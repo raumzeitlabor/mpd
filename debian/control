@@ -1,0 +1,52 @@
+Source: mpd
+Section: sound
+Priority: optional
+Maintainer: Decklin Foster <decklin@red-bean.com>
+Build-Depends: debhelper (>= 6), cdbs, libsqlite3-dev, libcurl4-gnutls-dev | libcurl-dev, libmms-dev, libavahi-client-dev, libsamplerate0-dev, libaudiofile-dev, libasound2-dev  [!kfreebsd-amd64 !kfreebsd-i386 !hurd-i386], libao-dev (>= 0.8.3), libpulse-dev, libjack-dev, libshout3-dev, libogg-dev, libvorbis-dev [!arm !armel !armeb], libvorbisidec-dev [arm armel armeb], libflac-dev (>= 1.1.4), libmpcdec-dev, libmad0-dev, libfaad-dev, libmikmod2-dev, libwavpack-dev, libsidplay2-dev, libresid-builder-dev, libavcodec-dev, libavformat-dev, libid3tag0-dev, zlib1g-dev, quilt, xmlto
+Standards-Version: 3.8.0
+Homepage: http://mpd.wikia.com/wiki/Music_Player_Daemon_Wiki
+
+Package: mpd
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, adduser
+Suggests: mpd-client, icecast2, pulseaudio, avahi-daemon
+Description: Music Player Daemon
+ Music Player Daemon (MPD) is a server that allows remote access for
+ playing audio files (Ogg-Vorbis, FLAC, MP3, Wave, and AIFF), streams
+ (Ogg-Vorbis, MP3) and managing playlists.  Gapless playback, buffered
+ output, and crossfading support is also included.  The design focus is
+ on integrating a computer into a stereo system that provides control
+ for music playback over a TCP/IP network.  The goals are to be easy to
+ install and use, to have minimal resource requirements (it has been
+ reported to run fine on a Pentium 75), and to remain stable and
+ flexible.
+ .
+ The daemon is controlled through a client which need not run on the
+ same computer mpd runs on.  The separate client and server design
+ allows users to choose a user interface that best suites their tastes
+ independently of the underlying daemon (this package) which actually
+ plays music.
+
+Package: mpd-dbg
+Section: debug
+Priority: extra
+Architecture: any
+Depends: mpd (= ${binary:Version}), ${misc:Depends}
+Description: Music Player Daemon debugging symbols
+ Music Player Daemon (MPD) is a server that allows remote access for
+ playing audio files (Ogg-Vorbis, FLAC, MP3, Wave, and AIFF), streams
+ (Ogg-Vorbis, MP3) and managing playlists.  Gapless playback, buffered
+ output, and crossfading support is also included.  The design focus is
+ on integrating a computer into a stereo system that provides control
+ for music playback over a TCP/IP network.  The goals are to be easy to
+ install and use, to have minimal resource requirements (it has been
+ reported to run fine on a Pentium 75), and to remain stable and
+ flexible.
+ .
+ The daemon is controlled through a client which need not run on the
+ same computer mpd runs on.  The separate client and server design
+ allows users to choose a user interface that best suites their tastes
+ independently of the underlying daemon (this package) which actually
+ plays music.
+ .
+ This package contains the debugging symbols.
