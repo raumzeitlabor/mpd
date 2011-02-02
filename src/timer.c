@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "timer.h"
 #include "audio_format.h"
 
@@ -68,6 +69,19 @@ void timer_add(Timer *timer, int size)
 	assert(timer->started);
 
 	timer->time += ((uint64_t)size * 1000000) / timer->rate;
+}
+
+unsigned
+timer_delay(const Timer *timer)
+{
+	int64_t delay = (int64_t)(timer->time - now()) / 1000;
+	if (delay < 0)
+		return 0;
+
+	if (delay > G_MAXINT)
+		delay = G_MAXINT;
+
+	return delay / 1000;
 }
 
 void timer_sync(Timer *timer)

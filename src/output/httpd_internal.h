@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,30 +29,34 @@
 
 #include <glib.h>
 
-#include <sys/socket.h>
+#include <stdbool.h>
 
 struct httpd_client;
 
 struct httpd_output {
+	/**
+	 * True if the audio output is open and accepts client
+	 * connections.
+	 */
+	bool open;
+
 	/**
 	 * The configured encoder plugin.
 	 */
 	struct encoder *encoder;
 
 	/**
+	 * Number of bytes which were fed into the encoder, without
+	 * ever receiving new output.  This is used to estimate
+	 * whether MPD should manually flush the encoder, to avoid
+	 * buffer underruns in the client.
+	 */
+	size_t unflushed_input;
+
+	/**
 	 * The MIME type produced by the #encoder.
 	 */
 	const char *content_type;
-
-	/**
-	 * The configured address of the listener socket.
-	 */
-	struct sockaddr_storage address;
-
-	/**
-	 * The size of #address.
-	 */
-	socklen_t address_size;
 
 	/**
 	 * This mutex protects the listener socket and the client
@@ -69,12 +73,7 @@ struct httpd_output {
 	/**
 	 * The listener socket.
 	 */
-	int fd;
-
-	/**
-	 * A GLib main loop source id for the listener socket.
-	 */
-	guint source_id;
+	struct server_socket *server_socket;
 
 	/**
 	 * The header page, which is sent to every client on connect.
@@ -87,6 +86,19 @@ struct httpd_output {
 	struct page *metadata;
 
 	/**
+	 * The configured name.
+	 */
+	char const *name;
+	/**
+	 * The configured genre.
+	 */
+	char const *genre;
+	/**
+	 * The configured website address.
+	 */
+	char const *website;
+
+	/**
 	 * A linked list containing all clients which are currently
 	 * connected.
 	 */
@@ -97,6 +109,12 @@ struct httpd_output {
 	 * function.
 	 */
 	char buffer[32768];
+
+	/**
+	 * The maximum and current number of clients connected 
+	 * at the same time.
+	 */
+	guint clients_max, clients_cnt;
 };
 
 /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,6 +27,8 @@
 #ifndef MPD_MIXER_PLUGIN_H
 #define MPD_MIXER_PLUGIN_H
 
+#include <glib.h>
+
 #include <stdbool.h>
 
 struct config_param;
@@ -35,8 +37,16 @@ struct mixer;
 struct mixer_plugin {
 	/**
          * Alocates and configures a mixer device.
+	 *
+	 * @param ao the pointer returned by audio_output_plugin.init
+	 * @param param the configuration section, or NULL if there is
+	 * no configuration
+	 * @param error_r location to store the error occuring, or
+	 * NULL to ignore errors
+	 * @return a mixer object, or NULL on error
 	 */
-	struct mixer *(*init)(const struct config_param *param);
+	struct mixer *(*init)(void *ao, const struct config_param *param,
+			      GError **error_r);
 
 	/**
 	 * Finish and free mixer data
@@ -45,8 +55,12 @@ struct mixer_plugin {
 
 	/**
 	 * Open mixer device
+	 *
+	 * @param error_r location to store the error occuring, or
+	 * NULL to ignore errors
+	 * @return true on success, false on error
 	 */
-	bool (*open)(struct mixer *data);
+	bool (*open)(struct mixer *data, GError **error_r);
 
 	/**
 	 * Close mixer device
@@ -56,18 +70,23 @@ struct mixer_plugin {
 	/**
 	 * Reads the current volume.
 	 *
-	 * @return the current volume (0..100 including) or -1 on
-	 * error
+	 * @param error_r location to store the error occuring, or
+	 * NULL to ignore errors
+	 * @return the current volume (0..100 including) or -1 if
+	 * unavailable or on error (error_r set, mixer will be closed)
 	 */
-	int (*get_volume)(struct mixer *mixer);
+	int (*get_volume)(struct mixer *mixer, GError **error_r);
 
 	/**
 	 * Sets the volume.
 	 *
+	 * @param error_r location to store the error occuring, or
+	 * NULL to ignore errors
 	 * @param volume the new volume (0..100 including)
-	 * @return true on success
+	 * @return true on success, false on error
 	 */
-	bool (*set_volume)(struct mixer *mixer, unsigned volume);
+	bool (*set_volume)(struct mixer *mixer, unsigned volume,
+			   GError **error_r);
 
 	/**
 	 * If true, then the mixer is automatically opened, even if

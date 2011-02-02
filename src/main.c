@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "main.h"
 #include "daemon.h"
 #include "client.h"
@@ -33,7 +34,6 @@
 #include "path.h"
 #include "mapper.h"
 #include "chunk.h"
-#include "decoder_control.h"
 #include "player_control.h"
 #include "stats.h"
 #include "sig_handlers.h"
@@ -42,19 +42,23 @@
 #include "volume.h"
 #include "log.h"
 #include "permission.h"
-#include "replay_gain.h"
+#include "replay_gain_config.h"
 #include "decoder_list.h"
-#include "input_stream.h"
+#include "input_init.h"
+#include "playlist_list.h"
 #include "state_file.h"
 #include "tag.h"
 #include "dbUtils.h"
-#include "config.h"
-#include "normalize.h"
 #include "zeroconf.h"
 #include "event_pipe.h"
 #include "dirvec.h"
 #include "songvec.h"
 #include "tag_pool.h"
+#include "mpd_error.h"
+
+#ifdef ENABLE_INOTIFY
+#include "inotify_update.h"
+#endif
 
 #ifdef ENABLE_SQLITE
 #include "sticker.h"
@@ -88,7 +92,34 @@ enum {
 GThread *main_task;
 GMainLoop *main_loop;
 
-struct notify main_notify;
+GCond *main_cond;
+
+static void
+glue_daemonize_init(const struct options *options)
+{
+	daemonize_init(config_get_string(CONF_USER, NULL),
+		       config_get_string(CONF_GROUP, NULL),
+		       config_get_path(CONF_PID_FILE));
+
+	if (options->kill)
+		daemonize_kill();
+}
+
+static void
+glue_mapper_init(void)
+{
+	const char *music_dir, *playlist_dir;
+
+	music_dir = config_get_path(CONF_MUSIC_DIR);
+#if GLIB_CHECK_VERSION(2,14,0)
+	if (music_dir == NULL)
+		music_dir = g_get_user_special_dir(G_USER_DIRECTORY_MUSIC);
+#endif
+
+	playlist_dir = config_get_path(CONF_PLAYLIST_DIR);
+
+	mapper_init(music_dir, playlist_dir);
+}
 
 /**
  * Returns the database.  If this function returns false, this has not
@@ -96,7 +127,7 @@ struct notify main_notify;
  * process has been daemonized.
  */
 static bool
-openDB(const Options *options)
+glue_db_init_and_load(void)
 {
 	const char *path = config_get_path(CONF_DB_FILE);
 	bool ret;
@@ -111,22 +142,14 @@ openDB(const Options *options)
 	}
 
 	if (path == NULL)
-		g_error(CONF_DB_FILE " setting missing");
+		MPD_ERROR(CONF_DB_FILE " setting missing");
 
 	db_init(path);
-
-	if (options->createDB > 0)
-		/* don't attempt to load the old database */
-		return false;
 
 	ret = db_load(&error);
 	if (!ret) {
 		g_warning("Failed to load database: %s", error->message);
 		g_error_free(error);
-
-		if (options->createDB < 0)
-			g_error("can't open db file and using "
-				"\"--no-create-db\" command line option");
 
 		if (!db_check())
 			exit(EXIT_FAILURE);
@@ -141,29 +164,51 @@ openDB(const Options *options)
 }
 
 /**
+ * Configure and initialize the sticker subsystem.
+ */
+static void
+glue_sticker_init(void)
+{
+#ifdef ENABLE_SQLITE
+	bool success;
+	GError *error = NULL;
+
+	success = sticker_global_init(config_get_path(CONF_STICKER_FILE),
+				      &error);
+	if (!success)
+		MPD_ERROR("%s", error->message);
+#endif
+}
+
+static void
+glue_state_file_init(void)
+{
+	state_file_init(config_get_path(CONF_STATE_FILE));
+}
+
+/**
  * Windows-only initialization of the Winsock2 library.
  */
-#ifdef WIN32
 static void winsock_init(void)
 {
+#ifdef WIN32
 	WSADATA sockinfo;
 	int retval;
 
 	retval = WSAStartup(MAKEWORD(2, 2), &sockinfo);
 	if(retval != 0)
 	{
-		g_error("Attempt to open Winsock2 failed; error code %d\n",
+		MPD_ERROR("Attempt to open Winsock2 failed; error code %d\n",
 			retval);
 	}
 
 	if (LOBYTE(sockinfo.wVersion) != 2)
 	{
-		g_error("We use Winsock2 but your version is either too new or "
-			"old; please install Winsock 2.x\n");
+		MPD_ERROR("We use Winsock2 but your version is either too new "
+			  "or old; please install Winsock 2.x\n");
 	}
-
-}
 #endif
+}
 
 /**
  * Initialize the decoder and player core, including the music pipe.
@@ -182,8 +227,8 @@ initialize_decoder_and_player(void)
 	if (param != NULL) {
 		buffer_size = strtol(param->value, &test, 10);
 		if (*test != '\0' || buffer_size <= 0)
-			g_error("buffer size \"%s\" is not a positive integer, "
-				"line %i\n", param->value, param->line);
+			MPD_ERROR("buffer size \"%s\" is not a positive integer, "
+				  "line %i\n", param->value, param->line);
 	} else
 		buffer_size = DEFAULT_BUFFER_SIZE;
 
@@ -192,15 +237,15 @@ initialize_decoder_and_player(void)
 	buffered_chunks = buffer_size / CHUNK_SIZE;
 
 	if (buffered_chunks >= 1 << 15)
-		g_error("buffer size \"%li\" is too big\n", (long)buffer_size);
+		MPD_ERROR("buffer size \"%li\" is too big\n", (long)buffer_size);
 
 	param = config_get_param(CONF_BUFFER_BEFORE_PLAY);
 	if (param != NULL) {
 		perc = strtod(param->value, &test);
 		if (*test != '%' || perc < 0 || perc > 100) {
-			g_error("buffered before play \"%s\" is not a positive "
-				"percentage and less than 100 percent, line %i",
-				param->value, param->line);
+			MPD_ERROR("buffered before play \"%s\" is not a positive "
+				  "percentage and less than 100 percent, line %i",
+				  param->value, param->line);
 		}
 	} else
 		perc = DEFAULT_BUFFER_BEFORE_PLAY;
@@ -210,7 +255,6 @@ initialize_decoder_and_player(void)
 		buffered_before_play = buffered_chunks;
 
 	pc_init(buffered_chunks, buffered_before_play);
-	dc_init();
 }
 
 /**
@@ -226,11 +270,31 @@ idle_event_emitted(void)
 		client_manager_idle_add(flags);
 }
 
+/**
+ * event_pipe callback function for PIPE_EVENT_SHUTDOWN
+ */
+static void
+shutdown_event_emitted(void)
+{
+	g_main_loop_quit(main_loop);
+}
+
 int main(int argc, char *argv[])
 {
-	Options options;
+#ifdef WIN32
+	return win32_main(argc, argv);
+#else
+	return mpd_main(argc, argv);
+#endif
+}
+
+int mpd_main(int argc, char *argv[])
+{
+	struct options options;
 	clock_t start;
 	bool create_db;
+	GError *error = NULL;
+	bool success;
 
 	daemonize_close_stdin();
 
@@ -239,45 +303,52 @@ int main(int argc, char *argv[])
 	setlocale(LC_CTYPE,"");
 #endif
 
+	g_set_application_name("Music Player Daemon");
+
 	/* enable GLib's thread safety code */
 	g_thread_init(NULL);
 
-#ifdef WIN32
 	winsock_init();
-#endif
 	idle_init();
 	dirvec_init();
 	songvec_init();
 	tag_pool_init();
 	config_global_init();
 
-	parseOptions(argc, argv, &options);
+	success = parse_cmdline(argc, argv, &options, &error);
+	if (!success) {
+		g_warning("%s", error->message);
+		g_error_free(error);
+		return EXIT_FAILURE;
+	}
 
-	daemonize_init(config_get_string(CONF_USER, NULL),
-		       config_get_path(CONF_PID_FILE));
-
-	if (options.kill)
-		daemonize_kill();
+	glue_daemonize_init(&options);
 
 	stats_global_init();
 	tag_lib_init();
-	log_init(options.verbose, options.stdOutput);
+	log_init(options.verbose, options.log_stderr);
 
-	listen_global_init();
+	success = listen_global_init(&error);
+	if (!success) {
+		g_warning("%s", error->message);
+		g_error_free(error);
+		return EXIT_FAILURE;
+	}
 
 	daemonize_set_user();
 
 	main_task = g_thread_self();
 	main_loop = g_main_loop_new(NULL, FALSE);
-	notify_init(&main_notify);
+	main_cond = g_cond_new();
 
 	event_pipe_init();
 	event_pipe_register(PIPE_EVENT_IDLE, idle_event_emitted);
+	event_pipe_register(PIPE_EVENT_SHUTDOWN, shutdown_event_emitted);
 
 	path_global_init();
-	mapper_init();
+	glue_mapper_init();
 	initPermissions();
-	initPlaylist();
+	playlist_global_init();
 	spl_global_init();
 #ifdef ENABLE_ARCHIVE
 	archive_plugin_init_all();
@@ -285,11 +356,9 @@ int main(int argc, char *argv[])
 	decoder_plugin_init_all();
 	update_global_init();
 
-	create_db = !openDB(&options);
+	create_db = !glue_db_init_and_load();
 
-#ifdef ENABLE_SQLITE
-	sticker_global_init(config_get_path(CONF_STICKER_FILE));
-#endif
+	glue_sticker_init();
 
 	command_init();
 	initialize_decoder_and_player();
@@ -298,12 +367,18 @@ int main(int argc, char *argv[])
 	audio_output_all_init();
 	client_manager_init();
 	replay_gain_global_init();
-	initNormalization();
-	input_stream_global_init();
+
+	if (!input_stream_global_init(&error)) {
+		g_warning("%s", error->message);
+		g_error_free(error);
+		return EXIT_FAILURE;
+	}
+
+	playlist_list_global_init();
 
 	daemonize(options.daemon);
 
-	setup_log_output(options.stdOutput);
+	setup_log_output(options.log_stderr);
 
 	initSigHandlers();
 
@@ -312,30 +387,56 @@ int main(int argc, char *argv[])
 	player_create();
 
 	if (create_db) {
-		/* the database failed to load, or MPD was started
-		   with --create-db: recreate a new database */
-		unsigned job = directory_update_init(NULL);
+		/* the database failed to load: recreate the
+		   database */
+		unsigned job = update_enqueue(NULL, true);
 		if (job == 0)
-			g_error("directory update failed");
+			MPD_ERROR("directory update failed");
 	}
 
+	glue_state_file_init();
 
-	state_file_init(config_get_path(CONF_STATE_FILE));
+	success = config_get_bool(CONF_AUTO_UPDATE, false);
+#ifdef ENABLE_INOTIFY
+	if (success && mapper_has_music_directory())
+		mpd_inotify_init(config_get_unsigned(CONF_AUTO_UPDATE_DEPTH,
+						     G_MAXUINT));
+#else
+	if (success)
+		g_warning("inotify: auto_update was disabled. enable during compilation phase");
+#endif
+
+	config_global_check();
+
+	/* enable all audio outputs (if not already done by
+	   playlist_state_restore() */
+	pc_update_audio();
+
+#ifdef WIN32
+	win32_app_started();
+#endif
 
 	/* run the main loop */
-
 	g_main_loop_run(main_loop);
+
+#ifdef WIN32
+	win32_app_stopping();
+#endif
 
 	/* cleanup */
 
 	g_main_loop_unref(main_loop);
 
+#ifdef ENABLE_INOTIFY
+	mpd_inotify_finish();
+#endif
+
 	state_file_finish();
-	playerKill();
+	pc_kill();
 	finishZeroconf();
 	client_manager_deinit();
 	listen_global_finish();
-	finishPlaylist();
+	playlist_global_finish();
 
 	start = clock();
 	db_finish();
@@ -346,18 +447,16 @@ int main(int argc, char *argv[])
 	sticker_global_finish();
 #endif
 
-	notify_deinit(&main_notify);
+	g_cond_free(main_cond);
 	event_pipe_deinit();
 
+	playlist_list_global_finish();
 	input_stream_global_finish();
-	finishNormalization();
 	audio_output_all_finish();
-	finishAudioConfig();
 	volume_finish();
 	mapper_finish();
 	path_global_finish();
 	finishPermissions();
-	dc_deinit();
 	pc_deinit();
 	command_finish();
 	update_global_finish();

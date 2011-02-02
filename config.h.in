@@ -3,14 +3,32 @@
 /* The archive API is available */
 #undef ENABLE_ARCHIVE
 
+/* Define when libcurl is used for HTTP streaming */
+#undef ENABLE_CURL
+
+/* Define to enable the encoder plugins */
+#undef ENABLE_ENCODER
+
+/* Define to enable the libffado output plugin */
+#undef ENABLE_FFADO_OUTPUT
+
+/* Define to enable the FLAC encoder plugin */
+#undef ENABLE_FLAC_ENCODER
+
 /* Define for fluidsynth support */
 #undef ENABLE_FLUIDSYNTH
 
 /* Define to enable the HTTP server output */
 #undef ENABLE_HTTPD_OUTPUT
 
+/* Define to enable inotify support */
+#undef ENABLE_INOTIFY
+
 /* Define to enable the lame encoder plugin */
 #undef ENABLE_LAME_ENCODER
+
+/* Define if large file support is enabled */
+#undef ENABLE_LARGEFILE
 
 /* Define when last.fm radio is enabled */
 #undef ENABLE_LASTFM
@@ -24,8 +42,14 @@
 /* Define to enable support for writing audio to a pipe */
 #undef ENABLE_PIPE_OUTPUT
 
+/* Define to enable the recorder output */
+#undef ENABLE_RECORDER_OUTPUT
+
 /* Define for libsidplay2 support */
 #undef ENABLE_SIDPLAY
+
+/* Define to enable the sndfile decoder plugin */
+#undef ENABLE_SNDFILE
 
 /* Define to enable Solaris /dev/audio support */
 #undef ENABLE_SOLARIS_OUTPUT
@@ -33,14 +57,26 @@
 /* Define to enable sqlite database support */
 #undef ENABLE_SQLITE
 
+/* Define to enable the TwoLAME encoder plugin */
+#undef ENABLE_TWOLAME_ENCODER
+
 /* Define for Ogg Vorbis support */
 #undef ENABLE_VORBIS_DECODER
 
 /* Define to enable the vorbis encoder plugin */
 #undef ENABLE_VORBIS_ENCODER
 
+/* Define to enable the PCM wave encoder plugin */
+#undef ENABLE_WAVE_ENCODER
+
 /* Define for wildmidi support */
 #undef ENABLE_WILDMIDI
+
+/* Define to enable WinMM support */
+#undef ENABLE_WINMM_OUTPUT
+
+/* Define to 1 if you have the `accept4' function. */
+#undef HAVE_ACCEPT4
 
 /* Define to enable ALSA support */
 #undef HAVE_ALSA
@@ -63,8 +99,8 @@
 /* Define to enable libcue support */
 #undef HAVE_CUE
 
-/* Define when libcurl is used for HTTP streaming */
-#undef HAVE_CURL
+/* Define to 1 if you have the `daemon' function. */
+#undef HAVE_DAEMON
 
 /* Define to 1 if `dontUpSampleImplicitSBR' is a member of
    `faacDecConfiguration'. */
@@ -94,11 +130,23 @@
 /* Define for FLAC support */
 #undef HAVE_FLAC
 
+/* Define to 1 if you have the `fork' function. */
+#undef HAVE_FORK
+
 /* Define to 1 if you have the `getpeereid' function. */
 #undef HAVE_GETPEEREID
 
+/* Define for gme support */
+#undef HAVE_GME
+
 /* Define to use id3tag */
 #undef HAVE_ID3TAG
+
+/* Define to 1 if you have the `inotify_init' function. */
+#undef HAVE_INOTIFY_INIT
+
+/* Define to 1 if you have the `inotify_init1' function. */
+#undef HAVE_INOTIFY_INIT1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -106,8 +154,8 @@
 /* Define if IPv6 support present */
 #undef HAVE_IPV6
 
-/* Define to have iso archive support */
-#undef HAVE_ISO
+/* Define to have ISO9660 archive support */
+#undef HAVE_ISO9660
 
 /* Define to enable JACK support */
 #undef HAVE_JACK
@@ -115,8 +163,17 @@
 /* Define to 1 if you have the `jack_set_info_function' function. */
 #undef HAVE_JACK_SET_INFO_FUNCTION
 
-/* Define if you have liblame. */
+/* Define to 1 if you have lame 3.98 or greater. */
 #undef HAVE_LAME
+
+/* Define to 1 if you have the <lame.h> header file. */
+#undef HAVE_LAME_H
+
+/* Define to 1 if you have the <lame/lame.h> header file. */
+#undef HAVE_LAME_LAME_H
+
+/* Define to 1 if you have the `mp3lame' library (-lmp3lame). */
+#undef HAVE_LIBMP3LAME
 
 /* Define to 1 if you have the `mp4ff' library (-lmp4ff). */
 #undef HAVE_LIBMP4FF
@@ -127,8 +184,14 @@
 /* libsamplerate doesn't provide src_int_to_float_array() (<0.1.3) */
 #undef HAVE_LIBSAMPLERATE_NOINT
 
+/* Define to 1 if you have the `sidutils' library (-lsidutils). */
+#undef HAVE_LIBSIDUTILS
+
 /* Define to 1 if you have the `WildMidi' library (-lWildMidi). */
 #undef HAVE_LIBWILDMIDI
+
+/* define to enable libwrap library */
+#undef HAVE_LIBWRAP
 
 /* Define to 1 if you have the <locale.h> header file. */
 #undef HAVE_LOCALE_H
@@ -148,17 +211,32 @@
 /* Define to use libmpcdec for MPC decoding */
 #undef HAVE_MPCDEC
 
+/* Define to use libmpg123 */
+#undef HAVE_MPG123
+
 /* Define to enable Hauppauge Media MVP support */
 #undef HAVE_MVP
 
 /* Define for OggFLAC support */
 #undef HAVE_OGGFLAC
 
+/* Define for OpenAL support */
+#undef HAVE_OPENAL
+
+/* Define to 1 if you have the <OpenAL/alc.h> header file. */
+#undef HAVE_OPENAL_ALC_H
+
+/* Define to 1 if you have the <OpenAL/al.h> header file. */
+#undef HAVE_OPENAL_AL_H
+
 /* Define to enable OSS */
 #undef HAVE_OSS
 
 /* Define for compiling OS X support */
 #undef HAVE_OSX
+
+/* Define to 1 if you have the `pipe2' function. */
+#undef HAVE_PIPE2
 
 /* Define to enable PulseAudio support */
 #undef HAVE_PULSE
@@ -193,6 +271,9 @@
 /* Define if TCP socket support is enabled */
 #undef HAVE_TCP
 
+/* Define to 1 if you have the <tcpd.h> header file. */
+#undef HAVE_TCPD_H
+
 /* Define to use tremor (libvorbisidec) for ogg support */
 #undef HAVE_TREMOR
 
@@ -215,7 +296,7 @@
 #undef HAVE_ZEROCONF
 
 /* Define to have zip archive support */
-#undef HAVE_ZIP
+#undef HAVE_ZZIP
 
 /* Define if an old pre-SV8 libmpcdec is used */
 #undef MPC_IS_OLD_API
@@ -244,7 +325,7 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* The mpd protocol version */
+/* The MPD protocol version */
 #undef PROTOCOL_VERSION
 
 /* Define to 1 if you have the ANSI C header files. */
@@ -252,3 +333,9 @@
 
 /* Version number of package */
 #undef VERSION
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+#undef _FILE_OFFSET_BITS
+
+/* Define for large files, on AIX-style hosts. */
+#undef _LARGE_FILES

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -66,6 +66,13 @@ struct audio_output *
 audio_output_find(const char *name);
 
 /**
+ * Checks the "enabled" flag of all audio outputs, and if one has
+ * changed, commit the change.
+ */
+void
+audio_output_all_enable_disable(void);
+
+/**
  * Opens all audio outputs which are not disabled.
  *
  * @param audio_format the preferred audio format, or NULL to reuse
@@ -83,6 +90,13 @@ audio_output_all_open(const struct audio_format *audio_format,
  */
 void
 audio_output_all_close(void);
+
+/**
+ * Closes all audio outputs.  Outputs with the "always_on" flag are
+ * put into pause mode.
+ */
+void
+audio_output_all_release(void);
 
 /**
  * Enqueue a #music_chunk object for playing, i.e. pushes it to a
@@ -123,9 +137,29 @@ void
 audio_output_all_pause(void);
 
 /**
+ * Drain all audio outputs.
+ */
+void
+audio_output_all_drain(void);
+
+/**
  * Try to cancel data which may still be in the device's buffers.
  */
 void
 audio_output_all_cancel(void);
+
+/**
+ * Indicate that a new song will begin now.
+ */
+void
+audio_output_all_song_border(void);
+
+/**
+ * Returns the "elapsed_time" stamp of the most recently finished
+ * chunk.  A negative value is returned when no chunk has been
+ * finished yet.
+ */
+float
+audio_output_all_get_elapsed_time(void);
 
 #endif

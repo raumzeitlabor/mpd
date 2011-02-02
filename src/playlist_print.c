@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,13 +17,19 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "playlist_print.h"
+#include "playlist_list.h"
+#include "playlist_plugin.h"
+#include "playlist_any.h"
+#include "playlist_song.h"
 #include "queue_print.h"
 #include "stored_playlist.h"
 #include "song_print.h"
 #include "song.h"
 #include "database.h"
 #include "client.h"
+#include "input_stream.h"
 
 void
 playlist_print_uris(struct client *client, const struct playlist *playlist)
@@ -69,7 +75,7 @@ playlist_print_id(struct client *client, const struct playlist *playlist,
 bool
 playlist_print_current(struct client *client, const struct playlist *playlist)
 {
-	int current_position = getPlaylistCurrentSong(playlist);
+	int current_position = playlist_get_current_song(playlist);
 
 	if (current_position < 0)
 		return false;
@@ -136,5 +142,43 @@ spl_print(struct client *client, const char *name_utf8, bool detail)
 	}
 
 	spl_free(list);
+	return true;
+}
+
+static void
+playlist_provider_print(struct client *client, const char *uri,
+			struct playlist_provider *playlist, bool detail)
+{
+	struct song *song;
+	char *base_uri = uri != NULL ? g_path_get_dirname(uri) : NULL;
+
+	while ((song = playlist_plugin_read(playlist)) != NULL) {
+		song = playlist_check_translate_song(song, base_uri);
+		if (song == NULL)
+			continue;
+
+		if (detail)
+			song_print_info(client, song);
+		else
+			song_print_uri(client, song);
+	}
+
+	g_free(base_uri);
+}
+
+bool
+playlist_file_print(struct client *client, const char *uri, bool detail)
+{
+	struct input_stream *is;
+	struct playlist_provider *playlist = playlist_open_any(uri, &is);
+	if (playlist == NULL)
+		return false;
+
+	playlist_provider_print(client, uri, playlist, detail);
+	playlist_plugin_close(playlist);
+
+	if (is != NULL)
+		input_stream_close(is);
+
 	return true;
 }

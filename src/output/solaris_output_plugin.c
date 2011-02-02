@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,9 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "output_api.h"
+#include "fd_util.h"
 
 #include <glib.h>
 
@@ -87,11 +89,11 @@ solaris_output_open(void *data, struct audio_format *audio_format,
 
 	/* support only 16 bit mono/stereo for now; nothing else has
 	   been tested */
-	audio_format->bits = 16;
+	audio_format->format = SAMPLE_FORMAT_S16;
 
 	/* open the device in non-blocking mode */
 
-	so->fd = open(so->device, O_WRONLY|O_NONBLOCK);
+	so->fd = open_cloexec(so->device, O_WRONLY|O_NONBLOCK, 0);
 	if (so->fd < 0) {
 		g_set_error(error, solaris_output_quark(), errno,
 			    "Failed to open %s: %s",
@@ -117,7 +119,7 @@ solaris_output_open(void *data, struct audio_format *audio_format,
 
 	info.play.sample_rate = audio_format->sample_rate;
 	info.play.channels = audio_format->channels;
-	info.play.precision = audio_format->bits;
+	info.play.precision = 16;
 	info.play.encoding = AUDIO_ENCODING_LINEAR;
 
 	ret = ioctl(so->fd, AUDIO_SETINFO, &info);

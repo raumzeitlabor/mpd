@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,11 +17,18 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "output_plugin.h"
 #include "output_internal.h"
 #include "output_control.h"
 #include "conf.h"
 #include "audio_parser.h"
+#include "filter_registry.h"
+#include "pcm_convert.h"
+#include "event_pipe.h"
+#include "idle.h"
+#include "playlist.h"
+#include "stdbin.h"
 
 #include <glib.h>
 
@@ -29,12 +36,44 @@
 #include <string.h>
 #include <unistd.h>
 
+struct playlist g_playlist;
+
+void
+idle_add(G_GNUC_UNUSED unsigned flags)
+{
+}
+
+void
+event_pipe_emit(G_GNUC_UNUSED enum pipe_event event)
+{
+}
+
 void pcm_convert_init(G_GNUC_UNUSED struct pcm_convert_state *state)
 {
 }
 
-void notify_init(G_GNUC_UNUSED struct notify *notify)
+void pcm_convert_deinit(G_GNUC_UNUSED struct pcm_convert_state *state)
 {
+}
+
+const void *
+pcm_convert(G_GNUC_UNUSED struct pcm_convert_state *state,
+	    G_GNUC_UNUSED const struct audio_format *src_format,
+	    G_GNUC_UNUSED const void *src, G_GNUC_UNUSED size_t src_size,
+	    G_GNUC_UNUSED const struct audio_format *dest_format,
+	    G_GNUC_UNUSED size_t *dest_size_r,
+	    GError **error_r)
+{
+	g_set_error(error_r, pcm_convert_quark(), 0,
+		    "Not implemented");
+	return NULL;
+}
+
+const struct filter_plugin *
+filter_plugin_by_name(G_GNUC_UNUSED const char *name)
+{
+	assert(false);
+	return NULL;
 }
 
 static const struct config_param *
@@ -77,11 +116,8 @@ load_audio_output(struct audio_output *ao, const char *name)
 int main(int argc, char **argv)
 {
 	struct audio_output ao;
-	struct audio_format audio_format = {
-		.sample_rate = 44100,
-		.bits = 16,
-		.channels = 2,
-	};
+	struct audio_format audio_format;
+	struct audio_format_string af_string;
 	bool success;
 	GError *error = NULL;
 	char buffer[4096];
@@ -93,12 +129,19 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	audio_format_init(&audio_format, 44100, SAMPLE_FORMAT_S16, 2);
+
 	g_thread_init(NULL);
 
 	/* read configuration file (mpd.conf) */
 
 	config_global_init();
-	config_read_file(argv[1]);
+	success = config_read_file(argv[1], &error);
+	if (!success) {
+		g_printerr("%s:", error->message);
+		g_error_free(error);
+		return 1;
+	}
 
 	/* initialize the audio output */
 
@@ -108,7 +151,8 @@ int main(int argc, char **argv)
 	/* parse the audio format */
 
 	if (argc > 3) {
-		success = audio_format_parse(&audio_format, argv[3], &error);
+		success = audio_format_parse(&audio_format, argv[3],
+					     false, &error);
 		if (!success) {
 			g_printerr("Failed to parse audio format: %s\n",
 				   error->message);
@@ -127,8 +171,8 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	g_printerr("audio_format=%u:%u:%u\n", audio_format.sample_rate,
-		   audio_format.bits, audio_format.channels);
+	g_printerr("audio_format=%s\n",
+		   audio_format_to_string(&audio_format, &af_string));
 
 	frame_size = audio_format_frame_size(&audio_format);
 

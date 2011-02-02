@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,14 +17,26 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "output_control.h"
 #include "output_api.h"
 #include "output_internal.h"
 #include "output_list.h"
 #include "audio_parser.h"
 #include "mixer_control.h"
+#include "mixer_type.h"
+#include "mixer_list.h"
+#include "mixer/software_mixer_plugin.h"
+#include "filter_plugin.h"
+#include "filter_registry.h"
+#include "filter_config.h"
+#include "filter/chain_filter_plugin.h"
+#include "filter/autoconvert_filter_plugin.h"
+#include "filter/replay_gain_filter_plugin.h"
 
 #include <glib.h>
+
+#include <assert.h>
 
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "output"
@@ -32,6 +44,7 @@
 #define AUDIO_OUTPUT_TYPE	"type"
 #define AUDIO_OUTPUT_NAME	"name"
 #define AUDIO_OUTPUT_FORMAT	"format"
+#define AUDIO_FILTERS		"filters"
 
 static const struct audio_output_plugin *
 audio_output_detect(GError **error)
@@ -56,46 +69,109 @@ audio_output_detect(GError **error)
 	return NULL;
 }
 
+/**
+ * Determines the mixer type which should be used for the specified
+ * configuration block.
+ *
+ * This handles the deprecated options mixer_type (global) and
+ * mixer_enabled, if the mixer_type setting is not configured.
+ */
+static enum mixer_type
+audio_output_mixer_type(const struct config_param *param)
+{
+	/* read the local "mixer_type" setting */
+	const char *p = config_get_block_string(param, "mixer_type", NULL);
+	if (p != NULL)
+		return mixer_type_parse(p);
+
+	/* try the local "mixer_enabled" setting next (deprecated) */
+	if (!config_get_block_bool(param, "mixer_enabled", true))
+		return MIXER_TYPE_NONE;
+
+	/* fall back to the global "mixer_type" setting (also
+	   deprecated) */
+	return mixer_type_parse(config_get_string("mixer_type", "hardware"));
+}
+
+static struct mixer *
+audio_output_load_mixer(void *ao, const struct config_param *param,
+			const struct mixer_plugin *plugin,
+			struct filter *filter_chain,
+			GError **error_r)
+{
+	struct mixer *mixer;
+
+	switch (audio_output_mixer_type(param)) {
+	case MIXER_TYPE_NONE:
+	case MIXER_TYPE_UNKNOWN:
+		return NULL;
+
+	case MIXER_TYPE_HARDWARE:
+		if (plugin == NULL)
+			return NULL;
+
+		return mixer_new(plugin, ao, param, error_r);
+
+	case MIXER_TYPE_SOFTWARE:
+		mixer = mixer_new(&software_mixer_plugin, NULL, NULL, NULL);
+		assert(mixer != NULL);
+
+		filter_chain_append(filter_chain,
+				    software_mixer_get_filter(mixer));
+		return mixer;
+	}
+
+	assert(false);
+	return NULL;
+}
+
 bool
 audio_output_init(struct audio_output *ao, const struct config_param *param,
-		  GError **error)
+		  GError **error_r)
 {
-	const char *format;
 	const struct audio_output_plugin *plugin = NULL;
+	GError *error = NULL;
 
 	if (param) {
-		const char *type = NULL;
+		const char *p;
 
-		type = config_get_block_string(param, AUDIO_OUTPUT_TYPE, NULL);
-		if (type == NULL) {
-			g_set_error(error, audio_output_quark(), 0,
+		p = config_get_block_string(param, AUDIO_OUTPUT_TYPE, NULL);
+		if (p == NULL) {
+			g_set_error(error_r, audio_output_quark(), 0,
 				    "Missing \"type\" configuration");
 			return false;
 		}
 
-		plugin = audio_output_plugin_get(type);
+		plugin = audio_output_plugin_get(p);
 		if (plugin == NULL) {
-			g_set_error(error, audio_output_quark(), 0,
-				    "No such audio output plugin: %s",
-				    type);
+			g_set_error(error_r, audio_output_quark(), 0,
+				    "No such audio output plugin: %s", p);
 			return false;
 		}
 
 		ao->name = config_get_block_string(param, AUDIO_OUTPUT_NAME,
 						   NULL);
 		if (ao->name == NULL) {
-			g_set_error(error, audio_output_quark(), 0,
+			g_set_error(error_r, audio_output_quark(), 0,
 				    "Missing \"name\" configuration");
 			return false;
 		}
 
-		format = config_get_block_string(param, AUDIO_OUTPUT_FORMAT,
+		p = config_get_block_string(param, AUDIO_OUTPUT_FORMAT,
 						 NULL);
+		if (p != NULL) {
+			bool success =
+				audio_format_parse(&ao->config_audio_format,
+						   p, true, error_r);
+			if (!success)
+				return false;
+		} else
+			audio_format_clear(&ao->config_audio_format);
 	} else {
 		g_warning("No \"%s\" defined in config file\n",
 			  CONF_AUDIO_OUTPUT);
 
-		plugin = audio_output_detect(error);
+		plugin = audio_output_detect(error_r);
 		if (plugin == NULL)
 			return false;
 
@@ -103,44 +179,115 @@ audio_output_init(struct audio_output *ao, const struct config_param *param,
 			  plugin->name);
 
 		ao->name = "default detected output";
-		format = NULL;
+
+		audio_format_clear(&ao->config_audio_format);
 	}
 
 	ao->plugin = plugin;
+	ao->always_on = config_get_block_bool(param, "always_on", false);
 	ao->enabled = config_get_block_bool(param, "enabled", true);
+	ao->really_enabled = false;
 	ao->open = false;
 	ao->pause = false;
 	ao->fail_timer = NULL;
 
-	pcm_convert_init(&ao->convert_state);
+	pcm_buffer_init(&ao->cross_fade_buffer);
 
-	ao->config_audio_format = format != NULL;
-	if (ao->config_audio_format) {
-		bool ret;
+	/* set up the filter chain */
 
-		ret = audio_format_parse(&ao->out_audio_format, format,
-					 error);
-		if (!ret)
-			return false;
+	ao->filter = filter_chain_new();
+	assert(ao->filter != NULL);
+
+	/* create the replay_gain filter */
+
+	const char *replay_gain_handler =
+		config_get_block_string(param, "replay_gain_handler",
+					"software");
+
+	if (strcmp(replay_gain_handler, "none") != 0) {
+		ao->replay_gain_filter = filter_new(&replay_gain_filter_plugin,
+						    param, NULL);
+		assert(ao->replay_gain_filter != NULL);
+
+		ao->replay_gain_serial = 0;
+
+		ao->other_replay_gain_filter = filter_new(&replay_gain_filter_plugin,
+							  param, NULL);
+		assert(ao->other_replay_gain_filter != NULL);
+
+		ao->other_replay_gain_serial = 0;
+	} else {
+		ao->replay_gain_filter = NULL;
+		ao->other_replay_gain_filter = NULL;
+	}
+
+	/* create the normalization filter (if configured) */
+
+	if (config_get_bool(CONF_VOLUME_NORMALIZATION, false)) {
+		struct filter *normalize_filter =
+			filter_new(&normalize_filter_plugin, NULL, NULL);
+		assert(normalize_filter != NULL);
+
+		filter_chain_append(ao->filter,
+				    autoconvert_filter_new(normalize_filter));
+	}
+
+	filter_chain_parse(ao->filter,
+	                   config_get_block_string(param, AUDIO_FILTERS, ""),
+	                   &error
+	);
+
+	// It's not really fatal - Part of the filter chain has been set up already
+	// and even an empty one will work (if only with unexpected behaviour)
+	if (error != NULL) {
+		g_warning("Failed to initialize filter chain for '%s': %s",
+			  ao->name, error->message);
+		g_error_free(error);
 	}
 
 	ao->thread = NULL;
-	notify_init(&ao->notify);
 	ao->command = AO_COMMAND_NONE;
 	ao->mutex = g_mutex_new();
+	ao->cond = g_cond_new();
 
 	ao->data = ao_plugin_init(plugin,
-				  ao->config_audio_format
-				  ? &ao->out_audio_format : NULL,
-				  param, error);
+				  &ao->config_audio_format,
+				  param, error_r);
 	if (ao->data == NULL)
 		return false;
 
-	if (plugin->mixer_plugin != NULL &&
-	    config_get_block_bool(param, "mixer_enabled", true))
-		ao->mixer = mixer_new(plugin->mixer_plugin, param);
-	else
-		ao->mixer = NULL;
+	ao->mixer = audio_output_load_mixer(ao->data, param,
+					    plugin->mixer_plugin,
+					    ao->filter, &error);
+	if (ao->mixer == NULL && error != NULL) {
+		g_warning("Failed to initialize hardware mixer for '%s': %s",
+			  ao->name, error->message);
+		g_error_free(error);
+	}
+
+	/* use the hardware mixer for replay gain? */
+
+	if (strcmp(replay_gain_handler, "mixer") == 0) {
+		if (ao->mixer != NULL)
+			replay_gain_filter_set_mixer(ao->replay_gain_filter,
+						     ao->mixer, 100);
+		else
+			g_warning("No such mixer for output '%s'", ao->name);
+	} else if (strcmp(replay_gain_handler, "software") != 0 &&
+		   ao->replay_gain_filter != NULL) {
+		g_set_error(error_r, audio_output_quark(), 0,
+			    "Invalid \"replay_gain_handler\" value");
+		return false;
+	}
+
+	/* the "convert" filter must be the last one in the chain */
+
+	ao->convert_filter = filter_new(&convert_filter_plugin, NULL, NULL);
+	assert(ao->convert_filter != NULL);
+
+	filter_chain_append(ao->filter, ao->convert_filter);
+
+	/* done */
 
 	return true;
 }

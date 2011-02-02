@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "stats.h"
 #include "database.h"
 #include "tag.h"
@@ -52,11 +53,11 @@ visit_tag(struct visit_data *data, const struct tag *tag)
 		const struct tag_item *item = tag->items[i];
 
 		switch (item->type) {
-		case TAG_ITEM_ARTIST:
+		case TAG_ARTIST:
 			strset_add(data->artists, item->value);
 			break;
 
-		case TAG_ITEM_ALBUM:
+		case TAG_ALBUM:
 			strset_add(data->albums, item->value);
 			break;
 
@@ -113,7 +114,7 @@ int stats_print(struct client *client)
 		      stats.album_count,
 		      stats.song_count,
 		      (long)g_timer_elapsed(stats.timer, NULL),
-		      (long)(getPlayerTotalPlayTime() + 0.5),
+		      (long)(pc_get_total_play_time() + 0.5),
 		      stats.song_duration,
 		      db_get_mtime());
 	return 0;

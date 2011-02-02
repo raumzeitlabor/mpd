@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -65,8 +65,8 @@ pcm_buffer_get(struct pcm_buffer *buffer, size_t size)
 		/* free the old buffer */
 		g_free(buffer->buffer);
 
-		/* allocate a new buffer; align at 64kB boundaries */
-		buffer->size = (size | 0xffff) + 1;
+		/* allocate a new buffer; align at 8 kB boundaries */
+		buffer->size = ((size - 1) | 0x1fff) + 1;
 		buffer->buffer = g_malloc(buffer->size);
 	}
 

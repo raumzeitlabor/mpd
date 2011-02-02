@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "daemon.h"
 
 #include <glib.h>
@@ -45,78 +46,72 @@
 static char *user_name;
 
 /** the Unix user id which MPD runs as */
-static uid_t user_uid;
+static uid_t user_uid = (uid_t)-1;
 
 /** the Unix group id which MPD runs as */
-static gid_t user_gid;
+static gid_t user_gid = (pid_t)-1;
 
 /** the absolute path of the pidfile */
 static char *pidfile;
 
-#endif
+/* whether "group" conf. option was given */
+static bool had_group = false;
+
 
 void
 daemonize_kill(void)
 {
-#ifndef WIN32
 	FILE *fp;
 	int pid, ret;
 
 	if (pidfile == NULL)
-		g_error("no pid_file specified in the config file");
+		MPD_ERROR("no pid_file specified in the config file");
 
 	fp = fopen(pidfile, "r");
 	if (fp == NULL)
-		g_error("unable to open pid file \"%s\": %s",
-			pidfile, g_strerror(errno));
+		MPD_ERROR("unable to open pid file \"%s\": %s",
+			  pidfile, g_strerror(errno));
 
 	if (fscanf(fp, "%i", &pid) != 1) {
-		g_error("unable to read the pid from file \"%s\"",
-			pidfile);
+		MPD_ERROR("unable to read the pid from file \"%s\"",
+			  pidfile);
 	}
 	fclose(fp);
 
 	ret = kill(pid, SIGTERM);
 	if (ret < 0)
-		g_error("unable to kill proccess %i: %s",
-			pid, g_strerror(errno));
+		MPD_ERROR("unable to kill proccess %i: %s",
+			  pid, g_strerror(errno));
 
 	exit(EXIT_SUCCESS);
-#else
-	g_error("--kill is not available on WIN32");
-#endif
 }
 
 void
 daemonize_close_stdin(void)
 {
-	int fd = open("/dev/null", O_RDONLY);
-
-	if (fd < 0)
-		close(STDIN_FILENO);
-	else if (fd != STDIN_FILENO) {
-		dup2(fd, STDIN_FILENO);
-		close(fd);
-	}
+	close(STDIN_FILENO);
+	open("/dev/null", O_RDONLY);
 }
 
 void
 daemonize_set_user(void)
 {
-#ifndef WIN32
 	if (user_name == NULL)
 		return;
 
-	/* get uid */
-	if (setgid(user_gid) == -1) {
-		g_error("cannot setgid for user \"%s\": %s",
-			user_name, g_strerror(errno));
+	/* set gid */
+	if (user_gid != (gid_t)-1 && user_gid != getgid()) {
+		if (setgid(user_gid) == -1) {
+			MPD_ERROR("cannot setgid to %d: %s",
+				  (int)user_gid, g_strerror(errno));
+		}
 	}
+
 #ifdef _BSD_SOURCE
 	/* init suplementary groups
 	 * (must be done before we change our uid)
 	 */
-	if (initgroups(user_name, user_gid) == -1) {
+	if (!had_group && initgroups(user_name, user_gid) == -1) {
 		g_warning("cannot init supplementary groups "
 			  "of user \"%s\": %s",
 			  user_name, g_strerror(errno));
@@ -124,50 +119,58 @@ daemonize_set_user(void)
 #endif
 
 	/* set uid */
-	if (setuid(user_uid) == -1) {
-		g_error("cannot change to uid of user \"%s\": %s",
-			user_name, g_strerror(errno));
+	if (user_uid != (uid_t)-1 && user_uid != getuid() &&
+	    setuid(user_uid) == -1) {
+		MPD_ERROR("cannot change to uid of user \"%s\": %s",
+			  user_name, g_strerror(errno));
 	}
-#endif
 }
 
-#ifndef G_OS_WIN32
 static void
 daemonize_detach(void)
 {
-	pid_t pid;
-
 	/* flush all file handles before duplicating the buffers */
 
 	fflush(NULL);
 
+#ifdef HAVE_DAEMON
+
+	if (daemon(0, 1))
+		MPD_ERROR("daemon() failed: %s", g_strerror(errno));
+
+#elif defined(HAVE_FORK)
+
 	/* detach from parent process */
 
-	pid = fork();
-	if (pid < 0)
-		g_error("fork() failed: %s", g_strerror(errno));
-
-	if (pid > 0)
+	switch (fork()) {
+	case -1:
+		MPD_ERROR("fork() failed: %s", g_strerror(errno));
+	case 0:
+		break;
+	default:
 		/* exit the parent process */
 		_exit(EXIT_SUCCESS);
+	}
 
 	/* release the current working directory */
 
 	if (chdir("/") < 0)
-		g_error("problems changing to root directory");
+		MPD_ERROR("problems changing to root directory");
 
 	/* detach from the current session */
 
 	setsid();
 
+#else
+	MPD_ERROR("no support for daemonizing");
+#endif
+
 	g_debug("daemonized!");
 }
-#endif
 
 void
 daemonize(bool detach)
 {
-#ifndef WIN32
 	FILE *fp = NULL;
 
 	if (pidfile != NULL) {
@@ -176,8 +179,8 @@ daemonize(bool detach)
 		g_debug("opening pid file");
 		fp = fopen(pidfile, "w+");
 		if (!fp) {
-			g_error("could not create pid file \"%s\": %s",
-				pidfile, g_strerror(errno));
+			MPD_ERROR("could not create pid file \"%s\": %s",
+				  pidfile, g_strerror(errno));
 		}
 	}
 
@@ -189,47 +192,45 @@ daemonize(bool detach)
 		fprintf(fp, "%lu\n", (unsigned long)getpid());
 		fclose(fp);
 	}
-#else
-	/* no daemonization on WIN32 */
-	(void)detach;
-#endif
 }
 
 void
-daemonize_init(const char *user, const char *_pidfile)
+daemonize_init(const char *user, const char *group, const char *_pidfile)
 {
-#ifndef WIN32
-	if (user != NULL && strcmp(user, g_get_user_name()) != 0) {
-		struct passwd *pwd;
-
-		user_name = g_strdup(user);
-
-		pwd = getpwnam(user_name);
-		if (pwd == NULL)
-			g_error("no such user \"%s\"", user_name);
+	if (user) {
+		struct passwd *pwd = getpwnam(user);
+		if (!pwd)
+			MPD_ERROR("no such user \"%s\"", user);
 
 		user_uid = pwd->pw_uid;
 		user_gid = pwd->pw_gid;
+
+		user_name = g_strdup(user);
 
 		/* this is needed by libs such as arts */
 		g_setenv("HOME", pwd->pw_dir, true);
 	}
 
+	if (group) {
+		struct group *grp = grp = getgrnam(group);
+		if (!grp)
+			MPD_ERROR("no such group \"%s\"", group);
+		user_gid = grp->gr_gid;
+		had_group = true;
+	}
+
+
 	pidfile = g_strdup(_pidfile);
-#else
-	(void)user;
-	(void)_pidfile;
-#endif
 }
 
 void
 daemonize_finish(void)
 {
-#ifndef WIN32
 	if (pidfile != NULL)
 		unlink(pidfile);
 
 	g_free(user_name);
 	g_free(pidfile);
-#endif
 }
+
+#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "buffer.h"
 #include "chunk.h"
 #include "poison.h"
@@ -116,6 +117,9 @@ music_buffer_return(struct music_buffer *buffer, struct music_chunk *chunk)
 {
 	assert(buffer != NULL);
 	assert(chunk != NULL);
+
+	if (chunk->other != NULL)
+		music_buffer_return(buffer, chunk->other);
 
 	g_mutex_lock(buffer->mutex);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,10 +17,14 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "state_file.h"
 #include "output_state.h"
 #include "playlist.h"
+#include "playlist_state.h"
 #include "volume.h"
+#include "text_file.h"
+#include "glib_compat.h"
 
 #include <glib.h>
 #include <assert.h>
@@ -30,28 +34,26 @@
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "state_file"
 
-static struct _sf_cb {
-	void (*reader)(FILE *);
-	void (*writer)(FILE *);
-} sf_callbacks [] = {
-	{ read_sw_volume_state, save_sw_volume_state },
-	{ readAudioDevicesState, saveAudioDevicesState },
-	{ readPlaylistState, savePlaylistState },
-};
-
 static char *state_file_path;
 
 /** the GLib source id for the save timer */
 static guint save_state_source_id;
 
+/**
+ * These version numbers determine whether we need to save the state
+ * file.  If nothing has changed, we won't let the hard drive spin up.
+ */
+static unsigned prev_volume_version, prev_output_version,
+	prev_playlist_version;
+
 static void
 state_file_write(void)
 {
-	unsigned int i;
 	FILE *fp;
 
-	if (state_file_path == NULL)
-		return;
+	assert(state_file_path != NULL);
+
+	g_debug("Saving state file %s", state_file_path);
 
 	fp = fopen(state_file_path, "w");
 	if (G_UNLIKELY(!fp)) {
@@ -60,21 +62,26 @@ state_file_write(void)
 		return;
 	}
 
-	for (i = 0; i < G_N_ELEMENTS(sf_callbacks); i++)
-		sf_callbacks[i].writer(fp);
+	save_sw_volume_state(fp);
+	audio_output_state_save(fp);
+	playlist_state_save(fp, &g_playlist);
 
-	while(fclose(fp) && errno == EINTR) /* nothing */;
+	fclose(fp);
+
+	prev_volume_version = sw_volume_state_get_hash();
+	prev_output_version = audio_output_state_get_version();
+	prev_playlist_version = playlist_state_get_hash(&g_playlist);
 }
 
 static void
 state_file_read(void)
 {
-	unsigned int i;
 	FILE *fp;
+	bool success;
 
 	assert(state_file_path != NULL);
 
-	g_debug("Saving state file");
+	g_debug("Loading state file %s", state_file_path);
 
 	fp = fopen(state_file_path, "r");
 	if (G_UNLIKELY(!fp)) {
@@ -82,12 +89,25 @@ state_file_read(void)
 			  state_file_path, strerror(errno));
 		return;
 	}
-	for (i = 0; i < G_N_ELEMENTS(sf_callbacks); i++) {
-		sf_callbacks[i].reader(fp);
-		rewind(fp);
+
+	GString *buffer = g_string_sized_new(1024);
+	const char *line;
+	while ((line = read_text_line(fp, buffer)) != NULL) {
+		success = read_sw_volume_state(line) ||
+			audio_output_state_read(line) ||
+			playlist_state_restore(line, fp, buffer, &g_playlist);
+		if (!success)
+			g_warning("Unrecognized line in state file: %s", line);
 	}
 
-	while(fclose(fp) && errno == EINTR) /* nothing */;
+	fclose(fp);
+
+	prev_volume_version = sw_volume_state_get_hash();
+	prev_output_version = audio_output_state_get_version();
+	prev_playlist_version = playlist_state_get_hash(&g_playlist);
+
+
+	g_string_free(buffer, true);
 }
 
 /**
@@ -97,6 +117,13 @@ state_file_read(void)
 static gboolean
 timer_save_state_file(G_GNUC_UNUSED gpointer data)
 {
+	if (prev_volume_version == sw_volume_state_get_hash() &&
+	    prev_output_version == audio_output_state_get_version() &&
+	    prev_playlist_version == playlist_state_get_hash(&g_playlist))
+		/* nothing has changed - don't save the state file,
+		   don't spin up the hard disk */
+		return true;
+
 	state_file_write();
 	return true;
 }
@@ -112,18 +139,22 @@ state_file_init(const char *path)
 	state_file_path = g_strdup(path);
 	state_file_read();
 
-	save_state_source_id = g_timeout_add(5 * 60 * 1000,
-					     timer_save_state_file, NULL);
+	save_state_source_id = g_timeout_add_seconds(5 * 60,
+						     timer_save_state_file,
+						     NULL);
 }
 
 void
 state_file_finish(void)
 {
+	if (state_file_path == NULL)
+		/* no state file configured, no cleanup required */
+		return;
+
 	if (save_state_source_id != 0)
 		g_source_remove(save_state_source_id);
 
-	if (state_file_path != NULL)
-		state_file_write();
+	state_file_write();
 
 	g_free(state_file_path);
 }

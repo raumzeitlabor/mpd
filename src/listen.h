@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,9 +20,14 @@
 #ifndef MPD_LISTEN_H
 #define MPD_LISTEN_H
 
+#include <glib.h>
+
+#include <stdbool.h>
+
 extern int listen_port;
 
-void listen_global_init(void);
+bool
+listen_global_init(GError **error_r);
 
 void listen_global_finish(void);
 

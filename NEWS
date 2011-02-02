@@ -1,3 +1,164 @@
+ver 0.16.1 (2010/01/09)
+* audio_check: fix parameter in prototype
+* add void casts to suppress "result unused" warnings (clang)
+* input:
+  - ffado: disable by default
+* decoder:
+  - mad: work around build failure on Solaris
+  - resolve modplug vs. libsndfile cflags/headers conflict
+* output:
+  - solaris: add missing parameter to open_cloexec() cal
+  - osx: fix up audio format first, then apply it to device
+* player_thread: discard empty chunks while cross-fading
+* player_thread: fix assertion failure due to early seek
+* output_thread: fix double lock
+
+
+ver 0.16 (2010/12/11)
+* protocol:
+  - send song modification time to client
+  - added "update" idle event
+  - removed the deprecated "volume" command
+  - added the "findadd" command
+  - range support for "delete"
+  - "previous" really plays the previous song
+  - "addid" with negative position is deprecated
+  - "load" supports remote playlists (extm3u, pls, asx, xspf, lastfm://)
+  - allow changing replay gain mode on-the-fly
+  - omitting the range end is possible
+  - "update" checks if the path is malformed
+* archive:
+  - iso: renamed plugin to "iso9660"
+  - zip: renamed plugin to "zzip"
+* input:
+  - lastfm: obsolete plugin removed
+  - ffmpeg: new input plugin using libavformat's "avio" library
+* tags:
+  - added tags "ArtistSort", "AlbumArtistSort"
+  - id3: revised "performer" tag support
+  - id3: support multiple values
+  - ape: MusicBrainz tags
+  - ape: support multiple values
+* decoders:
+  - don't try a plugin twice (MIME type & suffix)
+  - don't fall back to "mad" unless no plugin matches
+  - ffmpeg: support multiple tags
+  - ffmpeg: convert metadata to generic format
+  - ffmpeg: implement the libavutil log callback
+  - sndfile: new decoder plugin based on libsndfile
+  - flac: moved CUE sheet support to a playlist plugin
+  - flac: support streams without STREAMINFO block
+  - mikmod: sample rate is configurable
+  - mpg123: new decoder plugin based on libmpg123
+  - sidplay: support sub-tunes
+  - sidplay: implemented songlength database
+  - sidplay: support seeking
+  - sidplay: play monaural SID tunes in mono
+  - sidplay: play mus, str, prg, x00 files
+  - wavpack: activate 32 bit support
+  - wavpack: allow more than 2 channels
+  - mp4ff: rename plugin "mp4" to "mp4ff"
+* encoders:
+  - twolame: new encoder plugin based on libtwolame
+  - flac: new encoder plugin based on libFLAC
+  - wave: new encoder plugin for PCM WAV format
+* output:
+  - recorder: new output plugin for recording radio streams
+  - alsa: don't recover on CANCEL
+  - alsa: fill period buffer with silence before draining
+  - openal: new output plugin
+  - pulse: announce "media.role=music"
+  - pulse: renamed context to "Music Player Daemon"
+  - pulse: connect to server on MPD startup, implement pause
+  - jack: require libjack 0.100
+  - jack: don't disconnect during pause
+  - jack: connect to server on MPD startup
+  - jack: added options "client_name", "server_name"
+  - jack: clear ring buffers before activating
+  - jack: renamed option "ports" to "destination_ports"
+  - jack: support more than two audio channels
+  - httpd: bind port when output is enabled
+  - httpd: added name/genre/website configuration
+  - httpd: implement "pause"
+  - httpd: bind_to_address support (including IPv6)
+  - oss: 24 bit support via OSS4
+  - win32: new output plugin for Windows Wave
+  - shout, httpd: more responsive to control commands
+  - wildcards allowed in audio_format configuration
+  - consistently lock audio output objects
+* player:
+  - drain audio outputs at the end of the playlist
+* mixers:
+  - removed support for legacy mixer configuration
+  - reimplemented software volume as mixer+filter plugin
+  - per-device software/hardware mixer setting
+* commands:
+  - added new "status" line with more precise "elapsed time"
+* update:
+  - automatically update the database with Linux inotify
+  - support .mpdignore files in the music directory
+  - sort songs by album name first, then disc/track number
+  - rescan after metadata_to_use change
+* normalize: upgraded to AudioCompress 2.0
+  - automatically convert to 16 bit samples
+* replay gain:
+  - reimplemented as a filter plugin
+  - fall back to track gain if album gain is unavailable
+  - optionally use hardware mixer to apply replay gain
+  - added mode "auto"
+  - parse replay gain from APE tags
+* log unused/unknown block parameters
+* removed the deprecated "error_file" option
+* save state when stopped
+* renamed option "--stdout" to "--stderr"
+* removed options --create-db and --no-create-db
+* state_file: save only if something has changed
+* database: eliminated maximum line length
+* log: redirect stdout/stderr to /dev/null if syslog is used
+* set the close-on-exec flag on all file descriptors
+* pcm_volume, pcm_mix: implemented 32 bit support
+* support packed 24 bit samples
+* CUE sheet support
+* support for MixRamp tags
+* obey $(sysconfdir) for default mpd.conf location
+* build with large file support by default
+* added test suite ("make check")
+* require GLib 2.12
+* added libwrap support
+* make single mode 'sticky'
+
+
+ver 0.15.16 (2010/??/??)
+* encoders:
+  - lame: explicitly configure the output sample rate
+
+
+ver 0.15.15 (2010/11/08)
+* input:
+  - rewind: fix assertion failure
+* output:
+  - shout: artist comes first in stream title
+
+
+ver 0.15.14 (2010/11/06)
+* player_thread: fix assertion failure due to wrong music pipe on seek
+* output_thread: fix assertion failure due to race condition in OPEN
+* input:
+  - rewind: fix double free bug
+* decoders:
+  - mp4ff, ffmpeg: add extension ".m4b" (audio book)
+
+
+ver 0.15.13 (2010/10/10)
+* output_thread: fix race condition after CANCEL command
+* output:
+  - httpd: fix random data in stream title
+  - httpd: MIME type audio/ogg for Ogg Vorbis
+* input:
+  - rewind: update MIME not only once
+  - rewind: enable for MMS
+
+
 ver 0.15.12 (2010/07/20)
 * input:
   - curl: remove assertion after curl_multi_fdset()

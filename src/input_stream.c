@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,137 +17,64 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "input_plugin.h"
 #include "config.h"
-#include "conf.h"
-
-#include "input/file_input_plugin.h"
+#include "input_stream.h"
+#include "input_registry.h"
+#include "input_plugin.h"
 #include "input/rewind_input_plugin.h"
-
-#ifdef ENABLE_ARCHIVE
-#include "input/archive_input_plugin.h"
-#endif
-
-#ifdef HAVE_CURL
-#include "input/curl_input_plugin.h"
-#endif
-
-#include "input/lastfm_input_plugin.h"
-
-#ifdef ENABLE_MMS
-#include "input/mms_input_plugin.h"
-#endif
 
 #include <glib.h>
 #include <assert.h>
-#include <string.h>
 
-static const struct input_plugin *const input_plugins[] = {
-	&input_plugin_file,
-#ifdef ENABLE_ARCHIVE
-	&input_plugin_archive,
-#endif
-#ifdef HAVE_CURL
-	&input_plugin_curl,
-#endif
-#ifdef ENABLE_LASTFM
-	&lastfm_input_plugin,
-#endif
-#ifdef ENABLE_MMS
-	&input_plugin_mms,
-#endif
-};
-
-static bool input_plugins_enabled[G_N_ELEMENTS(input_plugins)];
-
-static const unsigned num_input_plugins =
-	sizeof(input_plugins) / sizeof(input_plugins[0]);
-
-/**
- * Find the "input" configuration block for the specified plugin.
- *
- * @param plugin_name the name of the input plugin
- * @return the configuration block, or NULL if none was configured
- */
-static const struct config_param *
-input_plugin_config(const char *plugin_name)
+static inline GQuark
+input_quark(void)
 {
-	const struct config_param *param = NULL;
-
-	while ((param = config_get_next_param(CONF_INPUT, param)) != NULL) {
-		const char *name =
-			config_get_block_string(param, "plugin", NULL);
-		if (name == NULL)
-			g_error("input configuration without 'plugin' name in line %d",
-				param->line);
-
-		if (strcmp(name, plugin_name) == 0)
-			return param;
-	}
-
-	return NULL;
+	return g_quark_from_static_string("input");
 }
 
-void input_stream_global_init(void)
+struct input_stream *
+input_stream_open(const char *url, GError **error_r)
 {
-	for (unsigned i = 0; i < num_input_plugins; ++i) {
-		const struct input_plugin *plugin = input_plugins[i];
-		const struct config_param *param =
-			input_plugin_config(plugin->name);
+	GError *error = NULL;
 
-		if (!config_get_block_bool(param, "enabled", true))
-			/* the plugin is disabled in mpd.conf */
+	assert(error_r == NULL || *error_r == NULL);
+
+	for (unsigned i = 0; input_plugins[i] != NULL; ++i) {
+		const struct input_plugin *plugin = input_plugins[i];
+		struct input_stream *is;
+
+		if (!input_plugins_enabled[i])
 			continue;
 
-		if (plugin->init == NULL || plugin->init(param))
-			input_plugins_enabled[i] = true;
-	}
-}
-
-void input_stream_global_finish(void)
-{
-	for (unsigned i = 0; i < num_input_plugins; ++i)
-		if (input_plugins_enabled[i] &&
-		    input_plugins[i]->finish != NULL)
-			input_plugins[i]->finish();
-}
-
-bool
-input_stream_open(struct input_stream *is, const char *url)
-{
-	is->seekable = false;
-	is->ready = false;
-	is->offset = 0;
-	is->size = -1;
-	is->error = 0;
-	is->mime = NULL;
-
-	for (unsigned i = 0; i < num_input_plugins; ++i) {
-		const struct input_plugin *plugin = input_plugins[i];
-
-		if (input_plugins_enabled[i] && plugin->open(is, url)) {
+		is = plugin->open(url, &error);
+		if (is != NULL) {
 			assert(is->plugin != NULL);
 			assert(is->plugin->close != NULL);
 			assert(is->plugin->read != NULL);
 			assert(is->plugin->eof != NULL);
 			assert(!is->seekable || is->plugin->seek != NULL);
 
-			input_rewind_open(is);
+			is = input_rewind_open(is);
 
-			return true;
+			return is;
+		} else if (error != NULL) {
+			g_propagate_error(error_r, error);
+			return NULL;
 		}
 	}
 
+	g_set_error(error_r, input_quark(), 0, "Unrecognized URI");
 	return false;
 }
 
 bool
-input_stream_seek(struct input_stream *is, off_t offset, int whence)
+input_stream_seek(struct input_stream *is, goffset offset, int whence,
+		  GError **error_r)
 {
 	if (is->plugin->seek == NULL)
 		return false;
 
-	return is->plugin->seek(is, offset, whence);
+	return is->plugin->seek(is, offset, whence, error_r);
 }
 
 struct tag *
@@ -161,19 +88,18 @@ input_stream_tag(struct input_stream *is)
 }
 
 size_t
-input_stream_read(struct input_stream *is, void *ptr, size_t size)
+input_stream_read(struct input_stream *is, void *ptr, size_t size,
+		  GError **error_r)
 {
 	assert(ptr != NULL);
 	assert(size > 0);
 
-	return is->plugin->read(is, ptr, size);
+	return is->plugin->read(is, ptr, size, error_r);
 }
 
 void input_stream_close(struct input_stream *is)
 {
 	is->plugin->close(is);
-
-	g_free(is->mime);
 }
 
 bool input_stream_eof(struct input_stream *is)
@@ -181,10 +107,11 @@ bool input_stream_eof(struct input_stream *is)
 	return is->plugin->eof(is);
 }
 
-int input_stream_buffer(struct input_stream *is)
+int
+input_stream_buffer(struct input_stream *is, GError **error_r)
 {
 	if (is->plugin->buffer == NULL)
 		return 0;
 
-	return is->plugin->buffer(is);
+	return is->plugin->buffer(is, error_r);
 }

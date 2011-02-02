@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,9 +17,9 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "output_list.h"
 #include "output_api.h"
-#include "config.h"
 
 extern const struct audio_output_plugin shoutPlugin;
 extern const struct audio_output_plugin null_output_plugin;
@@ -28,12 +28,16 @@ extern const struct audio_output_plugin pipe_output_plugin;
 extern const struct audio_output_plugin alsaPlugin;
 extern const struct audio_output_plugin ao_output_plugin;
 extern const struct audio_output_plugin oss_output_plugin;
+extern const struct audio_output_plugin openal_output_plugin;
 extern const struct audio_output_plugin osxPlugin;
 extern const struct audio_output_plugin solaris_output_plugin;
-extern const struct audio_output_plugin pulse_plugin;
+extern const struct audio_output_plugin pulse_output_plugin;
 extern const struct audio_output_plugin mvp_output_plugin;
-extern const struct audio_output_plugin jackPlugin;
+extern const struct audio_output_plugin jack_output_plugin;
 extern const struct audio_output_plugin httpd_output_plugin;
+extern const struct audio_output_plugin recorder_output_plugin;
+extern const struct audio_output_plugin winmm_output_plugin;
+extern const struct audio_output_plugin ffado_output_plugin;
 
 const struct audio_output_plugin *audio_output_plugins[] = {
 #ifdef HAVE_SHOUT
@@ -55,6 +59,9 @@ const struct audio_output_plugin *audio_output_plugins[] = {
 #ifdef HAVE_OSS
 	&oss_output_plugin,
 #endif
+#ifdef HAVE_OPENAL
+	&openal_output_plugin,
+#endif
 #ifdef HAVE_OSX
 	&osxPlugin,
 #endif
@@ -62,16 +69,25 @@ const struct audio_output_plugin *audio_output_plugins[] = {
 	&solaris_output_plugin,
 #endif
 #ifdef HAVE_PULSE
-	&pulse_plugin,
+	&pulse_output_plugin,
 #endif
 #ifdef HAVE_MVP
 	&mvp_output_plugin,
 #endif
 #ifdef HAVE_JACK
-	&jackPlugin,
+	&jack_output_plugin,
 #endif
 #ifdef ENABLE_HTTPD_OUTPUT
 	&httpd_output_plugin,
+#endif
+#ifdef ENABLE_RECORDER_OUTPUT
+	&recorder_output_plugin,
+#endif
+#ifdef ENABLE_WINMM_OUTPUT
+	&winmm_output_plugin,
+#endif
+#ifdef ENABLE_FFADO_OUTPUT
+	&ffado_output_plugin,
 #endif
 	NULL
 };

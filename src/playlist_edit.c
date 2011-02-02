@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,7 @@
  *
  */
 
+#include "config.h"
 #include "playlist_internal.h"
 #include "player_control.h"
 #include "database.h"
@@ -35,16 +36,16 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-static void incrPlaylistVersion(struct playlist *playlist)
+static void playlist_increment_version(struct playlist *playlist)
 {
 	queue_increment_version(&playlist->queue);
 
 	idle_add(IDLE_PLAYLIST);
 }
 
-void clearPlaylist(struct playlist *playlist)
+void playlist_clear(struct playlist *playlist)
 {
-	stopPlaylist(playlist);
+	playlist_stop(playlist);
 
 	/* make sure there are no references to allocated songs
 	   anymore */
@@ -58,7 +59,7 @@ void clearPlaylist(struct playlist *playlist)
 
 	playlist->current = -1;
 
-	incrPlaylistVersion(playlist);
+	playlist_increment_version(playlist);
 }
 
 #ifndef WIN32
@@ -86,41 +87,12 @@ playlist_append_file(struct playlist *playlist, const char *path, int uid,
 	if (song == NULL)
 		return PLAYLIST_RESULT_NO_SUCH_SONG;
 
-	return addSongToPlaylist(playlist, song, added_id);
+	return playlist_append_song(playlist, song, added_id);
 }
 #endif
 
-static struct song *
-song_by_url(const char *url)
-{
-	struct song *song;
-
-	song = db_get_song(url);
-	if (song != NULL)
-		return song;
-
-	if (uri_has_scheme(url))
-		return song_remote_new(url);
-
-	return NULL;
-}
-
 enum playlist_result
-addToPlaylist(struct playlist *playlist, const char *url, unsigned *added_id)
-{
-	struct song *song;
-
-	g_debug("add to playlist: %s", url);
-
-	song = song_by_url(url);
-	if (song == NULL)
-		return PLAYLIST_RESULT_NO_SUCH_SONG;
-
-	return addSongToPlaylist(playlist, song, added_id);
-}
-
-enum playlist_result
-addSongToPlaylist(struct playlist *playlist,
+playlist_append_song(struct playlist *playlist,
 		  struct song *song, unsigned *added_id)
 {
 	const struct song *queued;
@@ -147,7 +119,7 @@ addSongToPlaylist(struct playlist *playlist,
 						 queue_length(&playlist->queue));
 	}
 
-	incrPlaylistVersion(playlist);
+	playlist_increment_version(playlist);
 
 	playlist_update_queued_song(playlist, queued);
 
@@ -157,8 +129,38 @@ addSongToPlaylist(struct playlist *playlist,
 	return PLAYLIST_RESULT_SUCCESS;
 }
 
+static struct song *
+song_by_uri(const char *uri)
+{
+	struct song *song;
+
+	song = db_get_song(uri);
+	if (song != NULL)
+		return song;
+
+	if (uri_has_scheme(uri))
+		return song_remote_new(uri);
+
+	return NULL;
+}
+
 enum playlist_result
-swapSongsInPlaylist(struct playlist *playlist, unsigned song1, unsigned song2)
+playlist_append_uri(struct playlist *playlist, const char *uri,
+		    unsigned *added_id)
+{
+	struct song *song;
+
+	g_debug("add to playlist: %s", uri);
+
+	song = song_by_uri(uri);
+	if (song == NULL)
+		return PLAYLIST_RESULT_NO_SUCH_SONG;
+
+	return playlist_append_song(playlist, song, added_id);
+}
+
+enum playlist_result
+playlist_swap_songs(struct playlist *playlist, unsigned song1, unsigned song2)
 {
 	const struct song *queued;
 
@@ -188,7 +190,7 @@ swapSongsInPlaylist(struct playlist *playlist, unsigned song1, unsigned song2)
 			playlist->current = song1;
 	}
 
-	incrPlaylistVersion(playlist);
+	playlist_increment_version(playlist);
 
 	playlist_update_queued_song(playlist, queued);
 
@@ -196,7 +198,7 @@ swapSongsInPlaylist(struct playlist *playlist, unsigned song1, unsigned song2)
 }
 
 enum playlist_result
-swapSongsInPlaylistById(struct playlist *playlist, unsigned id1, unsigned id2)
+playlist_swap_songs_id(struct playlist *playlist, unsigned id1, unsigned id2)
 {
 	int song1 = queue_id_to_position(&playlist->queue, id1);
 	int song2 = queue_id_to_position(&playlist->queue, id2);
@@ -204,28 +206,25 @@ swapSongsInPlaylistById(struct playlist *playlist, unsigned id1, unsigned id2)
 	if (song1 < 0 || song2 < 0)
 		return PLAYLIST_RESULT_NO_SUCH_SONG;
 
-	return swapSongsInPlaylist(playlist, song1, song2);
+	return playlist_swap_songs(playlist, song1, song2);
 }
 
-enum playlist_result
-deleteFromPlaylist(struct playlist *playlist, unsigned song)
+static void
+playlist_delete_internal(struct playlist *playlist, unsigned song,
+			 const struct song **queued_p)
 {
-	const struct song *queued;
 	unsigned songOrder;
 
-	if (song >= queue_length(&playlist->queue))
-		return PLAYLIST_RESULT_BAD_RANGE;
-
-	queued = playlist_get_queued_song(playlist);
+	assert(song < queue_length(&playlist->queue));
 
 	songOrder = queue_position_to_order(&playlist->queue, song);
 
 	if (playlist->playing && playlist->current == (int)songOrder) {
-		bool paused = getPlayerState() == PLAYER_STATE_PAUSE;
+		bool paused = pc_get_state() == PLAYER_STATE_PAUSE;
 
 		/* the current song is going to be deleted: stop the player */
 
-		playerWait();
+		pc_stop();
 		playlist->playing = false;
 
 		/* see which song is going to be played instead */
@@ -237,13 +236,13 @@ deleteFromPlaylist(struct playlist *playlist, unsigned song)
 
 		if (playlist->current >= 0 && !paused)
 			/* play the song after the deleted one */
-			playPlaylistOrderNumber(playlist, playlist->current);
+			playlist_play_order(playlist, playlist->current);
 		else
 			/* no songs left to play, stop playback
 			   completely */
-			stopPlaylist(playlist);
+			playlist_stop(playlist);
 
-		queued = NULL;
+		*queued_p = NULL;
 	} else if (playlist->current == (int)songOrder)
 		/* there's a "current song" but we're not playing
 		   currently - clear "current" */
@@ -256,41 +255,80 @@ deleteFromPlaylist(struct playlist *playlist, unsigned song)
 
 	queue_delete(&playlist->queue, song);
 
-	incrPlaylistVersion(playlist);
-
 	/* update the "current" and "queued" variables */
 
 	if (playlist->current > (int)songOrder) {
 		playlist->current--;
 	}
+}
 
+enum playlist_result
+playlist_delete(struct playlist *playlist, unsigned song)
+{
+	const struct song *queued;
+
+	if (song >= queue_length(&playlist->queue))
+		return PLAYLIST_RESULT_BAD_RANGE;
+
+	queued = playlist_get_queued_song(playlist);
+
+	playlist_delete_internal(playlist, song, &queued);
+
+	playlist_increment_version(playlist);
 	playlist_update_queued_song(playlist, queued);
 
 	return PLAYLIST_RESULT_SUCCESS;
 }
 
 enum playlist_result
-deleteFromPlaylistById(struct playlist *playlist, unsigned id)
+playlist_delete_range(struct playlist *playlist, unsigned start, unsigned end)
+{
+	const struct song *queued;
+
+	if (start >= queue_length(&playlist->queue))
+		return PLAYLIST_RESULT_BAD_RANGE;
+
+	if (end > queue_length(&playlist->queue))
+		end = queue_length(&playlist->queue);
+
+	if (start >= end)
+		return PLAYLIST_RESULT_SUCCESS;
+
+	queued = playlist_get_queued_song(playlist);
+
+	do {
+		playlist_delete_internal(playlist, --end, &queued);
+	} while (end != start);
+
+	playlist_increment_version(playlist);
+	playlist_update_queued_song(playlist, queued);
+
+	return PLAYLIST_RESULT_SUCCESS;
+}
+
+enum playlist_result
+playlist_delete_id(struct playlist *playlist, unsigned id)
 {
 	int song = queue_id_to_position(&playlist->queue, id);
 	if (song < 0)
 		return PLAYLIST_RESULT_NO_SUCH_SONG;
 
-	return deleteFromPlaylist(playlist, song);
+	return playlist_delete(playlist, song);
 }
 
 void
-deleteASongFromPlaylist(struct playlist *playlist, const struct song *song)
+playlist_delete_song(struct playlist *playlist, const struct song *song)
 {
 	for (int i = queue_length(&playlist->queue) - 1; i >= 0; --i)
 		if (song == queue_get(&playlist->queue, i))
-			deleteFromPlaylist(playlist, i);
+			playlist_delete(playlist, i);
 
 	pc_song_deleted(song);
 }
 
 enum playlist_result
-moveSongRangeInPlaylist(struct playlist *playlist, unsigned start, unsigned end, int to)
+playlist_move_range(struct playlist *playlist,
+		    unsigned start, unsigned end, int to)
 {
 	const struct song *queued;
 	int currentSong;
@@ -342,7 +380,7 @@ moveSongRangeInPlaylist(struct playlist *playlist, unsigned start, unsigned end,
 		}
 	}
 
-	incrPlaylistVersion(playlist);
+	playlist_increment_version(playlist);
 
 	playlist_update_queued_song(playlist, queued);
 
@@ -350,16 +388,17 @@ moveSongRangeInPlaylist(struct playlist *playlist, unsigned start, unsigned end,
 }
 
 enum playlist_result
-moveSongInPlaylistById(struct playlist *playlist, unsigned id1, int to)
+playlist_move_id(struct playlist *playlist, unsigned id1, int to)
 {
 	int song = queue_id_to_position(&playlist->queue, id1);
 	if (song < 0)
 		return PLAYLIST_RESULT_NO_SUCH_SONG;
 
-	return moveSongRangeInPlaylist(playlist, song, song+1, to);
+	return playlist_move_range(playlist, song, song+1, to);
 }
 
-void shufflePlaylist(struct playlist *playlist, unsigned start, unsigned end)
+void
+playlist_shuffle(struct playlist *playlist, unsigned start, unsigned end)
 {
 	const struct song *queued;
 
@@ -399,7 +438,7 @@ void shufflePlaylist(struct playlist *playlist, unsigned start, unsigned end)
 
 	queue_shuffle_range(&playlist->queue, start, end);
 
-	incrPlaylistVersion(playlist);
+	playlist_increment_version(playlist);
 
 	playlist_update_queued_song(playlist, queued);
 }

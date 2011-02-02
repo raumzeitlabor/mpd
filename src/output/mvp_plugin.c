@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,9 @@
  * http://mvpmc.sourceforge.net/
  */
 
-#include "../output_api.h"
+#include "config.h"
+#include "output_api.h"
+#include "fd_util.h"
 
 #include <glib.h>
 
@@ -115,7 +117,7 @@ mvp_output_test_default_device(void)
 {
 	int fd;
 
-	fd = open("/dev/adec_pcm", O_WRONLY);
+	fd = open_cloexec("/dev/adec_pcm", O_WRONLY, 0);
 
 	if (fd >= 0) {
 		close(fd);
@@ -170,19 +172,19 @@ mvp_set_pcm_params(struct mvp_data *md, struct audio_format *audio_format,
 	}
 
 	/* 0,1=24bit(24) , 2,3=16bit */
-	switch (audio_format->bits) {
-	case 16:
+	switch (audio_format->format) {
+	case SAMPLE_FORMAT_S16:
 		mix[1] = 2;
 		break;
 
-	case 24:
+	case SAMPLE_FORMAT_S24_P32:
 		mix[1] = 0;
 		break;
 
 	default:
-		g_debug("unsupported sample format %u - falling back to stereo",
-			audio_format->bits);
-		audio_format->bits = 16;
+		g_debug("unsupported sample format %s - falling back to 16 bit",
+			sample_format_to_string(audio_format->format));
+		audio_format->format = SAMPLE_FORMAT_S16;
 		mix[1] = 2;
 		break;
 	}
@@ -230,7 +232,8 @@ mvp_output_open(void *data, struct audio_format *audio_format, GError **error)
 	int mix[5] = { 0, 2, 7, 1, 0 };
 	bool success;
 
-	if ((md->fd = open("/dev/adec_pcm", O_RDWR | O_NONBLOCK)) < 0) {
+	md->fd = open_cloexec("/dev/adec_pcm", O_RDWR | O_NONBLOCK, 0);
+	if (md->fd < 0) {
 		g_set_error(error, mvp_output_quark(), errno,
 			    "Error opening /dev/adec_pcm: %s",
 			    strerror(errno));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,8 @@
 #ifndef MPD_UTILS_H
 #define MPD_UTILS_H
 
+#include <stdbool.h>
+
 #ifndef assert_static
 /* Compile time assertion developed by Ralf Holly */
 /* http://pera-software.com/articles/compile-time-assertions.pdf */
@@ -31,8 +33,15 @@
 
 char *parsePath(char *path);
 
-int set_nonblocking(int fd);
-
-int stringFoundInStringArray(const char *const*array, const char *suffix);
+/**
+ * Checks whether a string array contains the specified string.
+ *
+ * @param haystack a NULL terminated list of strings
+ * @param needle the string to search for; the comparison is
+ * case-insensitive for ASCII characters
+ * @return true if found
+ */
+bool
+string_array_contains(const char *const* haystack, const char *needle);
 
 #endif

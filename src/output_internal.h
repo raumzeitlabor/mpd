@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,16 +21,33 @@
 #define MPD_OUTPUT_INTERNAL_H
 
 #include "audio_format.h"
-#include "pcm_convert.h"
-#include "notify.h"
+#include "pcm_buffer.h"
+
+#include <glib.h>
 
 #include <time.h>
 
 enum audio_output_command {
 	AO_COMMAND_NONE = 0,
+	AO_COMMAND_ENABLE,
+	AO_COMMAND_DISABLE,
 	AO_COMMAND_OPEN,
+
+	/**
+	 * This command is invoked when the input audio format
+	 * changes.
+	 */
+	AO_COMMAND_REOPEN,
+
 	AO_COMMAND_CLOSE,
 	AO_COMMAND_PAUSE,
+
+	/**
+	 * Drains the internal (hardware) buffers of the device.  This
+	 * operation may take a while to complete.
+	 */
+	AO_COMMAND_DRAIN,
+
 	AO_COMMAND_CANCEL,
 	AO_COMMAND_KILL
 };
@@ -60,15 +77,21 @@ struct audio_output {
 	struct mixer *mixer;
 
 	/**
-	 * This flag is true, when the audio_format of this device is
-	 * configured in mpd.conf.
+	 * Shall this output always play something (i.e. silence),
+	 * even when playback is stopped?
 	 */
-	bool config_audio_format;
+	bool always_on;
 
 	/**
 	 * Has the user enabled this device?
 	 */
 	bool enabled;
+
+	/**
+	 * Is this device actually enabled, i.e. the "enable" method
+	 * has succeeded?
+	 */
+	bool really_enabled;
 
 	/**
 	 * Is the device (already) open and functional?
@@ -94,6 +117,11 @@ struct audio_output {
 	GTimer *fail_timer;
 
 	/**
+	 * The configured audio format.
+	 */
+	struct audio_format config_audio_format;
+
+	/**
 	 * The audio_format in which audio data is received from the
 	 * player thread (which in turn receives it from the decoder).
 	 */
@@ -107,18 +135,55 @@ struct audio_output {
 	 */
 	struct audio_format out_audio_format;
 
-	struct pcm_convert_state convert_state;
+	/**
+	 * The buffer used to allocate the cross-fading result.
+	 */
+	struct pcm_buffer cross_fade_buffer;
+
+	/**
+	 * The filter object of this audio output.  This is an
+	 * instance of chain_filter_plugin.
+	 */
+	struct filter *filter;
+
+	/**
+	 * The replay_gain_filter_plugin instance of this audio
+	 * output.
+	 */
+	struct filter *replay_gain_filter;
+
+	/**
+	 * The serial number of the last replay gain info.  0 means no
+	 * replay gain info was available.
+	 */
+	unsigned replay_gain_serial;
+
+	/**
+	 * The replay_gain_filter_plugin instance of this audio
+	 * output, to be applied to the second chunk during
+	 * cross-fading.
+	 */
+	struct filter *other_replay_gain_filter;
+
+	/**
+	 * The serial number of the last replay gain info by the
+	 * "other" chunk during cross-fading.
+	 */
+	unsigned other_replay_gain_serial;
+
+	/**
+	 * The convert_filter_plugin instance of this audio output.
+	 * It is the last item in the filter chain, and is responsible
+	 * for converting the input data into the appropriate format
+	 * for this audio output.
+	 */
+	struct filter *convert_filter;
 
 	/**
 	 * The thread handle, or NULL if the output thread isn't
 	 * running.
 	 */
 	GThread *thread;
-
-	/**
-	 * Notify object for the thread.
-	 */
-	struct notify notify;
 
 	/**
 	 * The next command to be performed by the output thread.
@@ -131,9 +196,16 @@ struct audio_output {
 	const struct music_pipe *pipe;
 
 	/**
-	 * This mutex protects #open, #chunk and #chunk_finished.
+	 * This mutex protects #open, #fail_timer, #chunk and
+	 * #chunk_finished.
 	 */
 	GMutex *mutex;
+
+	/**
+	 * This condition object wakes up the output thread after
+	 * #command has been set.
+	 */
+	GCond *cond;
 
 	/**
 	 * The #music_chunk which is currently being played.  All

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,9 @@
 #ifndef MPD_DECODER_THREAD_H
 #define MPD_DECODER_THREAD_H
 
-void decoder_thread_start(void);
+struct decoder_control;
+
+void
+decoder_thread_start(struct decoder_control *dc);
 
 #endif

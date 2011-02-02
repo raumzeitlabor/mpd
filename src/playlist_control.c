@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,7 @@
  *
  */
 
+#include "config.h"
 #include "playlist_internal.h"
 #include "player_control.h"
 #include "idle.h"
@@ -31,15 +32,7 @@
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "playlist"
 
-enum {
-	/**
-	 * When the "prev" command is received, rewind the current
-	 * track if this number of seconds has already elapsed.
-	 */
-	PLAYLIST_PREV_UNLESS_ELAPSED = 10,
-};
-
-void stopPlaylist(struct playlist *playlist)
+void playlist_stop(struct playlist *playlist)
 {
 	if (!playlist->playing)
 		return;
@@ -47,7 +40,7 @@ void stopPlaylist(struct playlist *playlist)
 	assert(playlist->current >= 0);
 
 	g_debug("stop");
-	playerWait();
+	pc_stop();
 	playlist->queued = -1;
 	playlist->playing = false;
 
@@ -69,11 +62,11 @@ void stopPlaylist(struct playlist *playlist)
 	}
 }
 
-enum playlist_result playPlaylist(struct playlist *playlist, int song)
+enum playlist_result playlist_play(struct playlist *playlist, int song)
 {
 	unsigned i = song;
 
-	clearPlayerError();
+	pc_clear_error();
 
 	if (song == -1) {
 		/* play any song ("current" song, or the first song */
@@ -84,7 +77,7 @@ enum playlist_result playPlaylist(struct playlist *playlist, int song)
 		if (playlist->playing) {
 			/* already playing: unpause playback, just in
 			   case it was paused, and return */
-			playerSetPause(0);
+			pc_set_pause(false);
 			return PLAYLIST_RESULT_SUCCESS;
 		}
 
@@ -116,28 +109,28 @@ enum playlist_result playPlaylist(struct playlist *playlist, int song)
 	playlist->stop_on_error = false;
 	playlist->error_count = 0;
 
-	playPlaylistOrderNumber(playlist, i);
+	playlist_play_order(playlist, i);
 	return PLAYLIST_RESULT_SUCCESS;
 }
 
 enum playlist_result
-playPlaylistById(struct playlist *playlist, int id)
+playlist_play_id(struct playlist *playlist, int id)
 {
 	int song;
 
 	if (id == -1) {
-		return playPlaylist(playlist, id);
+		return playlist_play(playlist, id);
 	}
 
 	song = queue_id_to_position(&playlist->queue, id);
 	if (song < 0)
 		return PLAYLIST_RESULT_NO_SUCH_SONG;
 
-	return playPlaylist(playlist, song);
+	return playlist_play(playlist, song);
 }
 
 void
-nextSongInPlaylist(struct playlist *playlist)
+playlist_next(struct playlist *playlist)
 {
 	int next_order;
 	int current;
@@ -155,12 +148,8 @@ nextSongInPlaylist(struct playlist *playlist)
 
 	next_order = queue_next_order(&playlist->queue, playlist->current);
 	if (next_order < 0) {
-		/* cancel single */
-		playlist->queue.single = false;
-		idle_add(IDLE_OPTIONS);
-
 		/* no song after this one: stop playback */
-		stopPlaylist(playlist);
+		playlist_stop(playlist);
 
 		/* reset "current song" */
 		playlist->current = -1;
@@ -177,50 +166,42 @@ nextSongInPlaylist(struct playlist *playlist)
 			queue_shuffle_order(&playlist->queue);
 
 			/* note that playlist->current and playlist->queued are
-			   now invalid, but playPlaylistOrderNumber() will
+			   now invalid, but playlist_play_order() will
 			   discard them anyway */
 		}
 
-		playPlaylistOrderNumber(playlist, next_order);
+		playlist_play_order(playlist, next_order);
 	}
 
 	/* Consume mode removes each played songs. */
 	if(playlist->queue.consume)
-		deleteFromPlaylist(playlist, queue_order_to_position(&playlist->queue, current));
+		playlist_delete(playlist, queue_order_to_position(&playlist->queue, current));
 }
 
-void previousSongInPlaylist(struct playlist *playlist)
+void playlist_previous(struct playlist *playlist)
 {
 	if (!playlist->playing)
 		return;
 
-	if (g_timer_elapsed(playlist->prev_elapsed, NULL) >= 1.0 &&
-	    getPlayerElapsedTime() > PLAYLIST_PREV_UNLESS_ELAPSED) {
-		/* re-start playing the current song (just like the
-		   "prev" button on CD players) */
+	assert(queue_length(&playlist->queue) > 0);
 
-		playPlaylistOrderNumber(playlist, playlist->current);
+	if (playlist->current > 0) {
+		/* play the preceding song */
+		playlist_play_order(playlist,
+				    playlist->current - 1);
+	} else if (playlist->queue.repeat) {
+		/* play the last song in "repeat" mode */
+		playlist_play_order(playlist,
+				    queue_length(&playlist->queue) - 1);
 	} else {
-		if (playlist->current > 0) {
-			/* play the preceding song */
-			playPlaylistOrderNumber(playlist,
-						playlist->current - 1);
-		} else if (playlist->queue.repeat) {
-			/* play the last song in "repeat" mode */
-			playPlaylistOrderNumber(playlist,
-						queue_length(&playlist->queue) - 1);
-		} else {
-			/* re-start playing the current song if it's
-			   the first one */
-			playPlaylistOrderNumber(playlist, playlist->current);
-		}
+		/* re-start playing the current song if it's
+		   the first one */
+		playlist_play_order(playlist, playlist->current);
 	}
-
-	g_timer_start(playlist->prev_elapsed);
 }
 
 enum playlist_result
-seekSongInPlaylist(struct playlist *playlist, unsigned song, float seek_time)
+playlist_seek_song(struct playlist *playlist, unsigned song, float seek_time)
 {
 	const struct song *queued;
 	unsigned i;
@@ -236,7 +217,7 @@ seekSongInPlaylist(struct playlist *playlist, unsigned song, float seek_time)
 	else
 		i = song;
 
-	clearPlayerError();
+	pc_clear_error();
 	playlist->stop_on_error = true;
 	playlist->error_count = 0;
 
@@ -244,7 +225,7 @@ seekSongInPlaylist(struct playlist *playlist, unsigned song, float seek_time)
 		/* seeking is not within the current song - first
 		   start playing the new song */
 
-		playPlaylistOrderNumber(playlist, i);
+		playlist_play_order(playlist, i);
 		queued = NULL;
 	}
 
@@ -262,11 +243,11 @@ seekSongInPlaylist(struct playlist *playlist, unsigned song, float seek_time)
 }
 
 enum playlist_result
-seekSongInPlaylistById(struct playlist *playlist, unsigned id, float seek_time)
+playlist_seek_song_id(struct playlist *playlist, unsigned id, float seek_time)
 {
 	int song = queue_id_to_position(&playlist->queue, id);
 	if (song < 0)
 		return PLAYLIST_RESULT_NO_SUCH_SONG;
 
-	return seekSongInPlaylist(playlist, song, seek_time);
+	return playlist_seek_song(playlist, song, seek_time);
 }

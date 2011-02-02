@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -35,10 +35,12 @@ struct input_plugin {
 	/**
 	 * Global initialization.  This method is called when MPD starts.
 	 *
+	 * @param error_r location to store the error occuring, or
+	 * NULL to ignore errors
 	 * @return true on success, false if the plugin should be
 	 * disabled
 	 */
-	bool (*init)(const struct config_param *param);
+	bool (*init)(const struct config_param *param, GError **error_r);
 
 	/**
 	 * Global deinitialization.  Called once before MPD shuts
@@ -46,14 +48,16 @@ struct input_plugin {
 	 */
 	void (*finish)(void);
 
-	bool (*open)(struct input_stream *is, const char *url);
+	struct input_stream *(*open)(const char *uri, GError **error_r);
 	void (*close)(struct input_stream *is);
 
 	struct tag *(*tag)(struct input_stream *is);
-	int (*buffer)(struct input_stream *is);
-	size_t (*read)(struct input_stream *is, void *ptr, size_t size);
+	int (*buffer)(struct input_stream *is, GError **error_r);
+	size_t (*read)(struct input_stream *is, void *ptr, size_t size,
+		       GError **error_r);
 	bool (*eof)(struct input_stream *is);
-	bool (*seek)(struct input_stream *is, off_t offset, int whence);
+	bool (*seek)(struct input_stream *is, goffset offset, int whence,
+		     GError **error_r);
 };
 
 #endif

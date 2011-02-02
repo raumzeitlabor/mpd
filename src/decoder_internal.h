@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,11 +22,19 @@
 
 #include "decoder_command.h"
 #include "pcm_convert.h"
+#include "replay_gain_info.h"
 
 struct input_stream;
 
 struct decoder {
+	struct decoder_control *dc;
+
 	struct pcm_convert_state conv_state;
+
+	/**
+	 * The time stamp of the next data chunk, in seconds.
+	 */
+	double timestamp;
 
 	bool seeking;
 
@@ -45,6 +53,14 @@ struct decoder {
 
 	/** the chunk currently being written to */
 	struct music_chunk *chunk;
+
+	struct replay_gain_info replay_gain_info;
+
+	/**
+	 * A positive serial number for checking if replay gain info
+	 * has changed since the last check.
+	 */
+	unsigned replay_gain_serial;
 };
 
 /**

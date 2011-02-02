@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "input/archive_input_plugin.h"
 #include "archive_api.h"
 #include "archive_list.h"
@@ -32,23 +33,23 @@
  * parent_stream so tar plugin fetches file data from gzip
  * plugin and gzip fetches file from disk
  */
-static bool
-input_archive_open(struct input_stream *is, const char *pathname)
+static struct input_stream *
+input_archive_open(const char *pathname, GError **error_r)
 {
 	const struct archive_plugin *arplug;
 	struct archive_file *file;
 	char *archive, *filename, *suffix, *pname;
-	bool opened;
+	struct input_stream *is;
 
-	if (pathname[0] != '/')
-		return false;
+	if (!g_path_is_absolute(pathname))
+		return NULL;
 
 	pname = g_strdup(pathname);
 	// archive_lookup will modify pname when true is returned
 	if (!archive_lookup(pname, &archive, &filename, &suffix)) {
 		g_debug("not an archive, lookup %s failed\n", pname);
 		g_free(pname);
-		return false;
+		return NULL;
 	}
 
 	//check which archive plugin to use (by ext)
@@ -56,22 +57,19 @@ input_archive_open(struct input_stream *is, const char *pathname)
 	if (!arplug) {
 		g_warning("can't handle archive %s\n",archive);
 		g_free(pname);
-		return false;
+		return NULL;
 	}
 
-	file = arplug->open(archive);
+	file = archive_file_open(arplug, archive, error_r);
+	if (file == NULL)
+		return NULL;
 
 	//setup fileops
-	opened = arplug->open_stream(file, is, filename);
-
-	if (!opened) {
-		g_warning("open inarchive file %s failed\n\n",filename);
-		arplug->close(file);
-	} else {
-		is->ready = true;
-	}
+	is = archive_file_open_stream(file, filename, error_r);
+	archive_file_close(file);
 	g_free(pname);
-	return opened;
+
+	return is;
 }
 
 const struct input_plugin input_plugin_archive = {

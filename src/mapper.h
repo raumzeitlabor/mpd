@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,7 @@
 struct directory;
 struct song;
 
-void mapper_init(void);
+void mapper_init(const char *_music_dir, const char *_playlist_dir);
 
 void mapper_finish(void);
 
@@ -40,6 +40,14 @@ void mapper_finish(void);
  */
 bool
 mapper_has_music_directory(void);
+
+/**
+ * If the specified absolute path points inside the music directory,
+ * this function converts it to a relative path.  If not, it returns
+ * the unmodified string pointer.
+ */
+const char *
+map_to_relative_path(const char *path_utf8);
 
 /**
  * Determines the absolute file system path of a relative URI.  This

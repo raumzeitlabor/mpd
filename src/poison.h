@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,8 +20,9 @@
 #ifndef MPD_POISON_H
 #define MPD_POISON_H
 
+#include "check.h"
+
 #ifndef NDEBUG
-#include "config.h"
 
 #ifdef HAVE_VALGRIND_MEMCHECK_H
 #include <valgrind/memcheck.h>
@@ -46,7 +47,7 @@ poison_noaccess(void *p, size_t length)
 	memset(p, 0x01, length);
 
 #ifdef HAVE_VALGRIND_MEMCHECK_H
-	VALGRIND_MAKE_MEM_NOACCESS(p, length);
+	(void)VALGRIND_MAKE_MEM_NOACCESS(p, length);
 #endif
 #endif
 }
@@ -67,7 +68,7 @@ poison_undefined(void *p, size_t length)
 	memset(p, 0x02, length);
 
 #ifdef HAVE_VALGRIND_MEMCHECK_H
-	VALGRIND_MAKE_MEM_UNDEFINED(p, length);
+	(void)VALGRIND_MAKE_MEM_UNDEFINED(p, length);
 #endif
 #endif
 }

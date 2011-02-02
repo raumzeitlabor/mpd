@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,11 +20,17 @@
 #ifndef MPD_INPUT_STREAM_H
 #define MPD_INPUT_STREAM_H
 
+#include "check.h"
+
+#include <glib.h>
+
 #include <stddef.h>
 #include <stdbool.h>
 #include <sys/types.h>
 
-struct input_stream;
+#if !GLIB_CHECK_VERSION(2,14,0)
+typedef gint64 goffset;
+#endif
 
 struct input_stream {
 	/**
@@ -33,9 +39,10 @@ struct input_stream {
 	const struct input_plugin *plugin;
 
 	/**
-	 * an opaque pointer managed by the plugin
+	 * The absolute URI which was used to open this stream.  May
+	 * be NULL if this is unknown.
 	 */
-	void *data;
+	char *uri;
 
 	/**
 	 * indicates whether the stream is ready for reading and
@@ -49,19 +56,14 @@ struct input_stream {
 	bool seekable;
 
 	/**
-	 * an optional errno error code, set to non-zero after an error occured
-	 */
-	int error;
-
-	/**
 	 * the size of the resource, or -1 if unknown
 	 */
-	off_t size;
+	goffset size;
 
 	/**
 	 * the current offset within the stream
 	 */
-	off_t offset;
+	goffset offset;
 
 	/**
 	 * the MIME content type of the resource, or NULL if unknown
@@ -69,30 +71,37 @@ struct input_stream {
 	char *mime;
 };
 
-/**
- * Initializes this library and all input_stream implementations.
- */
-void input_stream_global_init(void);
+static inline void
+input_stream_init(struct input_stream *is, const struct input_plugin *plugin,
+		  const char *uri)
+{
+	is->plugin = plugin;
+	is->uri = g_strdup(uri);
+	is->ready = false;
+	is->seekable = false;
+	is->size = -1;
+	is->offset = 0;
+	is->mime = NULL;
+}
 
-/**
- * Deinitializes this library and all input_stream implementations.
- */
-void input_stream_global_finish(void);
+static inline void
+input_stream_deinit(struct input_stream *is)
+{
+	g_free(is->uri);
+	g_free(is->mime);
+}
 
 /**
  * Opens a new input stream.  You may not access it until the "ready"
  * flag is set.
  *
- * @param is the input_stream object allocated by the caller
- * @return true on success
+ * @return an #input_stream object on success, NULL on error
  */
-bool
-input_stream_open(struct input_stream *is, const char *url);
+struct input_stream *
+input_stream_open(const char *uri, GError **error_r);
 
 /**
- * Closes the input stream and free resources.  This does not free the
- * input_stream pointer itself, because it is assumed to be allocated
- * by the caller.
+ * Close the input stream and free resources.
  */
 void
 input_stream_close(struct input_stream *is);
@@ -106,7 +115,8 @@ input_stream_close(struct input_stream *is);
  * @param whence the base of the seek, one of SEEK_SET, SEEK_CUR, SEEK_END
  */
 bool
-input_stream_seek(struct input_stream *is, off_t offset, int whence);
+input_stream_seek(struct input_stream *is, goffset offset, int whence,
+		  GError **error_r);
 
 /**
  * Returns true if the stream has reached end-of-file.
@@ -130,7 +140,7 @@ input_stream_tag(struct input_stream *is);
  * The semantics of this function are not well-defined, and it will
  * eventually be removed.
  */
-int input_stream_buffer(struct input_stream *is);
+int input_stream_buffer(struct input_stream *is, GError **error_r);
 
 /**
  * Reads data from the stream into the caller-supplied buffer.
@@ -142,6 +152,7 @@ int input_stream_buffer(struct input_stream *is);
  * @return the number of bytes read
  */
 size_t
-input_stream_read(struct input_stream *is, void *ptr, size_t size);
+input_stream_read(struct input_stream *is, void *ptr, size_t size,
+		  GError **error_r);
 
 #endif

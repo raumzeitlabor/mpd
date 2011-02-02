@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,8 @@
 #ifndef MPD_ENCODER_LIST_H
 #define MPD_ENCODER_LIST_H
 
+#include <stdio.h>
+
 struct encoder_plugin;
 
 /**
@@ -31,5 +33,8 @@ struct encoder_plugin;
  */
 const struct encoder_plugin *
 encoder_plugin_get(const char *name);
+
+void
+encoder_plugin_print_all_types(FILE * fp);
 
 #endif

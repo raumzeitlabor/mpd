@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -100,5 +100,16 @@ playlist_print_changes_position(struct client *client,
  */
 bool
 spl_print(struct client *client, const char *name_utf8, bool detail);
+
+/**
+ * Send the playlist file to the client.
+ *
+ * @param client the client which requested the playlist
+ * @param uri the URI of the playlist file in UTF-8 encoding
+ * @param detail true if all details should be printed
+ * @return true on success, false if the playlist does not exist
+ */
+bool
+playlist_file_print(struct client *client, const char *uri, bool detail);
 
 #endif

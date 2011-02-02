@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,11 @@
  * Common data structures and functions used by FLAC and OggFLAC
  */
 
+#include "config.h"
 #include "_flac_common.h"
+#include "flac_metadata.h"
+#include "flac_pcm.h"
+#include "audio_check.h"
 
 #include <glib.h>
 
@@ -31,186 +35,104 @@ void
 flac_data_init(struct flac_data *data, struct decoder * decoder,
 	       struct input_stream *input_stream)
 {
-	data->time = 0;
+	pcm_buffer_init(&data->buffer);
+
+	data->unsupported = false;
+	data->initialized = false;
+	data->total_frames = 0;
+	data->first_frame = 0;
+	data->next_frame = 0;
+
 	data->position = 0;
-	data->bit_rate = 0;
 	data->decoder = decoder;
 	data->input_stream = input_stream;
-	data->replay_gain_info = NULL;
 	data->tag = NULL;
 }
 
-static void
-flac_find_float_comment(const FLAC__StreamMetadata *block,
-			const char *cmnt, float *fl, bool *found_r)
-{
-	int offset;
-	size_t pos;
-	int len;
-	unsigned char tmp, *p;
-
-	offset = FLAC__metadata_object_vorbiscomment_find_entry_from(block, 0,
-								     cmnt);
-	if (offset < 0)
-		return;
-
-	pos = strlen(cmnt) + 1; /* 1 is for '=' */
-	len = block->data.vorbis_comment.comments[offset].length - pos;
-	if (len <= 0)
-		return;
-
-	p = &block->data.vorbis_comment.comments[offset].entry[pos];
-	tmp = p[len];
-	p[len] = '\0';
-	*fl = (float)atof((char *)p);
-	p[len] = tmp;
-
-	*found_r = true;
-}
-
-static void
-flac_parse_replay_gain(const FLAC__StreamMetadata *block,
-		       struct flac_data *data)
-{
-	bool found = false;
-
-	if (data->replay_gain_info)
-		replay_gain_info_free(data->replay_gain_info);
-
-	data->replay_gain_info = replay_gain_info_new();
-
-	flac_find_float_comment(block, "replaygain_album_gain",
-				&data->replay_gain_info->tuples[REPLAY_GAIN_ALBUM].gain,
-				&found);
-	flac_find_float_comment(block, "replaygain_album_peak",
-				&data->replay_gain_info->tuples[REPLAY_GAIN_ALBUM].peak,
-				&found);
-	flac_find_float_comment(block, "replaygain_track_gain",
-				&data->replay_gain_info->tuples[REPLAY_GAIN_TRACK].gain,
-				&found);
-	flac_find_float_comment(block, "replaygain_track_peak",
-				&data->replay_gain_info->tuples[REPLAY_GAIN_TRACK].peak,
-				&found);
-
-	if (!found) {
-		replay_gain_info_free(data->replay_gain_info);
-		data->replay_gain_info = NULL;
-	}
-}
-
-/**
- * Checks if the specified name matches the entry's name, and if yes,
- * returns the comment value (not null-temrinated).
- */
-static const char *
-flac_comment_value(const FLAC__StreamMetadata_VorbisComment_Entry *entry,
-		   const char *name, const char *char_tnum, size_t *length_r)
-{
-	size_t name_length = strlen(name);
-	size_t char_tnum_length = 0;
-	const char *comment = (const char*)entry->entry;
-
-	if (entry->length <= name_length ||
-	    g_ascii_strncasecmp(comment, name, name_length) != 0)
-		return NULL;
-
-	if (char_tnum != NULL) {
-		char_tnum_length = strlen(char_tnum);
-		if (entry->length > name_length + char_tnum_length + 2 &&
-		    comment[name_length] == '[' &&
-		    g_ascii_strncasecmp(comment + name_length + 1,
-					char_tnum, char_tnum_length) == 0 &&
-		    comment[name_length + char_tnum_length + 1] == ']')
-			name_length = name_length + char_tnum_length + 2;
-		else if (entry->length > name_length + char_tnum_length &&
-			 g_ascii_strncasecmp(comment + name_length,
-					     char_tnum, char_tnum_length) == 0)
-			name_length = name_length + char_tnum_length;
-	}
-
-	if (comment[name_length] == '=') {
-		*length_r = entry->length - name_length - 1;
-		return comment + name_length + 1;
-	}
-
-	return NULL;
-}
-
-/**
- * Check if the comment's name equals the passed name, and if so, copy
- * the comment value into the tag.
- */
-static bool
-flac_copy_comment(struct tag *tag,
-		  const FLAC__StreamMetadata_VorbisComment_Entry *entry,
-		  const char *name, enum tag_type tag_type,
-		  const char *char_tnum)
-{
-	const char *value;
-	size_t value_length;
-
-	value = flac_comment_value(entry, name, char_tnum, &value_length);
-	if (value != NULL) {
-		tag_add_item_n(tag, tag_type, value, value_length);
-		return true;
-	}
-
-	return false;
-}
-
-/* tracknumber is used in VCs, MPD uses "track" ..., all the other
- * tag names match */
-static const char *VORBIS_COMMENT_TRACK_KEY = "tracknumber";
-static const char *VORBIS_COMMENT_DISC_KEY = "discnumber";
-
-static void
-flac_parse_comment(struct tag *tag, const char *char_tnum,
-		   const FLAC__StreamMetadata_VorbisComment_Entry *entry)
-{
-	assert(tag != NULL);
-
-	if (flac_copy_comment(tag, entry, VORBIS_COMMENT_TRACK_KEY,
-			      TAG_ITEM_TRACK, char_tnum) ||
-	    flac_copy_comment(tag, entry, VORBIS_COMMENT_DISC_KEY,
-			      TAG_ITEM_DISC, char_tnum) ||
-	    flac_copy_comment(tag, entry, "album artist",
-			      TAG_ITEM_ALBUM_ARTIST, char_tnum))
-		return;
-
-	for (unsigned i = 0; i < TAG_NUM_OF_ITEM_TYPES; ++i)
-		if (flac_copy_comment(tag, entry,
-				      tag_item_names[i], i, char_tnum))
-			return;
-}
-
 void
-flac_vorbis_comments_to_tag(struct tag *tag, const char *char_tnum,
-			    const FLAC__StreamMetadata *block)
+flac_data_deinit(struct flac_data *data)
 {
-	FLAC__StreamMetadata_VorbisComment_Entry *comments =
-		block->data.vorbis_comment.comments;
+	pcm_buffer_deinit(&data->buffer);
 
-	for (unsigned i = block->data.vorbis_comment.num_comments; i > 0; --i)
-		flac_parse_comment(tag, char_tnum, comments++);
+	if (data->tag != NULL)
+		tag_free(data->tag);
+}
+
+static enum sample_format
+flac_sample_format(unsigned bits_per_sample)
+{
+	switch (bits_per_sample) {
+	case 8:
+		return SAMPLE_FORMAT_S8;
+
+	case 16:
+		return SAMPLE_FORMAT_S16;
+
+	case 24:
+		return SAMPLE_FORMAT_S24_P32;
+
+	case 32:
+		return SAMPLE_FORMAT_S32;
+
+	default:
+		return SAMPLE_FORMAT_UNDEFINED;
+	}
+}
+
+static void
+flac_got_stream_info(struct flac_data *data,
+		     const FLAC__StreamMetadata_StreamInfo *stream_info)
+{
+	if (data->initialized || data->unsupported)
+		return;
+
+	GError *error = NULL;
+	if (!audio_format_init_checked(&data->audio_format,
+				       stream_info->sample_rate,
+				       flac_sample_format(stream_info->bits_per_sample),
+				       stream_info->channels, &error)) {
+		g_warning("%s", error->message);
+		g_error_free(error);
+		data->unsupported = true;
+		return;
+	}
+
+	data->frame_size = audio_format_frame_size(&data->audio_format);
+
+	if (data->total_frames == 0)
+		data->total_frames = stream_info->total_samples;
+
+	data->initialized = true;
 }
 
 void flac_metadata_common_cb(const FLAC__StreamMetadata * block,
 			     struct flac_data *data)
 {
-	const FLAC__StreamMetadata_StreamInfo *si = &(block->data.stream_info);
+	if (data->unsupported)
+		return;
+
+	struct replay_gain_info rgi;
+	char *mixramp_start;
+	char *mixramp_end;
+	float replay_gain_db = 0;
 
 	switch (block->type) {
 	case FLAC__METADATA_TYPE_STREAMINFO:
-		data->audio_format.bits = (int8_t)si->bits_per_sample;
-		data->audio_format.sample_rate = si->sample_rate;
-		data->audio_format.channels = (int8_t)si->channels;
-		data->total_time = ((float)si->total_samples) / (si->sample_rate);
+		flac_got_stream_info(data, &block->data.stream_info);
 		break;
+
 	case FLAC__METADATA_TYPE_VORBIS_COMMENT:
-		flac_parse_replay_gain(block, data);
+		if (flac_parse_replay_gain(&rgi, block))
+			replay_gain_db = decoder_replay_gain(data->decoder, &rgi);
+		if (flac_parse_mixramp(&mixramp_start, &mixramp_end, block)) {
+			g_debug("setting mixramp_tags");
+			decoder_mixramp(data->decoder, replay_gain_db,
+					mixramp_start, mixramp_end);
+		}
 
 		if (data->tag != NULL)
-			flac_vorbis_comments_to_tag(data->tag, NULL, block);
+			flac_vorbis_comments_to_tag(data->tag, NULL,
+						    &block->data.vorbis_comment);
 
 	default:
 		break;
@@ -239,187 +161,82 @@ void flac_error_common_cb(const char *plugin,
 	}
 }
 
-static void flac_convert_stereo16(int16_t *dest,
-				  const FLAC__int32 * const buf[],
-				  unsigned int position, unsigned int end)
-{
-	for (; position < end; ++position) {
-		*dest++ = buf[0][position];
-		*dest++ = buf[1][position];
-	}
-}
-
-static void
-flac_convert_16(int16_t *dest,
-		unsigned int num_channels,
-		const FLAC__int32 * const buf[],
-		unsigned int position, unsigned int end)
-{
-	unsigned int c_chan;
-
-	for (; position < end; ++position)
-		for (c_chan = 0; c_chan < num_channels; c_chan++)
-			*dest++ = buf[c_chan][position];
-}
-
 /**
- * Note: this function also handles 24 bit files!
+ * This function attempts to call decoder_initialized() in case there
+ * was no STREAMINFO block.  This is allowed for nonseekable streams,
+ * where the server sends us only a part of the file, without
+ * providing the STREAMINFO block from the beginning of the file
+ * (e.g. when seeking with SqueezeBox Server).
  */
-static void
-flac_convert_32(int32_t *dest,
-		unsigned int num_channels,
-		const FLAC__int32 * const buf[],
-		unsigned int position, unsigned int end)
+static bool
+flac_got_first_frame(struct flac_data *data, const FLAC__FrameHeader *header)
 {
-	unsigned int c_chan;
+	if (data->unsupported)
+		return false;
 
-	for (; position < end; ++position)
-		for (c_chan = 0; c_chan < num_channels; c_chan++)
-			*dest++ = buf[c_chan][position];
-}
-
-static void
-flac_convert_8(int8_t *dest,
-	       unsigned int num_channels,
-	       const FLAC__int32 * const buf[],
-	       unsigned int position, unsigned int end)
-{
-	unsigned int c_chan;
-
-	for (; position < end; ++position)
-		for (c_chan = 0; c_chan < num_channels; c_chan++)
-			*dest++ = buf[c_chan][position];
-}
-
-static void flac_convert(unsigned char *dest,
-			 unsigned int num_channels,
-			 unsigned int bytes_per_sample,
-			 const FLAC__int32 * const buf[],
-			 unsigned int position, unsigned int end)
-{
-	switch (bytes_per_sample) {
-	case 2:
-		if (num_channels == 2)
-			flac_convert_stereo16((int16_t*)dest, buf,
-					      position, end);
-		else
-			flac_convert_16((int16_t*)dest, num_channels, buf,
-					position, end);
-		break;
-
-	case 4:
-		flac_convert_32((int32_t*)dest, num_channels, buf,
-				position, end);
-		break;
-
-	case 1:
-		flac_convert_8((int8_t*)dest, num_channels, buf,
-			       position, end);
-		break;
+	GError *error = NULL;
+	if (!audio_format_init_checked(&data->audio_format,
+				       header->sample_rate,
+				       flac_sample_format(header->bits_per_sample),
+				       header->channels, &error)) {
+		g_warning("%s", error->message);
+		g_error_free(error);
+		data->unsupported = true;
+		return false;
 	}
+
+	data->frame_size = audio_format_frame_size(&data->audio_format);
+
+	decoder_initialized(data->decoder, &data->audio_format,
+			    data->input_stream->seekable,
+			    (float)data->total_frames /
+			    (float)data->audio_format.sample_rate);
+
+	data->initialized = true;
+
+	return true;
 }
 
 FLAC__StreamDecoderWriteStatus
 flac_common_write(struct flac_data *data, const FLAC__Frame * frame,
-		  const FLAC__int32 *const buf[])
+		  const FLAC__int32 *const buf[],
+		  FLAC__uint64 nbytes)
 {
-	unsigned int c_samp;
-	const unsigned int num_channels = frame->header.channels;
-	const unsigned int bytes_per_sample =
-		audio_format_sample_size(&data->audio_format);
-	const unsigned int bytes_per_channel =
-		bytes_per_sample * frame->header.channels;
-	const unsigned int max_samples = FLAC_CHUNK_SIZE / bytes_per_channel;
-	unsigned int num_samples;
 	enum decoder_command cmd;
+	void *buffer;
+	unsigned bit_rate;
 
-	if (bytes_per_sample != 1 && bytes_per_sample != 2 &&
-	    bytes_per_sample != 4)
-		/* exotic unsupported bit rate */
+	if (!data->initialized && !flac_got_first_frame(data, &frame->header))
 		return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
 
-	for (c_samp = 0; c_samp < frame->header.blocksize;
-	     c_samp += num_samples) {
-		num_samples = frame->header.blocksize - c_samp;
-		if (num_samples > max_samples)
-			num_samples = max_samples;
+	size_t buffer_size = frame->header.blocksize * data->frame_size;
+	buffer = pcm_buffer_get(&data->buffer, buffer_size);
 
-		flac_convert(data->chunk,
-			     num_channels, bytes_per_sample, buf,
-			     c_samp, c_samp + num_samples);
+	flac_convert(buffer, frame->header.channels,
+		     data->audio_format.format, buf,
+		     0, frame->header.blocksize);
 
-		cmd = decoder_data(data->decoder, data->input_stream,
-				   data->chunk,
-				   num_samples * bytes_per_channel,
-				   data->time, data->bit_rate,
-				   data->replay_gain_info);
-		switch (cmd) {
-		case DECODE_COMMAND_NONE:
-		case DECODE_COMMAND_START:
-			break;
+	if (nbytes > 0)
+		bit_rate = nbytes * 8 * frame->header.sample_rate /
+			(1000 * frame->header.blocksize);
+	else
+		bit_rate = 0;
 
-		case DECODE_COMMAND_STOP:
-			return
-				FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
+	cmd = decoder_data(data->decoder, data->input_stream,
+			   buffer, buffer_size,
+			   bit_rate);
+	data->next_frame += frame->header.blocksize;
+	switch (cmd) {
+	case DECODE_COMMAND_NONE:
+	case DECODE_COMMAND_START:
+		break;
 
-		case DECODE_COMMAND_SEEK:
-			return
-				FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
-		}
+	case DECODE_COMMAND_STOP:
+		return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
+
+	case DECODE_COMMAND_SEEK:
+		return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
 	}
 
 	return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
 }
-
-#if defined(FLAC_API_VERSION_CURRENT) && FLAC_API_VERSION_CURRENT > 7
-
-char*
-flac_cue_track(	const char* pathname,
-		const unsigned int tnum)
-{
-	FLAC__bool success;
-	FLAC__StreamMetadata* cs;
-
-	success = FLAC__metadata_get_cuesheet(pathname, &cs);
-	if (!success)
-		return NULL;
-
-	assert(cs != NULL);
-
-	if (cs->data.cue_sheet.num_tracks <= 1)
-	{
-		FLAC__metadata_object_delete(cs);
-		return NULL;
-	}
-
-	if (tnum > 0 && tnum < cs->data.cue_sheet.num_tracks)
-	{
-		char* track = g_strdup_printf("track_%03u.flac", tnum);
-
-		FLAC__metadata_object_delete(cs);
-
-		return track;
-	}
-	else
-	{
-		FLAC__metadata_object_delete(cs);
-		return NULL;
-	}
-}
-
-unsigned int
-flac_vtrack_tnum(const char* fname)
-{
-	/* find last occurrence of '_' in fname
-	 * which is hopefully something like track_xxx.flac
-	 * another/better way would be to use tag struct
-	 */
-	char* ptr = strrchr(fname, '_');
-	if (ptr == NULL)
-		return 0;
-
-	// copy ascii tracknumber to int
-	return (unsigned int)strtol(++ptr, NULL, 10);
-}
-
-#endif /* FLAC_API_VERSION_CURRENT >= 7 */

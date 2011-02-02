@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,10 +17,12 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "log.h"
 #include "conf.h"
 #include "utils.h"
-#include "config.h"
+#include "fd_util.h"
+#include "mpd_error.h"
 
 #include <assert.h>
 #include <sys/types.h>
@@ -59,9 +61,9 @@ static void redirect_logs(int fd)
 {
 	assert(fd >= 0);
 	if (dup2(fd, STDOUT_FILENO) < 0)
-		g_error("problems dup2 stdout : %s\n", strerror(errno));
+		MPD_ERROR("problems dup2 stdout : %s\n", strerror(errno));
 	if (dup2(fd, STDERR_FILENO) < 0)
-		g_error("problems dup2 stderr : %s\n", strerror(errno));
+		MPD_ERROR("problems dup2 stderr : %s\n", strerror(errno));
 }
 
 static const char *log_date(void)
@@ -128,7 +130,7 @@ open_log_file(void)
 {
 	assert(out_filename != NULL);
 
-	return open(out_filename, O_CREAT | O_WRONLY | O_APPEND, 0666);
+	return open_cloexec(out_filename, O_CREAT | O_WRONLY | O_APPEND, 0666);
 }
 
 static void
@@ -137,8 +139,8 @@ log_init_file(const char *path, unsigned line)
 	out_filename = path;
 	out_fd = open_log_file();
 	if (out_fd < 0)
-		g_error("problem opening log file \"%s\" (config line %u) for "
-			"writing\n", path, line);
+		MPD_ERROR("problem opening log file \"%s\" (config line %u) "
+			  "for writing\n", path, line);
 
 	g_log_set_default_handler(file_log_func, NULL);
 }
@@ -215,8 +217,8 @@ parse_log_level(const char *value, unsigned line)
 	else if (0 == strcmp(value, "verbose"))
 		return G_LOG_LEVEL_DEBUG;
 	else {
-		g_error("unknown log level \"%s\" at line %u\n",
-			value, line);
+		MPD_ERROR("unknown log level \"%s\" at line %u\n",
+			  value, line);
 		return G_LOG_LEVEL_MESSAGE;
 	}
 }
@@ -251,8 +253,8 @@ void log_init(bool verbose, bool use_stdout)
 			   available) */
 			log_init_syslog();
 #else
-			g_error("config parameter \"%s\" not found\n",
-				CONF_LOG_FILE);
+			MPD_ERROR("config parameter \"%s\" not found\n",
+				  CONF_LOG_FILE);
 #endif
 #ifdef HAVE_SYSLOG
 		} else if (strcmp(param->value, "syslog") == 0) {
@@ -271,7 +273,12 @@ void setup_log_output(bool use_stdout)
 {
 	fflush(NULL);
 	if (!use_stdout) {
-		if (out_filename != NULL) {
+#ifndef WIN32
+		if (out_filename == NULL)
+			out_fd = open("/dev/null", O_WRONLY);
+#endif
+
+		if (out_fd >= 0) {
 			redirect_logs(out_fd);
 			close(out_fd);
 		}

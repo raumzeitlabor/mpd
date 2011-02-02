@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -38,6 +38,10 @@ searchForSongsIn(struct client *client, const char *name,
 int
 findSongsIn(struct client *client, const char *name,
 	    const struct locate_item_list *criteria);
+
+int
+findAddIn(struct client *client, const char *name,
+	  const struct locate_item_list *criteria);
 
 int
 searchStatsForSongsIn(struct client *client, const char *name,

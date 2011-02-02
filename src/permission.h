@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,7 +27,7 @@
 #define PERMISSION_ADMIN   8
 
 
-int getPermissionFromPassword(char *password, unsigned *permission);
+int getPermissionFromPassword(char const* password, unsigned* permission);
 
 void finishPermissions(void);
 

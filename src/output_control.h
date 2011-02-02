@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -38,7 +38,19 @@ audio_output_quark(void)
 
 bool
 audio_output_init(struct audio_output *ao, const struct config_param *param,
-		  GError **error);
+		  GError **error_r);
+
+/**
+ * Enables the device.
+ */
+void
+audio_output_enable(struct audio_output *ao);
+
+/**
+ * Disables the device.
+ */
+void
+audio_output_disable(struct audio_output *ao);
 
 /**
  * Opens or closes the device, depending on the "enabled" flag.
@@ -55,8 +67,20 @@ audio_output_play(struct audio_output *ao);
 
 void audio_output_pause(struct audio_output *ao);
 
+void
+audio_output_drain_async(struct audio_output *ao);
+
 void audio_output_cancel(struct audio_output *ao);
+
 void audio_output_close(struct audio_output *ao);
+
+/**
+ * Closes the audio output, but if the "always_on" flag is set, put it
+ * into pause mode instead.
+ */
+void
+audio_output_release(struct audio_output *ao);
+
 void audio_output_finish(struct audio_output *ao);
 
 #endif

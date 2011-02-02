@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "songvec.h"
 #include "song.h"
 #include "tag.h"
@@ -28,6 +29,38 @@
 #include <stdlib.h>
 
 static GMutex *nr_lock = NULL;
+
+static const char *
+tag_get_value_checked(const struct tag *tag, enum tag_type type)
+{
+	return tag != NULL
+		? tag_get_value(tag, type)
+		: NULL;
+}
+
+static int
+compare_utf8_string(const char *a, const char *b)
+{
+	if (a == NULL)
+		return b == NULL ? 0 : -1;
+
+	if (b == NULL)
+		return 1;
+
+	return g_utf8_collate(a, b);
+}
+
+/**
+ * Compare two string tag values, ignoring case.  Either one may be
+ * NULL.
+ */
+static int
+compare_string_tag_item(const struct tag *a, const struct tag *b,
+			enum tag_type type)
+{
+	return compare_utf8_string(tag_get_value_checked(a, type),
+				   tag_get_value_checked(b, type));
+}
 
 /**
  * Compare two tag values which should contain an integer value
@@ -51,14 +84,8 @@ compare_number_string(const char *a, const char *b)
 static int
 compare_tag_item(const struct tag *a, const struct tag *b, enum tag_type type)
 {
-	if (a == NULL)
-		return b == NULL ? 0 : -1;
-
-	if (b == NULL)
-		return 1;
-
-	return compare_number_string(tag_get_value(a, type),
-				     tag_get_value(b, type));
+	return compare_number_string(tag_get_value_checked(a, type),
+				     tag_get_value_checked(b, type));
 }
 
 /* Only used for sorting/searchin a songvec, not general purpose compares */
@@ -68,18 +95,23 @@ static int songvec_cmp(const void *s1, const void *s2)
 	const struct song *b = ((const struct song * const *)s2)[0];
 	int ret;
 
-	/* first sort by disc */
-	ret = compare_tag_item(a->tag, b->tag, TAG_ITEM_DISC);
+	/* first sort by album */
+	ret = compare_string_tag_item(a->tag, b->tag, TAG_ALBUM);
+	if (ret != 0)
+		return ret;
+
+	/* then sort by disc */
+	ret = compare_tag_item(a->tag, b->tag, TAG_DISC);
 	if (ret != 0)
 		return ret;
 
 	/* then by track number */
-	ret = compare_tag_item(a->tag, b->tag, TAG_ITEM_TRACK);
+	ret = compare_tag_item(a->tag, b->tag, TAG_TRACK);
 	if (ret != 0)
 		return ret;
 
 	/* still no difference?  compare file name */
-	return g_utf8_collate(a->url, b->url);
+	return g_utf8_collate(a->uri, b->uri);
 }
 
 static size_t sv_size(const struct songvec *sv)
@@ -108,14 +140,14 @@ void songvec_sort(struct songvec *sv)
 }
 
 struct song *
-songvec_find(const struct songvec *sv, const char *url)
+songvec_find(const struct songvec *sv, const char *uri)
 {
 	int i;
 	struct song *ret = NULL;
 
 	g_mutex_lock(nr_lock);
 	for (i = sv->nr; --i >= 0; ) {
-		if (strcmp(sv->base[i]->url, url))
+		if (strcmp(sv->base[i]->uri, uri))
 			continue;
 		ret = sv->base[i];
 		break;
@@ -182,7 +214,7 @@ songvec_for_each(const struct songvec *sv,
 		struct song *song = sv->base[i];
 
 		assert(song);
-		assert(*song->url);
+		assert(*song->uri);
 
 		prev_nr = sv->nr;
 		g_mutex_unlock(nr_lock); /* fn() may block */

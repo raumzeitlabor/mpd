@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -67,6 +67,24 @@ struct audio_output_plugin {
 	void (*finish)(void *data);
 
 	/**
+	 * Enable the device.  This may allocate resources, preparing
+	 * for the device to be opened.  Enabling a device cannot
+	 * fail: if an error occurs during that, it should be reported
+	 * by the open() method.
+	 *
+	 * @param error_r location to store the error occuring, or
+	 * NULL to ignore errors
+	 * @return true on success, false on error
+	 */
+	bool (*enable)(void *data, GError **error_r);
+
+	/**
+	 * Disables the device.  It is closed before this method is
+	 * called.
+	 */
+	void (*disable)(void *data);
+
+	/**
 	 * Really open the device.
 	 *
 	 * @param audio_format the audio format in which data is going
@@ -83,6 +101,16 @@ struct audio_output_plugin {
 	void (*close)(void *data);
 
 	/**
+	 * Returns a positive number if the output thread shall delay
+	 * the next call to play() or pause().  This should be
+	 * implemented instead of doing a sleep inside the plugin,
+	 * because this allows MPD to listen to commands meanwhile.
+	 *
+	 * @return the number of milliseconds to wait
+	 */
+	unsigned (*delay)(void *data);
+
+	/**
 	 * Display metadata for the next chunk.  Optional method,
 	 * because not all devices can display metadata.
 	 */
@@ -97,6 +125,11 @@ struct audio_output_plugin {
 	 */
 	size_t (*play)(void *data, const void *chunk, size_t size,
 		       GError **error);
+
+	/**
+	 * Wait until the device has finished playing.
+	 */
+	void (*drain)(void *data);
 
 	/**
 	 * Try to cancel data which may still be in the device's
@@ -150,6 +183,22 @@ ao_plugin_finish(const struct audio_output_plugin *plugin, void *data)
 }
 
 static inline bool
+ao_plugin_enable(const struct audio_output_plugin *plugin, void *data,
+		 GError **error_r)
+{
+	return plugin->enable != NULL
+		? plugin->enable(data, error_r)
+		: true;
+}
+
+static inline void
+ao_plugin_disable(const struct audio_output_plugin *plugin, void *data)
+{
+	if (plugin->disable != NULL)
+		plugin->disable(data);
+}
+
+static inline bool
 ao_plugin_open(const struct audio_output_plugin *plugin,
 	       void *data, struct audio_format *audio_format,
 	       GError **error)
@@ -161,6 +210,14 @@ static inline void
 ao_plugin_close(const struct audio_output_plugin *plugin, void *data)
 {
 	plugin->close(data);
+}
+
+static inline unsigned
+ao_plugin_delay(const struct audio_output_plugin *plugin, void *data)
+{
+	return plugin->delay != NULL
+		? plugin->delay(data)
+		: 0;
 }
 
 static inline void
@@ -177,6 +234,13 @@ ao_plugin_play(const struct audio_output_plugin *plugin,
 	       GError **error)
 {
 	return plugin->play(data, chunk, size, error);
+}
+
+static inline void
+ao_plugin_drain(const struct audio_output_plugin *plugin, void *data)
+{
+	if (plugin->drain != NULL)
+		plugin->drain(data);
 }
 
 static inline void

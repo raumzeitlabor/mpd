@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -37,11 +37,26 @@ mixer_all_get_volume(void);
 /**
  * Sets the volume on all available mixers.
  *
- * @param volume the volume (range 0..100 or -100..100 if #relative)
- * @param relative if true, then the #volume is added to the current value
+ * @param volume the volume (range 0..100)
  * @return true on success, false on failure
  */
 bool
-mixer_all_set_volume(int volume, bool relative);
+mixer_all_set_volume(unsigned volume);
+
+/**
+ * Similar to mixer_all_get_volume(), but gets the volume only for
+ * software mixers.  See #software_mixer_plugin.  This function fails
+ * if no software mixer is configured.
+ */
+int
+mixer_all_get_software_volume(void);
+
+/**
+ * Similar to mixer_all_set_volume(), but sets the volume only for
+ * software mixers.  See #software_mixer_plugin.  This function cannot
+ * fail, because the underlying software mixers cannot fail either.
+ */
+void
+mixer_all_set_software_volume(unsigned volume);
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,20 +21,16 @@
  * Maps directory and song objects to file system paths.
  */
 
+#include "config.h"
 #include "mapper.h"
 #include "directory.h"
 #include "song.h"
 #include "path.h"
-#include "conf.h"
 
 #include <glib.h>
 
 #include <assert.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
 #include <string.h>
-#include <errno.h>
 
 static char *music_dir;
 static size_t music_dir_length;
@@ -58,17 +54,10 @@ strdup_chop_slash(const char *path_fs)
 static void
 mapper_set_music_dir(const char *path)
 {
-	int ret;
-	struct stat st;
-
 	music_dir = strdup_chop_slash(path);
 	music_dir_length = strlen(music_dir);
 
-	ret = stat(music_dir, &st);
-	if (ret < 0)
-		g_warning("failed to stat music directory \"%s\": %s",
-			  music_dir, g_strerror(errno));
-	else if (!S_ISDIR(st.st_mode))
+	if (!g_file_test(music_dir, G_FILE_TEST_IS_DIR))
 		g_warning("music directory is not a directory: \"%s\"",
 			  music_dir);
 }
@@ -76,38 +65,20 @@ mapper_set_music_dir(const char *path)
 static void
 mapper_set_playlist_dir(const char *path)
 {
-	int ret;
-	struct stat st;
-
 	playlist_dir = g_strdup(path);
 
-	ret = stat(playlist_dir, &st);
-	if (ret < 0)
-		g_warning("failed to stat playlist directory \"%s\": %s",
-			  playlist_dir, g_strerror(errno));
-	else if (!S_ISDIR(st.st_mode))
+	if (!g_file_test(playlist_dir, G_FILE_TEST_IS_DIR))
 		g_warning("playlist directory is not a directory: \"%s\"",
 			  playlist_dir);
 }
 
-void mapper_init(void)
+void mapper_init(const char *_music_dir, const char *_playlist_dir)
 {
-	const char *path;
+	if (_music_dir != NULL)
+		mapper_set_music_dir(_music_dir);
 
-	path = config_get_path(CONF_MUSIC_DIR);
-	if (path != NULL)
-		mapper_set_music_dir(path);
-#if GLIB_CHECK_VERSION(2,14,0)
-	else {
-		path = g_get_user_special_dir(G_USER_DIRECTORY_MUSIC);
-		if (path != NULL)
-			mapper_set_music_dir(path);
-	}
-#endif
-
-	path = config_get_path(CONF_PLAYLIST_DIR);
-	if (path != NULL)
-		mapper_set_playlist_dir(path);
+	if (_playlist_dir != NULL)
+		mapper_set_playlist_dir(_playlist_dir);
 }
 
 void mapper_finish(void)
@@ -120,6 +91,16 @@ bool
 mapper_has_music_directory(void)
 {
 	return music_dir != NULL;
+}
+
+const char *
+map_to_relative_path(const char *path_utf8)
+{
+	return music_dir != NULL &&
+		memcmp(path_utf8, music_dir, music_dir_length) == 0 &&
+		G_IS_DIR_SEPARATOR(path_utf8[music_dir_length])
+		? path_utf8 + music_dir_length + 1
+		: path_utf8;
 }
 
 char *
@@ -189,9 +170,9 @@ map_song_fs(const struct song *song)
 	assert(song_is_file(song));
 
 	if (song_in_database(song))
-		return map_directory_child_fs(song->parent, song->url);
+		return map_directory_child_fs(song->parent, song->uri);
 	else
-		return utf8_to_fs_charset(song->url);
+		return utf8_to_fs_charset(song->uri);
 }
 
 char *
@@ -199,10 +180,10 @@ map_fs_to_utf8(const char *path_fs)
 {
 	if (music_dir != NULL &&
 	    strncmp(path_fs, music_dir, music_dir_length) == 0 &&
-	    path_fs[music_dir_length] == '/')
+	    G_IS_DIR_SEPARATOR(path_fs[music_dir_length]))
 		/* remove musicDir prefix */
 		path_fs += music_dir_length + 1;
-	else if (path_fs[0] == '/')
+	else if (G_IS_DIR_SEPARATOR(path_fs[0]))
 		/* not within musicDir */
 		return NULL;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,10 +17,12 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "encoder_api.h"
 #include "encoder_plugin.h"
 #include "tag.h"
 #include "audio_format.h"
+#include "mpd_error.h"
 
 #include <vorbis/vorbisenc.h>
 
@@ -211,7 +213,7 @@ vorbis_encoder_open(struct encoder *_encoder,
 	struct vorbis_encoder *encoder = (struct vorbis_encoder *)_encoder;
 	bool ret;
 
-	audio_format->bits = 16;
+	audio_format->format = SAMPLE_FORMAT_S16;
 
 	encoder->audio_format = *audio_format;
 
@@ -373,12 +375,18 @@ vorbis_encoder_read(struct encoder *_encoder, void *_dest, size_t length)
 
 	if (nbytes > length)
 		/* XXX better error handling */
-		g_error("buffer too small");
+		MPD_ERROR("buffer too small");
 
 	memcpy(dest, page.header, page.header_len);
 	memcpy(dest + page.header_len, page.body, page.body_len);
 
 	return nbytes;
+}
+
+static const char *
+vorbis_encoder_get_mime_type(G_GNUC_UNUSED struct encoder *_encoder)
+{
+	return  "audio/ogg";
 }
 
 const struct encoder_plugin vorbis_encoder_plugin = {
@@ -391,4 +399,5 @@ const struct encoder_plugin vorbis_encoder_plugin = {
 	.tag = vorbis_encoder_tag,
 	.write = vorbis_encoder_write,
 	.read = vorbis_encoder_read,
+	.get_mime_type = vorbis_encoder_get_mime_type,
 };

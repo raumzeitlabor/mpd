@@ -12,7 +12,7 @@ WITH_TREMOR=--with-tremor
 endif
 
 DEB_BUILDDIR := debian/build
-DEB_CONFIGURE_USER_FLAGS += $(WITH_TREMOR) --enable-sqlite --enable-un --enable-ao --enable-lastfm --disable-lame --disable-cue
+DEB_CONFIGURE_USER_FLAGS += $(WITH_TREMOR) --enable-sqlite --enable-un --enable-ao --enable-lastfm --enable-pipe-output --disable-lame --disable-cue
 LDFLAGS += -Wl,--as-needed
 
 include /usr/share/cdbs/1/rules/debhelper.mk

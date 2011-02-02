@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -47,6 +47,6 @@ playlist_update_queued_song(struct playlist *playlist,
 			    const struct song *prev);
 
 void
-playPlaylistOrderNumber(struct playlist *playlist, int orderNum);
+playlist_play_order(struct playlist *playlist, int orderNum);
 
 #endif

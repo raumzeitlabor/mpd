@@ -9,20 +9,20 @@ srcdir="`dirname $0`"
 test -z "$srcdir" && srcdir=.
 cd "$srcdir"
 DIE=
-AM_VERSIONGREP="sed -e s/.*[^0-9\.]\([0-9]\.[0-9]\).*/\1/"
+AM_VERSIONGREP="sed -e s/.*[^0-9\.]\([0-9]\.[0-9][0-9]*\).*/\1/"
 AC_VERSIONGREP="sed -e s/.*[^0-9\.]\([0-9]\.[0-9][0-9]\).*/\1/"
 VERSIONMKINT="sed -e s/[^0-9]//"
 if test -n "$AM_FORCE_VERSION"
 then
 	AM_VERSIONS="$AM_FORCE_VERSION"
 else
-	AM_VERSIONS='1.9 1.10'
+	AM_VERSIONS='1.11 1.10'
 fi
 if test -n "$AC_FORCE_VERSION"
 then
 	AC_VERSIONS="$AC_FORCE_VERSION"
 else
-	AC_VERSIONS='2.58 2.59 2.60 2.61'
+	AC_VERSIONS='2.60 2.61'
 fi
 
 versioned_bins ()

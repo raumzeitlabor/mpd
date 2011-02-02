@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "../output_api.h"
+#include "config.h"
+#include "output_api.h"
 #include "mixer_list.h"
 
 #include <glib.h>
@@ -69,6 +70,16 @@ struct alsa_data {
 
 	/** the size of one audio frame */
 	size_t frame_size;
+
+	/**
+	 * The size of one period, in number of frames.
+	 */
+	snd_pcm_uframes_t period_frames;
+
+	/**
+	 * The number of frames written in the current period.
+	 */
+	snd_pcm_uframes_t period_position;
 };
 
 /**
@@ -172,15 +183,148 @@ alsa_test_default_device(void)
 }
 
 static snd_pcm_format_t
-get_bitformat(const struct audio_format *af)
+get_bitformat(enum sample_format sample_format)
 {
-	switch (af->bits) {
-	case 8: return SND_PCM_FORMAT_S8;
-	case 16: return SND_PCM_FORMAT_S16;
-	case 24: return SND_PCM_FORMAT_S24;
-	case 32: return SND_PCM_FORMAT_S32;
+	switch (sample_format) {
+	case SAMPLE_FORMAT_S8:
+		return SND_PCM_FORMAT_S8;
+
+	case SAMPLE_FORMAT_S16:
+		return SND_PCM_FORMAT_S16;
+
+	case SAMPLE_FORMAT_S24_P32:
+		return SND_PCM_FORMAT_S24;
+
+	case SAMPLE_FORMAT_S24:
+		return G_BYTE_ORDER == G_BIG_ENDIAN
+			? SND_PCM_FORMAT_S24_3BE
+			: SND_PCM_FORMAT_S24_3LE;
+
+	case SAMPLE_FORMAT_S32:
+		return SND_PCM_FORMAT_S32;
+
+	default:
+		return SND_PCM_FORMAT_UNKNOWN;
 	}
-	return SND_PCM_FORMAT_UNKNOWN;
+}
+
+static snd_pcm_format_t
+byteswap_bitformat(snd_pcm_format_t fmt)
+{
+	switch(fmt) {
+	case SND_PCM_FORMAT_S16_LE: return SND_PCM_FORMAT_S16_BE;
+	case SND_PCM_FORMAT_S24_LE: return SND_PCM_FORMAT_S24_BE;
+	case SND_PCM_FORMAT_S32_LE: return SND_PCM_FORMAT_S32_BE;
+	case SND_PCM_FORMAT_S16_BE: return SND_PCM_FORMAT_S16_LE;
+	case SND_PCM_FORMAT_S24_BE: return SND_PCM_FORMAT_S24_LE;
+
+	case SND_PCM_FORMAT_S24_3BE:
+		return SND_PCM_FORMAT_S24_3LE;
+
+	case SND_PCM_FORMAT_S24_3LE:
+		return SND_PCM_FORMAT_S24_3BE;
+
+	case SND_PCM_FORMAT_S32_BE: return SND_PCM_FORMAT_S32_LE;
+	default: return SND_PCM_FORMAT_UNKNOWN;
+	}
+}
+
+/**
+ * Attempts to configure the specified sample format.
+ */
+static int
+alsa_output_try_format(snd_pcm_t *pcm, snd_pcm_hw_params_t *hwparams,
+		       struct audio_format *audio_format,
+		       enum sample_format sample_format)
+{
+	snd_pcm_format_t alsa_format = get_bitformat(sample_format);
+	if (alsa_format == SND_PCM_FORMAT_UNKNOWN)
+		return -EINVAL;
+
+	int err = snd_pcm_hw_params_set_format(pcm, hwparams, alsa_format);
+	if (err == 0)
+		audio_format->format = sample_format;
+
+	return err;
+}
+
+/**
+ * Attempts to configure the specified sample format with reversed
+ * host byte order.
+ */
+static int
+alsa_output_try_reverse(snd_pcm_t *pcm, snd_pcm_hw_params_t *hwparams,
+		       struct audio_format *audio_format,
+		       enum sample_format sample_format)
+{
+	snd_pcm_format_t alsa_format =
+		byteswap_bitformat(get_bitformat(sample_format));
+	if (alsa_format == SND_PCM_FORMAT_UNKNOWN)
+		return -EINVAL;
+
+	int err = snd_pcm_hw_params_set_format(pcm, hwparams, alsa_format);
+	if (err == 0) {
+		audio_format->format = sample_format;
+		audio_format->reverse_endian = true;
+	}
+
+	return err;
+}
+
+/**
+ * Attempts to configure the specified sample format, and tries the
+ * reversed host byte order if was not supported.
+ */
+static int
+alsa_output_try_format_both(snd_pcm_t *pcm, snd_pcm_hw_params_t *hwparams,
+			    struct audio_format *audio_format,
+			    enum sample_format sample_format)
+{
+	int err = alsa_output_try_format(pcm, hwparams, audio_format,
+					 sample_format);
+	if (err == -EINVAL)
+		err = alsa_output_try_reverse(pcm, hwparams, audio_format,
+					      sample_format);
+
+	return err;
+}
+
+/**
+ * Configure a sample format, and probe other formats if that fails.
+ */
+static int
+alsa_output_setup_format(snd_pcm_t *pcm, snd_pcm_hw_params_t *hwparams,
+			 struct audio_format *audio_format)
+{
+	/* try the input format first */
+
+	int err = alsa_output_try_format_both(pcm, hwparams, audio_format,
+					      audio_format->format);
+	if (err != -EINVAL)
+		return err;
+
+	/* if unsupported by the hardware, try other formats */
+
+	static const enum sample_format probe_formats[] = {
+		SAMPLE_FORMAT_S24_P32,
+		SAMPLE_FORMAT_S32,
+		SAMPLE_FORMAT_S24,
+		SAMPLE_FORMAT_S16,
+		SAMPLE_FORMAT_S8,
+		SAMPLE_FORMAT_UNDEFINED,
+	};
+
+	for (unsigned i = 0; probe_formats[i] != SAMPLE_FORMAT_UNDEFINED; ++i) {
+		if (probe_formats[i] == audio_format->format)
+			continue;
+
+		err = alsa_output_try_format_both(pcm, hwparams, audio_format,
+						  probe_formats[i]);
+		if (err != -EINVAL)
+			return err;
+	}
+
+	return -EINVAL;
 }
 
 /**
@@ -189,7 +333,6 @@ get_bitformat(const struct audio_format *af)
  */
 static bool
 alsa_setup(struct alsa_data *ad, struct audio_format *audio_format,
-	   snd_pcm_format_t bitformat,
 	   GError **error)
 {
 	snd_pcm_hw_params_t *hwparams;
@@ -208,7 +351,6 @@ alsa_setup(struct alsa_data *ad, struct audio_format *audio_format,
 configure_hw:
 	/* configure HW params */
 	snd_pcm_hw_params_alloca(&hwparams);
-
 	cmd = "snd_pcm_hw_params_any";
 	err = snd_pcm_hw_params_any(ad->pcm, hwparams);
 	if (err < 0)
@@ -235,31 +377,12 @@ configure_hw:
 		ad->writei = snd_pcm_writei;
 	}
 
-	err = snd_pcm_hw_params_set_format(ad->pcm, hwparams, bitformat);
-	if (err == -EINVAL && (audio_format->bits == 24 ||
-			       audio_format->bits == 16)) {
-		/* fall back to 32 bit, let pcm_convert.c do the conversion */
-		err = snd_pcm_hw_params_set_format(ad->pcm, hwparams,
-						   SND_PCM_FORMAT_S32);
-		if (err == 0)
-			audio_format->bits = 32;
-	}
-
-	if (err == -EINVAL && audio_format->bits != 16) {
-		/* fall back to 16 bit, let pcm_convert.c do the conversion */
-		err = snd_pcm_hw_params_set_format(ad->pcm, hwparams,
-						   SND_PCM_FORMAT_S16);
-		if (err == 0) {
-			g_debug("ALSA device \"%s\": converting %u bit to 16 bit\n",
-				alsa_device(ad), audio_format->bits);
-			audio_format->bits = 16;
-		}
-	}
-
+	err = alsa_output_setup_format(ad->pcm, hwparams, audio_format);
 	if (err < 0) {
 		g_set_error(error, alsa_output_quark(), err,
-			    "ALSA device \"%s\" does not support %u bit audio: %s",
-			    alsa_device(ad), audio_format->bits,
+			    "ALSA device \"%s\" does not support format %s: %s",
+			    alsa_device(ad),
+			    sample_format_to_string(audio_format->format),
 			    snd_strerror(-err));
 		return false;
 	}
@@ -284,6 +407,26 @@ configure_hw:
 		return false;
 	}
 	audio_format->sample_rate = sample_rate;
+
+	snd_pcm_uframes_t buffer_size_min, buffer_size_max;
+	snd_pcm_hw_params_get_buffer_size_min(hwparams, &buffer_size_min);
+	snd_pcm_hw_params_get_buffer_size_max(hwparams, &buffer_size_max);
+	unsigned buffer_time_min, buffer_time_max;
+	snd_pcm_hw_params_get_buffer_time_min(hwparams, &buffer_time_min, 0);
+	snd_pcm_hw_params_get_buffer_time_max(hwparams, &buffer_time_max, 0);
+	g_debug("buffer: size=%u..%u time=%u..%u",
+		(unsigned)buffer_size_min, (unsigned)buffer_size_max,
+		buffer_time_min, buffer_time_max);
+
+	snd_pcm_uframes_t period_size_min, period_size_max;
+	snd_pcm_hw_params_get_period_size_min(hwparams, &period_size_min, 0);
+	snd_pcm_hw_params_get_period_size_max(hwparams, &period_size_max, 0);
+	unsigned period_time_min, period_time_max;
+	snd_pcm_hw_params_get_period_time_min(hwparams, &period_time_min, 0);
+	snd_pcm_hw_params_get_period_time_max(hwparams, &period_time_max, 0);
+	g_debug("period: size=%u..%u time=%u..%u",
+		(unsigned)period_size_min, (unsigned)period_size_max,
+		period_time_min, period_time_max);
 
 	if (ad->buffer_time > 0) {
 		buffer_time = ad->buffer_time;
@@ -365,6 +508,9 @@ configure_hw:
 	g_debug("buffer_size=%u period_size=%u",
 		(unsigned)alsa_buffer_size, (unsigned)alsa_period_size);
 
+	ad->period_frames = alsa_period_size;
+	ad->period_position = 0;
+
 	return true;
 
 error:
@@ -378,18 +524,8 @@ static bool
 alsa_open(void *data, struct audio_format *audio_format, GError **error)
 {
 	struct alsa_data *ad = data;
-	snd_pcm_format_t bitformat;
 	int err;
 	bool success;
-
-	bitformat = get_bitformat(audio_format);
-	if (bitformat == SND_PCM_FORMAT_UNKNOWN) {
-		/* sample format is not supported by this plugin -
-		   fall back to 16 bit samples */
-
-		audio_format->bits = 16;
-		bitformat = SND_PCM_FORMAT_S16;
-	}
 
 	err = snd_pcm_open(&ad->pcm, alsa_device(ad),
 			   SND_PCM_STREAM_PLAYBACK, ad->mode);
@@ -400,7 +536,7 @@ alsa_open(void *data, struct audio_format *audio_format, GError **error)
 		return false;
 	}
 
-	success = alsa_setup(ad, audio_format, bitformat, error);
+	success = alsa_setup(ad, audio_format, error);
 	if (!success) {
 		snd_pcm_close(ad->pcm);
 		return false;
@@ -431,6 +567,7 @@ alsa_recover(struct alsa_data *ad, int err)
 		/* fall-through to snd_pcm_prepare: */
 	case SND_PCM_STATE_SETUP:
 	case SND_PCM_STATE_XRUN:
+		ad->period_position = 0;
 		err = snd_pcm_prepare(ad->pcm);
 		break;
 	case SND_PCM_STATE_DISCONNECTED:
@@ -448,20 +585,53 @@ alsa_recover(struct alsa_data *ad, int err)
 }
 
 static void
+alsa_drain(void *data)
+{
+	struct alsa_data *ad = data;
+
+	if (snd_pcm_state(ad->pcm) != SND_PCM_STATE_RUNNING)
+		return;
+
+	if (ad->period_position > 0) {
+		/* generate some silence to finish the partial
+		   period */
+		snd_pcm_uframes_t nframes =
+			ad->period_frames - ad->period_position;
+		size_t nbytes = nframes * ad->frame_size;
+		void *buffer = g_malloc(nbytes);
+		snd_pcm_hw_params_t *params;
+		snd_pcm_format_t format;
+		unsigned channels;
+
+		snd_pcm_hw_params_alloca(&params);
+		snd_pcm_hw_params_current(ad->pcm, params);
+		snd_pcm_hw_params_get_format(params, &format);
+		snd_pcm_hw_params_get_channels(params, &channels);
+
+		snd_pcm_format_set_silence(format, buffer, nframes * channels);
+		ad->writei(ad->pcm, buffer, nframes);
+		g_free(buffer);
+	}
+
+	snd_pcm_drain(ad->pcm);
+
+	ad->period_position = 0;
+}
+
+static void
 alsa_cancel(void *data)
 {
 	struct alsa_data *ad = data;
 
-	alsa_recover(ad, snd_pcm_drop(ad->pcm));
+	ad->period_position = 0;
+
+	snd_pcm_drop(ad->pcm);
 }
 
 static void
 alsa_close(void *data)
 {
 	struct alsa_data *ad = data;
-
-	if (snd_pcm_state(ad->pcm) == SND_PCM_STATE_RUNNING)
-		snd_pcm_drain(ad->pcm);
 
 	snd_pcm_close(ad->pcm);
 }
@@ -475,8 +645,11 @@ alsa_play(void *data, const void *chunk, size_t size, GError **error)
 
 	while (true) {
 		snd_pcm_sframes_t ret = ad->writei(ad->pcm, chunk, size);
-		if (ret > 0)
+		if (ret > 0) {
+			ad->period_position = (ad->period_position + ret)
+				% ad->period_frames;
 			return ret * ad->frame_size;
+		}
 
 		if (ret < 0 && ret != -EAGAIN && ret != -EINTR &&
 		    alsa_recover(ad, ret) < 0) {
@@ -494,7 +667,9 @@ const struct audio_output_plugin alsaPlugin = {
 	.finish = alsa_finish,
 	.open = alsa_open,
 	.play = alsa_play,
+	.drain = alsa_drain,
 	.cancel = alsa_cancel,
 	.close = alsa_close,
-	.mixer_plugin = &alsa_mixer,
+
+	.mixer_plugin = &alsa_mixer_plugin,
 };

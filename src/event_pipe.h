@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,7 +32,7 @@ enum pipe_event {
 	/** an idle event was emitted */
 	PIPE_EVENT_IDLE,
 
-	/** must call syncPlayerAndPlaylist() */
+	/** must call playlist_sync() */
 	PIPE_EVENT_PLAYLIST,
 
 	/** the current song's tag has changed */
@@ -40,6 +40,12 @@ enum pipe_event {
 
 	/** SIGHUP received: reload configuration, roll log file */
 	PIPE_EVENT_RELOAD,
+
+	/** a hardware mixer plugin has detected a change */
+	PIPE_EVENT_MIXER,
+
+	/** shutdown requested */
+	PIPE_EVENT_SHUTDOWN,
 
 	PIPE_EVENT_MAX
 };

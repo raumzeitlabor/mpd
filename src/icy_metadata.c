@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "icy_metadata.h"
 #include "tag.h"
 
@@ -95,7 +96,7 @@ icy_parse_tag_item(struct tag *tag, const char *item)
 
 	if (p[0] != NULL && p[1] != NULL) {
 		if (strcmp(p[0], "StreamTitle") == 0)
-			icy_add_item(tag, TAG_ITEM_TITLE, p[1]);
+			icy_add_item(tag, TAG_TITLE, p[1]);
 		else
 			g_debug("unknown icy-tag: '%s'", p[0]);
 	}

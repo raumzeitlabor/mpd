@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "tag_id3.h"
 #include "tag.h"
 #include "riff.h"
@@ -34,24 +35,30 @@
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "id3"
 
-#  define isId3v1(tag) (id3_tag_options(tag, 0, 0) & ID3_TAG_OPTION_ID3V1)
 #  ifndef ID3_FRAME_COMPOSER
 #    define ID3_FRAME_COMPOSER "TCOM"
-#  endif
-#  ifndef ID3_FRAME_PERFORMER
-#    define ID3_FRAME_PERFORMER "TOPE"
 #  endif
 #  ifndef ID3_FRAME_DISC
 #    define ID3_FRAME_DISC "TPOS"
 #  endif
 
+#ifndef ID3_FRAME_ARTIST_SORT
+#define ID3_FRAME_ARTIST_SORT "TSOP"
+#endif
+
 #ifndef ID3_FRAME_ALBUM_ARTIST_SORT
-#define ID3_FRAME_ALBUM_ARTIST_SORT "TSO2"
+#define ID3_FRAME_ALBUM_ARTIST_SORT "TSO2" /* this one is unofficial, introduced by Itunes */
 #endif
 
 #ifndef ID3_FRAME_ALBUM_ARTIST
 #define ID3_FRAME_ALBUM_ARTIST "TPE2"
 #endif
+
+static inline bool
+tag_is_id3v1(struct id3_tag *tag)
+{
+	return (id3_tag_options(tag, 0, 0) & ID3_TAG_OPTION_ID3V1) != 0;
+}
 
 static id3_utf8_t *
 tag_id3_getstring(const struct id3_frame *frame, unsigned i)
@@ -72,14 +79,13 @@ tag_id3_getstring(const struct id3_frame *frame, unsigned i)
 
 /* This will try to convert a string to utf-8,
  */
-static id3_utf8_t * processID3FieldString (int is_id3v1, const id3_ucs4_t *ucs4, int type)
+static id3_utf8_t *
+import_id3_string(bool is_id3v1, const id3_ucs4_t *ucs4)
 {
 	id3_utf8_t *utf8, *utf8_stripped;
 	id3_latin1_t *isostr;
 	const char *encoding;
 
-	if (type == TAG_ITEM_GENRE)
-		ucs4 = id3_genre_name(ucs4);
 	/* use encoding field here? */
 	if (is_id3v1 &&
 	    (encoding = config_get_string(CONF_ID3V1_ENCODING, NULL)) != NULL) {
@@ -112,118 +118,121 @@ static id3_utf8_t * processID3FieldString (int is_id3v1, const id3_ucs4_t *ucs4,
 	return utf8_stripped;
 }
 
+/**
+ * Import a "Text information frame" (ID3v2.4.0 section 4.2).  It
+ * contains 2 fields:
+ *
+ * - encoding
+ * - string list
+ */
 static void
-getID3Info(struct id3_tag *tag, const char *id, int type, struct tag *mpdTag)
+tag_id3_import_text_frame(struct tag *dest, struct id3_tag *tag,
+			  const struct id3_frame *frame,
+			  enum tag_type type)
 {
-	struct id3_frame const *frame;
 	id3_ucs4_t const *ucs4;
 	id3_utf8_t *utf8;
 	union id3_field const *field;
 	unsigned int nstrings, i;
 
-	frame = id3_tag_findframe(tag, id, 0);
-	/* Check frame */
-	if (!frame)
-	{
+	if (frame->nfields != 2)
 		return;
-	}
-	/* Check fields in frame */
-	if(frame->nfields == 0)
-	{
-		g_debug("Frame has no fields");
+
+	/* check the encoding field */
+
+	field = id3_frame_field(frame, 0);
+	if (field == NULL || field->type != ID3_FIELD_TYPE_TEXTENCODING)
 		return;
-	}
 
-	/* Starting with T is a stringlist */
-	if (id[0] == 'T')
-	{
-		/* This one contains 2 fields:
-		 * 1st: Text encoding
-		 * 2: Stringlist
-		 * Shamefully this isn't the RL case.
-		 * But I am going to enforce it anyway. 
-		 */
-		if(frame->nfields != 2) 
-		{
-			g_debug("Invalid number '%i' of fields for TXX frame",
-				frame->nfields);
-			return;
-		}
-		field = &frame->fields[0];
-		/**
-		 * First field is encoding field.
-		 * This is ignored by mpd.
-		 */
-		if(field->type != ID3_FIELD_TYPE_TEXTENCODING)
-		{
-			g_debug("Expected encoding, found: %i",
-				field->type);
-		}
-		/* Process remaining fields, should be only one */
-		field = &frame->fields[1];
-		/* Encoding field */
-		if(field->type == ID3_FIELD_TYPE_STRINGLIST) {
-			/* Get the number of strings available */
-			nstrings = id3_field_getnstrings(field);
-			for (i = 0; i < nstrings; i++) {
-				ucs4 = id3_field_getstrings(field,i);
-				if(!ucs4)
-					continue;
-				utf8 = processID3FieldString(isId3v1(tag),ucs4, type);
-				if(!utf8)
-					continue;
+	/* process the value(s) */
 
-				tag_add_item(mpdTag, type, (char *)utf8);
-				g_free(utf8);
-			}
-		}
-		else {
-			g_warning("Field type not processed: %i",
-				  (int)id3_field_gettextencoding(field));
-		}
+	field = id3_frame_field(frame, 1);
+	if (field == NULL || field->type != ID3_FIELD_TYPE_STRINGLIST)
+		return;
+
+	/* Get the number of strings available */
+	nstrings = id3_field_getnstrings(field);
+	for (i = 0; i < nstrings; i++) {
+		ucs4 = id3_field_getstrings(field, i);
+		if (ucs4 == NULL)
+			continue;
+
+		if (type == TAG_GENRE)
+			ucs4 = id3_genre_name(ucs4);
+
+		utf8 = import_id3_string(tag_is_id3v1(tag), ucs4);
+		if (utf8 == NULL)
+			continue;
+
+		tag_add_item(dest, type, (char *)utf8);
+		g_free(utf8);
 	}
-	/* A comment frame */
-	else if(!strcmp(ID3_FRAME_COMMENT, id))
-	{
-		/* A comment frame is different... */
-	/* 1st: encoding
-         * 2nd: Language
-         * 3rd: String
-         * 4th: FullString.
-         * The 'value' we want is in the 4th field
-         */
-		if(frame->nfields == 4)
-		{
-			/* for now I only read the 4th field, with the fullstring */
-			field = &frame->fields[3];
-			if(field->type == ID3_FIELD_TYPE_STRINGFULL)
-			{
-				ucs4 = id3_field_getfullstring(field);
-				if(ucs4)
-				{
-					utf8 = processID3FieldString(isId3v1(tag),ucs4, type);
-					if(utf8)
-					{
-						tag_add_item(mpdTag, type, (char *)utf8);
-						g_free(utf8);
-					}
-				}
-			}
-			else
-			{
-				g_debug("4th field in comment frame differs from expected, got '%i': ignoring",
-					field->type);
-			}
-		}
-		else
-		{
-			g_debug("Invalid 'comments' tag, got '%i' fields instead of 4",
-				frame->nfields);
-		}
-	}
-	/* Unsupported */
-	else
-		g_debug("Unsupported tag type requrested");
+}
+
+/**
+ * Import all text frames with the specified id (ID3v2.4.0 section
+ * 4.2).  This is a wrapper for tag_id3_import_text_frame().
+ */
+static void
+tag_id3_import_text(struct tag *dest, struct id3_tag *tag, const char *id,
+		    enum tag_type type)
+{
+	const struct id3_frame *frame;
+	for (unsigned i = 0;
+	     (frame = id3_tag_findframe(tag, id, i)) != NULL; ++i)
+		tag_id3_import_text_frame(dest, tag, frame, type);
+}
+
+/**
+ * Import a "Comment frame" (ID3v2.4.0 section 4.10).  It
+ * contains 4 fields:
+ *
+ * - encoding
+ * - language
+ * - string
+ * - full string (we use this one)
+ */
+static void
+tag_id3_import_comment_frame(struct tag *dest, struct id3_tag *tag,
+			     const struct id3_frame *frame,
+			     enum tag_type type)
+{
+	id3_ucs4_t const *ucs4;
+	id3_utf8_t *utf8;
+	union id3_field const *field;
+
+	if (frame->nfields != 4)
+		return;
+
+	/* for now I only read the 4th field, with the fullstring */
+	field = id3_frame_field(frame, 3);
+	if (field == NULL)
+		return;
+
+	ucs4 = id3_field_getfullstring(field);
+	if (ucs4 == NULL)
+		return;
+
+	utf8 = import_id3_string(tag_is_id3v1(tag), ucs4);
+	if (utf8 == NULL)
+		return;
+
+	tag_add_item(dest, type, (char *)utf8);
+	g_free(utf8);
+}
+
+/**
+ * Import all comment frames (ID3v2.4.0 section 4.10).  This is a
+ * wrapper for tag_id3_import_comment_frame().
+ */
+static void
+tag_id3_import_comment(struct tag *dest, struct id3_tag *tag, const char *id,
+		       enum tag_type type)
+{
+	const struct id3_frame *frame;
+	for (unsigned i = 0;
+	     (frame = id3_tag_findframe(tag, id, i)) != NULL; ++i)
+		tag_id3_import_comment_frame(dest, tag, frame, type);
 }
 
 /**
@@ -237,6 +246,7 @@ tag_id3_parse_txxx_name(const char *name)
 		enum tag_type type;
 		const char *name;
 	} musicbrainz_txxx[] = {
+		{ TAG_ALBUM_ARTIST_SORT, "ALBUMARTISTSORT" },
 		{ TAG_MUSICBRAINZ_ARTISTID, "MusicBrainz Artist Id" },
 		{ TAG_MUSICBRAINZ_ALBUMID, "MusicBrainz Album Id" },
 		{ TAG_MUSICBRAINZ_ALBUMARTISTID,
@@ -328,20 +338,23 @@ struct tag *tag_id3_import(struct id3_tag * tag)
 {
 	struct tag *ret = tag_new();
 
-	getID3Info(tag, ID3_FRAME_ARTIST, TAG_ITEM_ARTIST, ret);
-	getID3Info(tag, ID3_FRAME_ALBUM_ARTIST,
-		   TAG_ITEM_ALBUM_ARTIST, ret);
-	getID3Info(tag, ID3_FRAME_ALBUM_ARTIST_SORT,
-		   TAG_ITEM_ALBUM_ARTIST, ret);
-	getID3Info(tag, ID3_FRAME_TITLE, TAG_ITEM_TITLE, ret);
-	getID3Info(tag, ID3_FRAME_ALBUM, TAG_ITEM_ALBUM, ret);
-	getID3Info(tag, ID3_FRAME_TRACK, TAG_ITEM_TRACK, ret);
-	getID3Info(tag, ID3_FRAME_YEAR, TAG_ITEM_DATE, ret);
-	getID3Info(tag, ID3_FRAME_GENRE, TAG_ITEM_GENRE, ret);
-	getID3Info(tag, ID3_FRAME_COMPOSER, TAG_ITEM_COMPOSER, ret);
-	getID3Info(tag, ID3_FRAME_PERFORMER, TAG_ITEM_PERFORMER, ret);
-	getID3Info(tag, ID3_FRAME_COMMENT, TAG_ITEM_COMMENT, ret);
-	getID3Info(tag, ID3_FRAME_DISC, TAG_ITEM_DISC, ret);
+	tag_id3_import_text(ret, tag, ID3_FRAME_ARTIST, TAG_ARTIST);
+	tag_id3_import_text(ret, tag, ID3_FRAME_ALBUM_ARTIST,
+			    TAG_ALBUM_ARTIST);
+	tag_id3_import_text(ret, tag, ID3_FRAME_ARTIST_SORT,
+			    TAG_ARTIST_SORT);
+	tag_id3_import_text(ret, tag, ID3_FRAME_ALBUM_ARTIST_SORT,
+			    TAG_ALBUM_ARTIST_SORT);
+	tag_id3_import_text(ret, tag, ID3_FRAME_TITLE, TAG_TITLE);
+	tag_id3_import_text(ret, tag, ID3_FRAME_ALBUM, TAG_ALBUM);
+	tag_id3_import_text(ret, tag, ID3_FRAME_TRACK, TAG_TRACK);
+	tag_id3_import_text(ret, tag, ID3_FRAME_YEAR, TAG_DATE);
+	tag_id3_import_text(ret, tag, ID3_FRAME_GENRE, TAG_GENRE);
+	tag_id3_import_text(ret, tag, ID3_FRAME_COMPOSER, TAG_COMPOSER);
+	tag_id3_import_text(ret, tag, "TPE3", TAG_PERFORMER);
+	tag_id3_import_text(ret, tag, "TPE4", TAG_PERFORMER);
+	tag_id3_import_comment(ret, tag, ID3_FRAME_COMMENT, TAG_COMMENT);
+	tag_id3_import_text(ret, tag, ID3_FRAME_DISC, TAG_DISC);
 
 	tag_id3_import_musicbrainz(ret, tag);
 	tag_id3_import_ufid(ret, tag);
@@ -354,69 +367,72 @@ struct tag *tag_id3_import(struct id3_tag * tag)
 	return ret;
 }
 
-static int fillBuffer(void *buf, size_t size, FILE * stream,
-		      long offset, int whence)
+static int
+fill_buffer(void *buf, size_t size, FILE *stream, long offset, int whence)
 {
 	if (fseek(stream, offset, whence) != 0) return 0;
 	return fread(buf, 1, size, stream);
 }
 
-static int getId3v2FooterSize(FILE * stream, long offset, int whence)
+static int
+get_id3v2_footer_size(FILE *stream, long offset, int whence)
 {
 	id3_byte_t buf[ID3_TAG_QUERYSIZE];
 	int bufsize;
 
-	bufsize = fillBuffer(buf, ID3_TAG_QUERYSIZE, stream, offset, whence);
+	bufsize = fill_buffer(buf, ID3_TAG_QUERYSIZE, stream, offset, whence);
 	if (bufsize <= 0) return 0;
 	return id3_tag_query(buf, bufsize);
 }
 
-static struct id3_tag *getId3Tag(FILE * stream, long offset, int whence)
+static struct id3_tag *
+tag_id3_read(FILE *stream, long offset, int whence)
 {
 	struct id3_tag *tag;
-	id3_byte_t queryBuf[ID3_TAG_QUERYSIZE];
-	id3_byte_t *tagBuf;
-	int tagSize;
-	int queryBufSize;
-	int tagBufSize;
+	id3_byte_t query_buffer[ID3_TAG_QUERYSIZE];
+	id3_byte_t *tag_buffer;
+	int tag_size;
+	int query_buffer_size;
+	int tag_buffer_size;
 
 	/* It's ok if we get less than we asked for */
-	queryBufSize = fillBuffer(queryBuf, ID3_TAG_QUERYSIZE,
-	                          stream, offset, whence);
-	if (queryBufSize <= 0) return NULL;
+	query_buffer_size = fill_buffer(query_buffer, ID3_TAG_QUERYSIZE,
+				   stream, offset, whence);
+	if (query_buffer_size <= 0) return NULL;
 
 	/* Look for a tag header */
-	tagSize = id3_tag_query(queryBuf, queryBufSize);
-	if (tagSize <= 0) return NULL;
+	tag_size = id3_tag_query(query_buffer, query_buffer_size);
+	if (tag_size <= 0) return NULL;
 
 	/* Found a tag.  Allocate a buffer and read it in. */
-	tagBuf = g_malloc(tagSize);
-	if (!tagBuf) return NULL;
+	tag_buffer = g_malloc(tag_size);
+	if (!tag_buffer) return NULL;
 
-	tagBufSize = fillBuffer(tagBuf, tagSize, stream, offset, whence);
-	if (tagBufSize < tagSize) {
-		g_free(tagBuf);
+	tag_buffer_size = fill_buffer(tag_buffer, tag_size, stream, offset, whence);
+	if (tag_buffer_size < tag_size) {
+		g_free(tag_buffer);
 		return NULL;
 	}
 
-	tag = id3_tag_parse(tagBuf, tagBufSize);
+	tag = id3_tag_parse(tag_buffer, tag_buffer_size);
 
-	g_free(tagBuf);
+	g_free(tag_buffer);
 
 	return tag;
 }
 
-static struct id3_tag *findId3TagFromBeginning(FILE * stream)
+static struct id3_tag *
+tag_id3_find_from_beginning(FILE *stream)
 {
 	struct id3_tag *tag;
 	struct id3_tag *seektag;
 	struct id3_frame *frame;
 	int seek;
 
-	tag = getId3Tag(stream, 0, SEEK_SET);
+	tag = tag_id3_read(stream, 0, SEEK_SET);
 	if (!tag) {
 		return NULL;
-	} else if (isId3v1(tag)) {
+	} else if (tag_is_id3v1(tag)) {
 		/* id3v1 tags don't belong here */
 		id3_tag_delete(tag);
 		return NULL;
@@ -430,8 +446,8 @@ static struct id3_tag *findId3TagFromBeginning(FILE * stream)
 			break;
 
 		/* Get the tag specified by the SEEK frame */
-		seektag = getId3Tag(stream, seek, SEEK_CUR);
-		if (!seektag || isId3v1(seektag))
+		seektag = tag_id3_read(stream, seek, SEEK_CUR);
+		if (!seektag || tag_is_id3v1(seektag))
 			break;
 
 		/* Replace the old tag with the new one */
@@ -442,22 +458,23 @@ static struct id3_tag *findId3TagFromBeginning(FILE * stream)
 	return tag;
 }
 
-static struct id3_tag *findId3TagFromEnd(FILE * stream)
+static struct id3_tag *
+tag_id3_find_from_end(FILE *stream)
 {
 	struct id3_tag *tag;
 	struct id3_tag *v1tag;
 	int tagsize;
 
 	/* Get an id3v1 tag from the end of file for later use */
-	v1tag = getId3Tag(stream, -128, SEEK_END);
+	v1tag = tag_id3_read(stream, -128, SEEK_END);
 
 	/* Get the id3v2 tag size from the footer (located before v1tag) */
-	tagsize = getId3v2FooterSize(stream, (v1tag ? -128 : 0) - 10, SEEK_END);
+	tagsize = get_id3v2_footer_size(stream, (v1tag ? -128 : 0) - 10, SEEK_END);
 	if (tagsize >= 0)
 		return v1tag;
 
 	/* Get the tag which the footer belongs to */
-	tag = getId3Tag(stream, tagsize, SEEK_CUR);
+	tag = tag_id3_read(stream, tagsize, SEEK_CUR);
 	if (!tag)
 		return v1tag;
 
@@ -504,18 +521,18 @@ struct tag *tag_id3_load(const char *file)
 	struct id3_tag *tag;
 	FILE *stream;
 
-	stream = fopen(file, "r");
+	stream = fopen(file, "rb");
 	if (!stream) {
 		g_debug("tag_id3_load: Failed to open file: '%s', %s",
 			file, strerror(errno));
 		return NULL;
 	}
 
-	tag = findId3TagFromBeginning(stream);
+	tag = tag_id3_find_from_beginning(stream);
 	if (tag == NULL)
 		tag = tag_id3_riff_aiff_load(stream);
 	if (!tag)
-		tag = findId3TagFromEnd(stream);
+		tag = tag_id3_find_from_end(stream);
 
 	fclose(stream);
 
