@@ -1,7 +1,10 @@
 This package was debianized by Warren Dukes <shank@mercury.chem.pitt.edu> on
 Fri, 25 Jul 2003 10:28:30 -0400.
 
-This package is currently maintained by Decklin Foster <decklin@red-bean.com>.
+This package is currently maintained by the mpd packaging team
+http://alioth.debian.org/projects/pkg-mpd
+
+Mailinglist: pkg-mpd-maintainers@lists.alioth.debian.org
 
 It was downloaded from http://musicpd.org/
 
