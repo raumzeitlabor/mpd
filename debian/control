@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: mpd maintainers <pkg-mpd-maintainers@lists.alioth.debian.org>
 Uploaders: Alexander Wirt <formorer@debian.org>
 Build-Depends: debhelper (>= 6), cdbs, libsqlite3-dev, libcurl4-gnutls-dev | libcurl-dev, libmms-dev, libavahi-client-dev, libsamplerate0-dev, libaudiofile-dev, libasound2-dev  [!kfreebsd-amd64 !kfreebsd-i386 !hurd-i386], libao-dev (>= 0.8.3), libpulse-dev, libjack-dev, libshout3-dev, libogg-dev, libvorbis-dev [!arm !armel !armeb], libvorbisidec-dev [arm armel armeb], libflac-dev (>= 1.1.4), libmpcdec-dev, libmad0-dev, libfaad-dev, libmikmod2-dev, libwavpack-dev, libsidplay2-dev, libresid-builder-dev, libavcodec-dev, libavformat-dev, libid3tag0-dev, zlib1g-dev, quilt, xmlto
-Standards-Version: 3.8.0
+Standards-Version: 3.9.1
 Homepage: http://mpd.wikia.com/wiki/Music_Player_Daemon_Wiki
 
 Package: mpd
