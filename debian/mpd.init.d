@@ -33,6 +33,18 @@ if [ -n "$MPD_DEBUG" ]; then
     MPD_OPTS=--verbose
 fi
 
+if [ ! -d "/var/run/mpd" ]; then
+	mkdir /var/run/mpd 
+	if dpkg-statoverride --list --quiet /var/run/mpd > /dev/null; then
+		#if dpkg-statoverride is used update it with permissions there
+		dpkg-statoverride --force --quiet --update --add $( dpkg-statoverride --list --quiet /var/run/mpd ) 2> /dev/null
+	else
+		#use defaults
+		chown mpd:audio /var/run/mpd
+		chmod 755 /var/run/mpd
+	fi
+fi
+
 DBFILE=$(sed -n 's/^[[:space:]]*db_file[[:space:]]*"\?\([^"]*\)\"\?/\1/p' $MPDCONF)
 PIDFILE=$(sed -n 's/^[[:space:]]*pid_file[[:space:]]*"\?\([^"]*\)\"\?/\1/p' $MPDCONF)
 
