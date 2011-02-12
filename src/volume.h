@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,22 +23,26 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#define VOLUME_MIXER_OSS	"oss"
-#define VOLUME_MIXER_ALSA	"alsa"
-#define VOLUME_MIXER_SOFTWARE	"software"
-#define VOLUME_MIXER_HARDWARE	"hardware"
-#define VOLUME_MIXER_DISABLED	"disabled"
-
 void volume_init(void);
 
 void volume_finish(void);
 
 int volume_level_get(void);
 
-bool volume_level_change(int change, bool rel);
+bool volume_level_change(unsigned volume);
 
-void read_sw_volume_state(FILE *fp);
+bool
+read_sw_volume_state(const char *line);
 
 void save_sw_volume_state(FILE *fp);
+
+/**
+ * Generates a hash number for the current state of the software
+ * volume control.  This is used by timer_save_state_file() to
+ * determine whether the state has changed and the state file should
+ * be saved.
+ */
+unsigned
+sw_volume_state_get_hash(void);
 
 #endif

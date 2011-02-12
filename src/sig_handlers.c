@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "sig_handlers.h"
 
 #ifndef WIN32
@@ -24,6 +25,7 @@
 #include "log.h"
 #include "main.h"
 #include "event_pipe.h"
+#include "mpd_error.h"
 
 #include <glib.h>
 
@@ -45,7 +47,7 @@ static void
 x_sigaction(int signum, const struct sigaction *act)
 {
 	if (sigaction(signum, act, NULL) < 0)
-		g_error("sigaction() failed: %s", strerror(errno));
+		MPD_ERROR("sigaction() failed: %s", strerror(errno));
 }
 
 static void
@@ -65,7 +67,7 @@ void initSigHandlers(void)
 	sa.sa_flags = 0;
 	sigemptyset(&sa.sa_mask);
 	sa.sa_handler = SIG_IGN;
-	while (sigaction(SIGPIPE, &sa, NULL) < 0 && errno == EINTR) ;
+	x_sigaction(SIGPIPE, &sa);
 
 	sa.sa_handler = exit_signal_handler;
 	x_sigaction(SIGINT, &sa);

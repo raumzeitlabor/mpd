@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,9 +17,11 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "output_api.h"
 #include "encoder_plugin.h"
 #include "encoder_list.h"
+#include "mpd_error.h"
 
 #include <shout/shout.h>
 #include <glib.h>
@@ -100,8 +102,8 @@ static void free_shout_data(struct shout_data *sd)
 #define check_block_param(name) {		  \
 		block_param = config_get_block_param(param, name);	\
 		if (!block_param) {					\
-			g_error("no \"%s\" defined for shout device defined at line " \
-				"%i\n", name, param->line);		\
+			MPD_ERROR("no \"%s\" defined for shout device defined at line " \
+				  "%i\n", name, param->line);		\
 		}							\
 	}
 
@@ -125,6 +127,13 @@ my_shout_init_driver(const struct audio_format *audio_format,
 	const char *value;
 	struct block_param *block_param;
 	int public;
+
+	if (audio_format == NULL ||
+	    !audio_format_fully_defined(audio_format)) {
+		g_set_error(error, shout_output_quark(), 0,
+			    "Need full audio format specification");
+		return NULL;
+	}
 
 	sd = new_shout_data();
 
@@ -190,8 +199,6 @@ my_shout_init_driver(const struct audio_format *audio_format,
 			return NULL;
 		}
 	}
-
-	check_block_param("format");
 
 	encoding = config_get_block_string(param, "encoding", "ogg");
 	encoder_plugin = shout_encoder_plugin_get(encoding);
@@ -335,7 +342,6 @@ write_page(struct shout_data *sd, GError **error)
 	if (sd->buf.len == 0)
 		return true;
 
-	shout_sync(sd->shout_conn);
 	err = shout_send(sd->shout_conn, sd->buf.data, sd->buf.len);
 	if (!handle_shout_error(sd, err, error))
 		return false;
@@ -434,6 +440,18 @@ my_shout_open_device(void *data, struct audio_format *audio_format,
 	return true;
 }
 
+static unsigned
+my_shout_delay(void *data)
+{
+	struct shout_data *sd = (struct shout_data *)data;
+
+	int delay = shout_delay(sd->shout_conn);
+	if (delay < 0)
+		delay = 0;
+
+	return delay;
+}
+
 static size_t
 my_shout_play(void *data, const void *chunk, size_t size, GError **error)
 {
@@ -448,14 +466,7 @@ my_shout_play(void *data, const void *chunk, size_t size, GError **error)
 static bool
 my_shout_pause(void *data)
 {
-	struct shout_data *sd = (struct shout_data *)data;
 	static const char silence[1020];
-
-	if (shout_delay(sd->shout_conn) > 500) {
-		/* cap the latency for unpause */
-		g_usleep(500000);
-		return true;
-	}
 
 	return my_shout_play(data, silence, sizeof(silence), NULL);
 }
@@ -471,10 +482,10 @@ shout_tag_to_metadata(const struct tag *tag, char *dest, size_t size)
 
 	for (unsigned i = 0; i < tag->num_items; i++) {
 		switch (tag->items[i]->type) {
-		case TAG_ITEM_ARTIST:
+		case TAG_ARTIST:
 			strncpy(artist, tag->items[i]->value, size);
 			break;
-		case TAG_ITEM_TITLE:
+		case TAG_TITLE:
 			strncpy(title, tag->items[i]->value, size);
 			break;
 
@@ -483,7 +494,7 @@ shout_tag_to_metadata(const struct tag *tag, char *dest, size_t size)
 		}
 	}
 
-	snprintf(dest, size, "%s - %s", title, artist);
+	snprintf(dest, size, "%s - %s", artist, title);
 }
 
 static void my_shout_set_tag(void *data,
@@ -533,6 +544,7 @@ const struct audio_output_plugin shoutPlugin = {
 	.init = my_shout_init_driver,
 	.finish = my_shout_finish_driver,
 	.open = my_shout_open_device,
+	.delay = my_shout_delay,
 	.play = my_shout_play,
 	.pause = my_shout_pause,
 	.cancel = my_shout_drop_buffered_audio,

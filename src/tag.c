@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,11 +17,13 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "tag.h"
 #include "tag_internal.h"
 #include "tag_pool.h"
 #include "conf.h"
 #include "song.h"
+#include "mpd_error.h"
 
 #include <glib.h>
 #include <assert.h>
@@ -42,18 +44,20 @@ static struct {
 } bulk;
 
 const char *tag_item_names[TAG_NUM_OF_ITEM_TYPES] = {
-	"Artist",
-	"Album",
-	"AlbumArtist",
-	"Title",
-	"Track",
-	"Name",
-	"Genre",
-	"Date",
-	"Composer",
-	"Performer",
-	"Comment",
-	"Disc",
+	[TAG_ARTIST] = "Artist",
+	[TAG_ARTIST_SORT] = "ArtistSort",
+	[TAG_ALBUM] = "Album",
+	[TAG_ALBUM_ARTIST] = "AlbumArtist",
+	[TAG_ALBUM_ARTIST_SORT] = "AlbumArtistSort",
+	[TAG_TITLE] = "Title",
+	[TAG_TRACK] = "Track",
+	[TAG_NAME] = "Name",
+	[TAG_GENRE] = "Genre",
+	[TAG_DATE] = "Date",
+	[TAG_COMPOSER] = "Composer",
+	[TAG_PERFORMER] = "Performer",
+	[TAG_COMMENT] = "Comment",
+	[TAG_DISC] = "Disc",
 
 	/* MusicBrainz tags from http://musicbrainz.org/doc/MusicBrainzTag */
 	[TAG_MUSICBRAINZ_ARTISTID] = "MUSICBRAINZ_ARTISTID",
@@ -111,7 +115,7 @@ void tag_lib_init(void)
 	/* parse the "metadata_to_use" config parameter below */
 
 	/* ignore comments by default */
-	ignore_tag_items[TAG_ITEM_COMMENT] = true;
+	ignore_tag_items[TAG_COMMENT] = true;
 
 	value = config_get_string(CONF_METADATA_TO_USE, NULL);
 	if (value == NULL)
@@ -135,8 +139,8 @@ void tag_lib_init(void)
 
 			type = tag_name_parse_i(c);
 			if (type == TAG_NUM_OF_ITEM_TYPES)
-				g_error("error parsing metadata item \"%s\"",
-					c);
+				MPD_ERROR("error parsing metadata item \"%s\"",
+					  c);
 
 			ignore_tag_items[type] = false;
 
@@ -169,7 +173,7 @@ static void tag_delete_item(struct tag *tag, unsigned idx)
 
 	if (tag->num_items - idx > 0) {
 		memmove(tag->items + idx, tag->items + idx + 1,
-			tag->num_items - idx);
+			(tag->num_items - idx) * sizeof(tag->items[0]));
 	}
 
 	if (tag->num_items > 0) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,20 +20,25 @@
 #ifndef MPD_DIRECTORY_H
 #define MPD_DIRECTORY_H
 
+#include "check.h"
 #include "dirvec.h"
 #include "songvec.h"
+#include "playlist_vector.h"
 
 #include <stdbool.h>
 #include <sys/types.h>
 
 #define DIRECTORY_DIR		"directory: "
 
-#define DEVICE_INARCHIVE	(unsigned)(-1)
-#define DEVICE_CONTAINER	(unsigned)(-2)
+#define DEVICE_INARCHIVE (dev_t)(-1)
+#define DEVICE_CONTAINER (dev_t)(-2)
 
 struct directory {
 	struct dirvec children;
 	struct songvec songs;
+
+	struct playlist_vector playlists;
+
 	struct directory *parent;
 	time_t mtime;
 	ino_t inode;

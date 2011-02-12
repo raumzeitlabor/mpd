@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,12 +17,13 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "input/curl_input_plugin.h"
 #include "input_plugin.h"
 #include "conf.h"
-#include "config.h"
 #include "tag.h"
 #include "icy_metadata.h"
+#include "glib_compat.h"
 
 #include <assert.h>
 
@@ -56,6 +57,8 @@ struct buffer {
 };
 
 struct input_curl {
+	struct input_stream base;
+
 	/* some buffers which were passed to libcurl, which we have
 	   too free */
 	char *url, *range;
@@ -96,8 +99,15 @@ static struct curl_slist *http_200_aliases;
 static const char *proxy, *proxy_user, *proxy_password;
 static unsigned proxy_port;
 
+static inline GQuark
+curl_quark(void)
+{
+	return g_quark_from_static_string("curl");
+}
+
 static bool
-input_curl_init(const struct config_param *param)
+input_curl_init(const struct config_param *param,
+		G_GNUC_UNUSED GError **error_r)
 {
 	CURLcode code = curl_global_init(CURL_GLOBAL_ALL);
 	if (code != CURLE_OK) {
@@ -144,11 +154,6 @@ buffer_free_callback(gpointer data, G_GNUC_UNUSED gpointer user_data)
 	g_free(data);
 }
 
-/* g_queue_clear() was introduced in GLib 2.14 */
-#if !GLIB_CHECK_VERSION(2,14,0)
-#define g_queue_clear(q) do { g_queue_free(q); q = g_queue_new(); } while (0)
-#endif
-
 /**
  * Frees the current "libcurl easy" handle, and everything associated
  * with it.
@@ -176,10 +181,8 @@ input_curl_easy_free(struct input_curl *c)
  * Frees this stream (but not the input_stream struct itself).
  */
 static void
-input_curl_free(struct input_stream *is)
+input_curl_free(struct input_curl *c)
 {
-	struct input_curl *c = is->data;
-
 	if (c->tag != NULL)
 		tag_free(c->tag);
 	g_free(c->meta_name);
@@ -192,13 +195,14 @@ input_curl_free(struct input_stream *is)
 	g_queue_free(c->buffers);
 
 	g_free(c->url);
+	input_stream_deinit(&c->base);
 	g_free(c);
 }
 
 static struct tag *
 input_curl_tag(struct input_stream *is)
 {
-	struct input_curl *c = is->data;
+	struct input_curl *c = (struct input_curl *)is;
 	struct tag *tag = c->tag;
 
 	c->tag = NULL;
@@ -206,9 +210,8 @@ input_curl_tag(struct input_stream *is)
 }
 
 static bool
-input_curl_multi_info_read(struct input_stream *is)
+input_curl_multi_info_read(struct input_curl *c, GError **error_r)
 {
-	struct input_curl *c = is->data;
 	CURLMsg *msg;
 	int msgs_in_queue;
 
@@ -216,11 +219,12 @@ input_curl_multi_info_read(struct input_stream *is)
 					   &msgs_in_queue)) != NULL) {
 		if (msg->msg == CURLMSG_DONE) {
 			c->eof = true;
-			is->ready = true;
+			c->base.ready = true;
 
 			if (msg->data.result != CURLE_OK) {
-				g_warning("curl failed: %s\n", c->error);
-				is->error = -1;
+				g_set_error(error_r, curl_quark(),
+					    msg->data.result,
+					    "curl failed: %s", c->error);
 				return false;
 			}
 		}
@@ -236,7 +240,7 @@ input_curl_multi_info_read(struct input_stream *is)
  * available
  */
 static int
-input_curl_select(struct input_curl *c)
+input_curl_select(struct input_curl *c, GError **error_r)
 {
 	fd_set rfds, wfds, efds;
 	int max_fd, ret;
@@ -254,12 +258,13 @@ input_curl_select(struct input_curl *c)
 
 	mcode = curl_multi_fdset(c->multi, &rfds, &wfds, &efds, &max_fd);
 	if (mcode != CURLM_OK) {
-		g_warning("curl_multi_fdset() failed: %s\n",
-			  curl_multi_strerror(mcode));
+		g_set_error(error_r, curl_quark(), mcode,
+			    "curl_multi_fdset() failed: %s",
+			    curl_multi_strerror(mcode));
 		return -1;
 	}
 
-#if LIBCURL_VERSION_NUM >= 0x070f00
+#if LIBCURL_VERSION_NUM >= 0x070f04
 	long timeout2;
 	mcode = curl_multi_timeout(c->multi, &timeout2);
 	if (mcode != CURLM_OK) {
@@ -279,15 +284,17 @@ input_curl_select(struct input_curl *c)
 
 	ret = select(max_fd + 1, &rfds, &wfds, &efds, &timeout);
 	if (ret < 0)
-		g_warning("select() failed: %s\n", strerror(errno));
+		g_set_error(error_r, g_quark_from_static_string("errno"),
+			    errno,
+			    "select() failed: %s\n", g_strerror(errno));
 
 	return ret;
 }
 
 static bool
-fill_buffer(struct input_stream *is)
+fill_buffer(struct input_stream *is, GError **error_r)
 {
-	struct input_curl *c = is->data;
+	struct input_curl *c = (struct input_curl *)is;
 	CURLMcode mcode = CURLM_CALL_MULTI_PERFORM;
 
 	while (!c->eof && g_queue_is_empty(c->buffers)) {
@@ -297,7 +304,7 @@ fill_buffer(struct input_stream *is)
 		if (mcode != CURLM_CALL_MULTI_PERFORM) {
 			/* if we're still here, there is no input yet
 			   - wait for input */
-			int ret = input_curl_select(c);
+			int ret = input_curl_select(c, error_r);
 			if (ret <= 0)
 				/* no data yet or error */
 				return false;
@@ -305,14 +312,15 @@ fill_buffer(struct input_stream *is)
 
 		mcode = curl_multi_perform(c->multi, &running_handles);
 		if (mcode != CURLM_OK && mcode != CURLM_CALL_MULTI_PERFORM) {
-			g_warning("curl_multi_perform() failed: %s\n",
-				  curl_multi_strerror(mcode));
+			g_set_error(error_r, curl_quark(), mcode,
+				    "curl_multi_perform() failed: %s",
+				    curl_multi_strerror(mcode));
 			c->eof = true;
 			is->ready = true;
 			return false;
 		}
 
-		bret = input_curl_multi_info_read(is);
+		bret = input_curl_multi_info_read(c, error_r);
 		if (!bret)
 			return false;
 	}
@@ -404,16 +412,17 @@ copy_icy_tag(struct input_curl *c)
 	if (c->tag != NULL)
 		tag_free(c->tag);
 
-	if (c->meta_name != NULL && !tag_has_type(tag, TAG_ITEM_NAME))
-		tag_add_item(tag, TAG_ITEM_NAME, c->meta_name);
+	if (c->meta_name != NULL && !tag_has_type(tag, TAG_NAME))
+		tag_add_item(tag, TAG_NAME, c->meta_name);
 
 	c->tag = tag;
 }
 
 static size_t
-input_curl_read(struct input_stream *is, void *ptr, size_t size)
+input_curl_read(struct input_stream *is, void *ptr, size_t size,
+		GError **error_r)
 {
-	struct input_curl *c = is->data;
+	struct input_curl *c = (struct input_curl *)is;
 	bool success;
 	size_t nbytes = 0;
 	char *dest = ptr;
@@ -421,7 +430,7 @@ input_curl_read(struct input_stream *is, void *ptr, size_t size)
 	do {
 		/* fill the buffer */
 
-		success = fill_buffer(is);
+		success = fill_buffer(is, error_r);
 		if (!success)
 			return 0;
 
@@ -439,7 +448,7 @@ input_curl_read(struct input_stream *is, void *ptr, size_t size)
 	if (icy_defined(&c->icy_metadata))
 		copy_icy_tag(c);
 
-	is->offset += (off_t)nbytes;
+	is->offset += (goffset)nbytes;
 
 	return nbytes;
 }
@@ -447,21 +456,23 @@ input_curl_read(struct input_stream *is, void *ptr, size_t size)
 static void
 input_curl_close(struct input_stream *is)
 {
-	input_curl_free(is);
+	struct input_curl *c = (struct input_curl *)is;
+
+	input_curl_free(c);
 }
 
 static bool
 input_curl_eof(G_GNUC_UNUSED struct input_stream *is)
 {
-	struct input_curl *c = is->data;
+	struct input_curl *c = (struct input_curl *)is;
 
 	return c->eof && g_queue_is_empty(c->buffers);
 }
 
 static int
-input_curl_buffer(struct input_stream *is)
+input_curl_buffer(struct input_stream *is, GError **error_r)
 {
-	struct input_curl *c = is->data;
+	struct input_curl *c = (struct input_curl *)is;
 	CURLMcode mcode;
 	int running_handles;
 	bool ret;
@@ -472,7 +483,8 @@ input_curl_buffer(struct input_stream *is)
 		/* not ready yet means the caller is waiting in a busy
 		   loop; relax that by calling select() on the
 		   socket */
-		input_curl_select(c);
+		if (input_curl_select(c, error_r) < 0)
+			return -1;
 
 	do {
 		mcode = curl_multi_perform(c->multi, &running_handles);
@@ -480,14 +492,15 @@ input_curl_buffer(struct input_stream *is)
 		 g_queue_is_empty(c->buffers));
 
 	if (mcode != CURLM_OK && mcode != CURLM_CALL_MULTI_PERFORM) {
-		g_warning("curl_multi_perform() failed: %s\n",
-			  curl_multi_strerror(mcode));
+		g_set_error(error_r, curl_quark(), mcode,
+			    "curl_multi_perform() failed: %s",
+			    curl_multi_strerror(mcode));
 		c->eof = true;
 		is->ready = true;
 		return -1;
 	}
 
-	ret = input_curl_multi_info_read(is);
+	ret = input_curl_multi_info_read(c, error_r);
 	if (!ret)
 		return -1;
 
@@ -498,8 +511,7 @@ input_curl_buffer(struct input_stream *is)
 static size_t
 input_curl_headerfunction(void *ptr, size_t size, size_t nmemb, void *stream)
 {
-	struct input_stream *is = stream;
-	struct input_curl *c = is->data;
+	struct input_curl *c = (struct input_curl *)stream;
 	const char *header = ptr, *end, *value;
 	char name[64];
 
@@ -528,7 +540,7 @@ input_curl_headerfunction(void *ptr, size_t size, size_t nmemb, void *stream)
 	if (g_ascii_strcasecmp(name, "accept-ranges") == 0) {
 		/* a stream with icy-metadata is not seekable */
 		if (!icy_defined(&c->icy_metadata))
-			is->seekable = true;
+			c->base.seekable = true;
 	} else if (g_ascii_strcasecmp(name, "content-length") == 0) {
 		char buffer[64];
 
@@ -538,10 +550,10 @@ input_curl_headerfunction(void *ptr, size_t size, size_t nmemb, void *stream)
 		memcpy(buffer, value, end - value);
 		buffer[end - value] = 0;
 
-		is->size = is->offset + g_ascii_strtoull(buffer, NULL, 10);
+		c->base.size = c->base.offset + g_ascii_strtoull(buffer, NULL, 10);
 	} else if (g_ascii_strcasecmp(name, "content-type") == 0) {
-		g_free(is->mime);
-		is->mime = g_strndup(value, end - value);
+		g_free(c->base.mime);
+		c->base.mime = g_strndup(value, end - value);
 	} else if (g_ascii_strcasecmp(name, "icy-name") == 0 ||
 		   g_ascii_strcasecmp(name, "ice-name") == 0 ||
 		   g_ascii_strcasecmp(name, "x-audiocast-name") == 0) {
@@ -552,7 +564,7 @@ input_curl_headerfunction(void *ptr, size_t size, size_t nmemb, void *stream)
 			tag_free(c->tag);
 
 		c->tag = tag_new();
-		tag_add_item(c->tag, TAG_ITEM_NAME, c->meta_name);
+		tag_add_item(c->tag, TAG_NAME, c->meta_name);
 	} else if (g_ascii_strcasecmp(name, "icy-metaint") == 0) {
 		char buffer[64];
 		size_t icy_metaint;
@@ -572,7 +584,7 @@ input_curl_headerfunction(void *ptr, size_t size, size_t nmemb, void *stream)
 
 			/* a stream with icy-metadata is not
 			   seekable */
-			is->seekable = false;
+			c->base.seekable = false;
 		}
 	}
 
@@ -583,8 +595,7 @@ input_curl_headerfunction(void *ptr, size_t size, size_t nmemb, void *stream)
 static size_t
 input_curl_writefunction(void *ptr, size_t size, size_t nmemb, void *stream)
 {
-	struct input_stream *is = stream;
-	struct input_curl *c = is->data;
+	struct input_curl *c = (struct input_curl *)stream;
 	struct buffer *buffer;
 
 	size *= nmemb;
@@ -598,15 +609,14 @@ input_curl_writefunction(void *ptr, size_t size, size_t nmemb, void *stream)
 	g_queue_push_tail(c->buffers, buffer);
 
 	c->buffered = true;
-	is->ready = true;
+	c->base.ready = true;
 
 	return size;
 }
 
 static bool
-input_curl_easy_init(struct input_stream *is)
+input_curl_easy_init(struct input_curl *c, GError **error_r)
 {
-	struct input_curl *c = is->data;
 	CURLcode code;
 	CURLMcode mcode;
 
@@ -614,22 +624,27 @@ input_curl_easy_init(struct input_stream *is)
 
 	c->easy = curl_easy_init();
 	if (c->easy == NULL) {
-		g_warning("curl_easy_init() failed\n");
+		g_set_error(error_r, curl_quark(), 0,
+			    "curl_easy_init() failed");
 		return false;
 	}
 
 	mcode = curl_multi_add_handle(c->multi, c->easy);
-	if (mcode != CURLM_OK)
+	if (mcode != CURLM_OK) {
+		g_set_error(error_r, curl_quark(), mcode,
+			    "curl_multi_add_handle() failed: %s",
+			    curl_multi_strerror(mcode));
 		return false;
+	}
 
 	curl_easy_setopt(c->easy, CURLOPT_USERAGENT,
 			 "Music Player Daemon " VERSION);
 	curl_easy_setopt(c->easy, CURLOPT_HEADERFUNCTION,
 			 input_curl_headerfunction);
-	curl_easy_setopt(c->easy, CURLOPT_WRITEHEADER, is);
+	curl_easy_setopt(c->easy, CURLOPT_WRITEHEADER, c);
 	curl_easy_setopt(c->easy, CURLOPT_WRITEFUNCTION,
 			 input_curl_writefunction);
-	curl_easy_setopt(c->easy, CURLOPT_WRITEDATA, is);
+	curl_easy_setopt(c->easy, CURLOPT_WRITEDATA, c);
 	curl_easy_setopt(c->easy, CURLOPT_HTTP200ALIASES, http_200_aliases);
 	curl_easy_setopt(c->easy, CURLOPT_FOLLOWLOCATION, 1);
 	curl_easy_setopt(c->easy, CURLOPT_MAXREDIRS, 5);
@@ -650,8 +665,12 @@ input_curl_easy_init(struct input_stream *is)
 	}
 
 	code = curl_easy_setopt(c->easy, CURLOPT_URL, c->url);
-	if (code != CURLE_OK)
+	if (code != CURLE_OK) {
+		g_set_error(error_r, curl_quark(), code,
+			    "curl_easy_setopt() failed: %s",
+			    curl_easy_strerror(code));
 		return false;
+	}
 
 	c->request_headers = NULL;
 	c->request_headers = curl_slist_append(c->request_headers,
@@ -664,9 +683,9 @@ input_curl_easy_init(struct input_stream *is)
 void
 input_curl_reinit(struct input_stream *is)
 {
-	struct input_curl *c = is->data;
+	struct input_curl *c = (struct input_curl *)is;
 
-	assert(is->plugin == &input_plugin_curl);
+	assert(c->base.plugin == &input_plugin_curl);
 	assert(c->easy != NULL);
 
 	curl_easy_setopt(c->easy, CURLOPT_WRITEHEADER, is);
@@ -674,7 +693,7 @@ input_curl_reinit(struct input_stream *is)
 }
 
 static bool
-input_curl_send_request(struct input_curl *c)
+input_curl_send_request(struct input_curl *c, GError **error_r)
 {
 	CURLMcode mcode;
 	int running_handles;
@@ -684,8 +703,9 @@ input_curl_send_request(struct input_curl *c)
 	} while (mcode == CURLM_CALL_MULTI_PERFORM);
 
 	if (mcode != CURLM_OK) {
-		g_warning("curl_multi_perform() failed: %s\n",
-			  curl_multi_strerror(mcode));
+		g_set_error(error_r, curl_quark(), mcode,
+			    "curl_multi_perform() failed: %s",
+			    curl_multi_strerror(mcode));
 		return false;
 	}
 
@@ -693,9 +713,10 @@ input_curl_send_request(struct input_curl *c)
 }
 
 static bool
-input_curl_seek(struct input_stream *is, off_t offset, int whence)
+input_curl_seek(struct input_stream *is, goffset offset, int whence,
+		GError **error_r)
 {
-	struct input_curl *c = is->data;
+	struct input_curl *c = (struct input_curl *)is;
 	bool ret;
 
 	assert(is->ready);
@@ -741,7 +762,7 @@ input_curl_seek(struct input_stream *is, off_t offset, int whence)
 		buffer = (struct buffer *)g_queue_pop_head(c->buffers);
 
 		length = buffer->size - buffer->consumed;
-		if (offset - is->offset < (off_t)length)
+		if (offset - is->offset < (goffset)length)
 			length = offset - is->offset;
 
 		buffer = consume_buffer(buffer, length);
@@ -767,7 +788,7 @@ input_curl_seek(struct input_stream *is, off_t offset, int whence)
 		return true;
 	}
 
-	ret = input_curl_easy_init(is);
+	ret = input_curl_easy_init(c, error_r);
 	if (!ret)
 		return false;
 
@@ -778,59 +799,58 @@ input_curl_seek(struct input_stream *is, off_t offset, int whence)
 		curl_easy_setopt(c->easy, CURLOPT_RANGE, c->range);
 	}
 
-	ret = input_curl_send_request(c);
+	ret = input_curl_send_request(c, error_r);
 	if (!ret)
 		return false;
 
-	return input_curl_multi_info_read(is);
+	return input_curl_multi_info_read(c, error_r);
 }
 
-static bool
-input_curl_open(struct input_stream *is, const char *url)
+static struct input_stream *
+input_curl_open(const char *url, GError **error_r)
 {
 	struct input_curl *c;
 	bool ret;
 
 	if (strncmp(url, "http://", 7) != 0)
-		return false;
+		return NULL;
 
 	c = g_new0(struct input_curl, 1);
+	input_stream_init(&c->base, &input_plugin_curl, url);
+
 	c->url = g_strdup(url);
 	c->buffers = g_queue_new();
 
-	is->plugin = &input_plugin_curl;
-	is->data = c;
-
 	c->multi = curl_multi_init();
 	if (c->multi == NULL) {
-		g_warning("curl_multi_init() failed\n");
-
-		input_curl_free(is);
-		return false;
+		g_set_error(error_r, curl_quark(), 0,
+			    "curl_multi_init() failed");
+		input_curl_free(c);
+		return NULL;
 	}
 
 	icy_clear(&c->icy_metadata);
 	c->tag = NULL;
 
-	ret = input_curl_easy_init(is);
+	ret = input_curl_easy_init(c, error_r);
 	if (!ret) {
-		input_curl_free(is);
-		return false;
+		input_curl_free(c);
+		return NULL;
 	}
 
-	ret = input_curl_send_request(c);
+	ret = input_curl_send_request(c, error_r);
 	if (!ret) {
-		input_curl_free(is);
-		return false;
+		input_curl_free(c);
+		return NULL;
 	}
 
-	ret = input_curl_multi_info_read(is);
+	ret = input_curl_multi_info_read(c, error_r);
 	if (!ret) {
-		input_curl_free(is);
-		return false;
+		input_curl_free(c);
+		return NULL;
 	}
 
-	return true;
+	return &c->base;
 }
 
 const struct input_plugin input_plugin_curl = {

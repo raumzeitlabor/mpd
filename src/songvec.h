@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -34,7 +34,7 @@ void songvec_deinit(void);
 void songvec_sort(struct songvec *sv);
 
 struct song *
-songvec_find(const struct songvec *sv, const char *url);
+songvec_find(const struct songvec *sv, const char *uri);
 
 int
 songvec_delete(struct songvec *sv, const struct song *del);

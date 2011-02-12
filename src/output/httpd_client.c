@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,15 +17,20 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "httpd_client.h"
 #include "httpd_internal.h"
 #include "fifo_buffer.h"
 #include "page.h"
 #include "icy_server.h"
+#include "glib_compat.h"
 
 #include <stdbool.h>
 #include <assert.h>
 #include <string.h>
+
+#undef G_LOG_DOMAIN
+#define G_LOG_DOMAIN "httpd_output"
 
 struct httpd_client {
 	/**
@@ -280,11 +285,12 @@ httpd_client_send_response(struct httpd_client *client)
 	} else {
 		gchar *metadata_header;
 
-		metadata_header = icy_server_metadata_header("Add config information here!", /* TODO */
-							     "Add config information here!", /* TODO */
-							     "Add config information here!", /* TODO */
-							     client->httpd->content_type,
-							     client->metaint);
+		metadata_header = icy_server_metadata_header(
+			client->httpd->name,
+			client->httpd->genre,
+			client->httpd->website,
+			client->httpd->content_type,
+			client->metaint);
 
 		g_strlcpy(buffer, metadata_header, sizeof(buffer));
 
@@ -481,11 +487,6 @@ httpd_client_queue_size(const struct httpd_client *client)
 	g_queue_foreach(client->pages, httpd_client_add_page_size, &size);
 	return size;
 }
-
-/* g_queue_clear() was introduced in GLib 2.14 */
-#if !GLIB_CHECK_VERSION(2,14,0)
-#define g_queue_clear(q) do { g_queue_free(q); q = g_queue_new(); } while (0)
-#endif
 
 void
 httpd_client_cancel(struct httpd_client *client)

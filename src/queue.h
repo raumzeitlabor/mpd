@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -74,8 +74,8 @@ struct queue {
 	/** map order numbers to positions */
 	unsigned *order;
 
-	/** map song ids to posiitons */
-	int *idToPosition;
+	/** map song ids to positions */
+	int *id_to_position;
 
 	/** repeat playback when the end of the queue has been
 	    reached? */
@@ -146,10 +146,10 @@ queue_id_to_position(const struct queue *queue, unsigned id)
 	if (id >= queue->max_length * QUEUE_HASH_MULT)
 		return -1;
 
-	assert(queue->idToPosition[id] >= -1);
-	assert(queue->idToPosition[id] < (int)queue->length);
+	assert(queue->id_to_position[id] >= -1);
+	assert(queue->id_to_position[id] < (int)queue->length);
 
-	return queue->idToPosition[id];
+	return queue->id_to_position[id];
 }
 
 static inline int

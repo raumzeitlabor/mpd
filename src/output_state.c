@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,7 @@
  *
  */
 
+#include "config.h"
 #include "output_state.h"
 #include "output_internal.h"
 #include "output_all.h"
@@ -34,8 +35,10 @@
 
 #define AUDIO_DEVICE_STATE "audio_device_state:"
 
+unsigned audio_output_state_version;
+
 void
-saveAudioDevicesState(FILE *fp)
+audio_output_state_save(FILE *fp)
 {
 	unsigned n = audio_output_count();
 
@@ -49,35 +52,40 @@ saveAudioDevicesState(FILE *fp)
 	}
 }
 
-void
-readAudioDevicesState(FILE *fp)
+bool
+audio_output_state_read(const char *line)
 {
-	char buffer[1024];
+	long value;
+	char *endptr;
+	const char *name;
+	struct audio_output *ao;
 
-	while (fgets(buffer, sizeof(buffer), fp)) {
-		char *c, *name;
-		struct audio_output *ao;
+	if (!g_str_has_prefix(line, AUDIO_DEVICE_STATE))
+		return false;
 
-		g_strchomp(buffer);
+	line += sizeof(AUDIO_DEVICE_STATE) - 1;
 
-		if (!g_str_has_prefix(buffer, AUDIO_DEVICE_STATE))
-			continue;
+	value = strtol(line, &endptr, 10);
+	if (*endptr != ':' || (value != 0 && value != 1))
+		return false;
 
-		c = strchr(buffer, ':');
-		if (!c || !(++c))
-			goto errline;
+	if (value != 0)
+		/* state is "enabled": no-op */
+		return true;
 
-		name = strchr(c, ':');
-		if (!name || !(++name))
-			goto errline;
-
-		ao = audio_output_find(name);
-		if (ao != NULL && atoi(c) == 0)
-			ao->enabled = false;
-
-		continue;
-errline:
-		/* nonfatal */
-		g_warning("invalid line in state_file: %s\n", buffer);
+	name = endptr + 1;
+	ao = audio_output_find(name);
+	if (ao == NULL) {
+		g_debug("Ignoring device state for '%s'", name);
+		return true;
 	}
+
+	ao->enabled = false;
+	return true;
+}
+
+unsigned
+audio_output_state_get_version(void)
+{
+	return audio_output_state_version;
 }

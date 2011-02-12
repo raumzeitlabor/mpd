@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -98,5 +98,11 @@ music_pipe_push(struct music_pipe *mp, struct music_chunk *chunk);
  */
 unsigned
 music_pipe_size(const struct music_pipe *mp);
+
+static inline bool
+music_pipe_empty(const struct music_pipe *mp)
+{
+	return music_pipe_size(mp) == 0;
+}
 
 #endif

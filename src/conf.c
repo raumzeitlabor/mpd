@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,10 +17,13 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "conf.h"
 #include "utils.h"
-#include "buffer2array.h"
+#include "tokenizer.h"
 #include "path.h"
+#include "glib_compat.h"
+#include "mpd_error.h"
 
 #include <glib.h>
 
@@ -36,37 +39,84 @@
 #define MAX_STRING_SIZE	MPD_PATH_MAX+80
 
 #define CONF_COMMENT		'#'
-#define CONF_BLOCK_BEGIN	"{"
-#define CONF_BLOCK_END		"}"
-
-#define CONF_REPEATABLE_MASK	0x01
-#define CONF_BLOCK_MASK		0x02
-#define CONF_LINE_TOKEN_MAX	3
 
 struct config_entry {
-	const char *name;
-	unsigned char mask;
+	const char *const name;
+	const bool repeatable;
+	const bool block;
 
 	GSList *params;
 };
 
-static GSList *config_entries;
+static struct config_entry config_entries[] = {
+	{ .name = CONF_MUSIC_DIR, false, false },
+	{ .name = CONF_PLAYLIST_DIR, false, false },
+	{ .name = CONF_FOLLOW_INSIDE_SYMLINKS, false, false },
+	{ .name = CONF_FOLLOW_OUTSIDE_SYMLINKS, false, false },
+	{ .name = CONF_DB_FILE, false, false },
+	{ .name = CONF_STICKER_FILE, false, false },
+	{ .name = CONF_LOG_FILE, false, false },
+	{ .name = CONF_PID_FILE, false, false },
+	{ .name = CONF_STATE_FILE, false, false },
+	{ .name = CONF_USER, false, false },
+	{ .name = CONF_GROUP, false, false },
+	{ .name = CONF_BIND_TO_ADDRESS, true, false },
+	{ .name = CONF_PORT, false, false },
+	{ .name = CONF_LOG_LEVEL, false, false },
+	{ .name = CONF_ZEROCONF_NAME, false, false },
+	{ .name = CONF_ZEROCONF_ENABLED, false, false },
+	{ .name = CONF_PASSWORD, true, false },
+	{ .name = CONF_DEFAULT_PERMS, false, false },
+	{ .name = CONF_AUDIO_OUTPUT, true, true },
+	{ .name = CONF_AUDIO_OUTPUT_FORMAT, false, false },
+	{ .name = CONF_MIXER_TYPE, false, false },
+	{ .name = CONF_REPLAYGAIN, false, false },
+	{ .name = CONF_REPLAYGAIN_PREAMP, false, false },
+	{ .name = CONF_REPLAYGAIN_MISSING_PREAMP, false, false },
+	{ .name = CONF_REPLAYGAIN_LIMIT, false, false },
+	{ .name = CONF_VOLUME_NORMALIZATION, false, false },
+	{ .name = CONF_SAMPLERATE_CONVERTER, false, false },
+	{ .name = CONF_AUDIO_BUFFER_SIZE, false, false },
+	{ .name = CONF_BUFFER_BEFORE_PLAY, false, false },
+	{ .name = CONF_HTTP_PROXY_HOST, false, false },
+	{ .name = CONF_HTTP_PROXY_PORT, false, false },
+	{ .name = CONF_HTTP_PROXY_USER, false, false },
+	{ .name = CONF_HTTP_PROXY_PASSWORD, false, false },
+	{ .name = CONF_CONN_TIMEOUT, false, false },
+	{ .name = CONF_MAX_CONN, false, false },
+	{ .name = CONF_MAX_PLAYLIST_LENGTH, false, false },
+	{ .name = CONF_MAX_COMMAND_LIST_SIZE, false, false },
+	{ .name = CONF_MAX_OUTPUT_BUFFER_SIZE, false, false },
+	{ .name = CONF_FS_CHARSET, false, false },
+	{ .name = CONF_ID3V1_ENCODING, false, false },
+	{ .name = CONF_METADATA_TO_USE, false, false },
+	{ .name = CONF_SAVE_ABSOLUTE_PATHS, false, false },
+	{ .name = CONF_DECODER, true, true },
+	{ .name = CONF_INPUT, true, true },
+	{ .name = CONF_GAPLESS_MP3_PLAYBACK, false, false },
+	{ .name = CONF_PLAYLIST_PLUGIN, true, true },
+	{ .name = CONF_AUTO_UPDATE, false, false },
+	{ .name = CONF_AUTO_UPDATE_DEPTH, false, false },
+	{ .name = "filter", true, true },
+};
 
-static int get_bool(const char *value)
+static bool
+get_bool(const char *value, bool *value_r)
 {
-	const char **x;
 	static const char *t[] = { "yes", "true", "1", NULL };
 	static const char *f[] = { "no", "false", "0", NULL };
 
-	for (x = t; *x; x++) {
-		if (!g_ascii_strcasecmp(*x, value))
-			return 1;
+	if (string_array_contains(t, value)) {
+		*value_r = true;
+		return true;
 	}
-	for (x = f; *x; x++) {
-		if (!g_ascii_strcasecmp(*x, value))
-			return 0;
+
+	if (string_array_contains(f, value)) {
+		*value_r = false;
+		return true;
 	}
-	return CONF_BOOL_INVALID;
+
+	return false;
 }
 
 struct config_param *
@@ -83,15 +133,14 @@ config_new_param(const char *value, int line)
 
 	ret->num_block_params = 0;
 	ret->block_params = NULL;
+	ret->used = false;
 
 	return ret;
 }
 
 static void
-config_param_free(gpointer data, G_GNUC_UNUSED gpointer user_data)
+config_param_free(struct config_param *param)
 {
-	struct config_param *param = data;
-
 	g_free(param->value);
 
 	for (unsigned i = 0; i < param->num_block_params; i++) {
@@ -105,42 +154,19 @@ config_param_free(gpointer data, G_GNUC_UNUSED gpointer user_data)
 	g_free(param);
 }
 
-static struct config_entry *
-newConfigEntry(const char *name, int repeatable, int block)
-{
-	struct config_entry *ret = g_new(struct config_entry, 1);
-
-	ret->name = name;
-	ret->mask = 0;
-	ret->params = NULL;
-
-	if (repeatable)
-		ret->mask |= CONF_REPEATABLE_MASK;
-	if (block)
-		ret->mask |= CONF_BLOCK_MASK;
-
-	return ret;
-}
-
 static void
-config_entry_free(gpointer data, G_GNUC_UNUSED gpointer user_data)
+config_param_free_callback(gpointer data, G_GNUC_UNUSED gpointer user_data)
 {
-	struct config_entry *entry = data;
+	struct config_param *param = data;
 
-	g_slist_foreach(entry->params, config_param_free, NULL);
-	g_slist_free(entry->params);
-
-	g_free(entry);
+	config_param_free(param);
 }
 
 static struct config_entry *
 config_entry_get(const char *name)
 {
-	GSList *list;
-
-	for (list = config_entries; list != NULL;
-	     list = g_slist_next(list)) {
-		struct config_entry *entry = list->data;
+	for (unsigned i = 0; i < G_N_ELEMENTS(config_entries); ++i) {
+		struct config_entry *entry = &config_entries[i];
 		if (strcmp(entry->name, name) == 0)
 			return entry;
 	}
@@ -148,81 +174,64 @@ config_entry_get(const char *name)
 	return NULL;
 }
 
-static void registerConfigParam(const char *name, int repeatable, int block)
-{
-	struct config_entry *entry;
-
-	entry = config_entry_get(name);
-	if (entry != NULL)
-		g_error("config parameter \"%s\" already registered\n", name);
-
-	entry = newConfigEntry(name, repeatable, block);
-	config_entries = g_slist_prepend(config_entries, entry);
-}
-
 void config_global_finish(void)
 {
-	g_slist_foreach(config_entries, config_entry_free, NULL);
-	g_slist_free(config_entries);
+	for (unsigned i = 0; i < G_N_ELEMENTS(config_entries); ++i) {
+		struct config_entry *entry = &config_entries[i];
+
+		g_slist_foreach(entry->params,
+				config_param_free_callback, NULL);
+		g_slist_free(entry->params);
+	}
 }
 
 void config_global_init(void)
 {
-	config_entries = NULL;
-
-	/* registerConfigParam(name,                   repeatable, block); */
-	registerConfigParam(CONF_MUSIC_DIR,                     0,     0);
-	registerConfigParam(CONF_PLAYLIST_DIR,                  0,     0);
-	registerConfigParam(CONF_FOLLOW_INSIDE_SYMLINKS,        0,     0);
-	registerConfigParam(CONF_FOLLOW_OUTSIDE_SYMLINKS,       0,     0);
-	registerConfigParam(CONF_DB_FILE,                       0,     0);
-	registerConfigParam(CONF_STICKER_FILE, false, false);
-	registerConfigParam(CONF_LOG_FILE,                      0,     0);
-	registerConfigParam(CONF_ERROR_FILE,                    0,     0);
-	registerConfigParam(CONF_PID_FILE,                      0,     0);
-	registerConfigParam(CONF_STATE_FILE,                    0,     0);
-	registerConfigParam(CONF_USER,                          0,     0);
-	registerConfigParam(CONF_BIND_TO_ADDRESS,               1,     0);
-	registerConfigParam(CONF_PORT,                          0,     0);
-	registerConfigParam(CONF_LOG_LEVEL,                     0,     0);
-	registerConfigParam(CONF_ZEROCONF_NAME,                 0,     0);
-	registerConfigParam(CONF_ZEROCONF_ENABLED,              0,     0);
-	registerConfigParam(CONF_PASSWORD,                      1,     0);
-	registerConfigParam(CONF_DEFAULT_PERMS,                 0,     0);
-	registerConfigParam(CONF_AUDIO_OUTPUT,                  1,     1);
-	registerConfigParam(CONF_AUDIO_OUTPUT_FORMAT,           0,     0);
-	registerConfigParam(CONF_MIXER_TYPE,                    0,     0);
-	registerConfigParam(CONF_MIXER_DEVICE,                  0,     0);
-	registerConfigParam(CONF_MIXER_CONTROL,                 0,     0);
-	registerConfigParam(CONF_REPLAYGAIN,                    0,     0);
-	registerConfigParam(CONF_REPLAYGAIN_PREAMP,             0,     0);
-	registerConfigParam(CONF_VOLUME_NORMALIZATION,          0,     0);
-	registerConfigParam(CONF_SAMPLERATE_CONVERTER,          0,     0);
-	registerConfigParam(CONF_AUDIO_BUFFER_SIZE,             0,     0);
-	registerConfigParam(CONF_BUFFER_BEFORE_PLAY,            0,     0);
-	registerConfigParam(CONF_HTTP_PROXY_HOST,               0,     0);
-	registerConfigParam(CONF_HTTP_PROXY_PORT,               0,     0);
-	registerConfigParam(CONF_HTTP_PROXY_USER,               0,     0);
-	registerConfigParam(CONF_HTTP_PROXY_PASSWORD,           0,     0);
-	registerConfigParam(CONF_CONN_TIMEOUT,                  0,     0);
-	registerConfigParam(CONF_MAX_CONN,                      0,     0);
-	registerConfigParam(CONF_MAX_PLAYLIST_LENGTH,           0,     0);
-	registerConfigParam(CONF_MAX_COMMAND_LIST_SIZE,         0,     0);
-	registerConfigParam(CONF_MAX_OUTPUT_BUFFER_SIZE,        0,     0);
-	registerConfigParam(CONF_FS_CHARSET,                    0,     0);
-	registerConfigParam(CONF_ID3V1_ENCODING,                0,     0);
-	registerConfigParam(CONF_METADATA_TO_USE,               0,     0);
-	registerConfigParam(CONF_SAVE_ABSOLUTE_PATHS,           0,     0);
-	registerConfigParam(CONF_DECODER, true, true);
-	registerConfigParam(CONF_INPUT, true, true);
-	registerConfigParam(CONF_GAPLESS_MP3_PLAYBACK,          0,     0);
 }
 
-void
+static void
+config_param_check(gpointer data, G_GNUC_UNUSED gpointer user_data)
+{
+	struct config_param *param = data;
+
+	if (!param->used)
+		/* this whole config_param was not queried at all -
+		   the feature might be disabled at compile time?
+		   Silently ignore it here. */
+		return;
+
+	for (unsigned i = 0; i < param->num_block_params; i++) {
+		struct block_param *bp = &param->block_params[i];
+
+		if (!bp->used)
+			g_warning("option '%s' on line %i was not recognized",
+				  bp->name, bp->line);
+	}
+}
+
+void config_global_check(void)
+{
+	for (unsigned i = 0; i < G_N_ELEMENTS(config_entries); ++i) {
+		struct config_entry *entry = &config_entries[i];
+
+		g_slist_foreach(entry->params, config_param_check, NULL);
+	}
+}
+
+bool
 config_add_block_param(struct config_param * param, const char *name,
-		       const char *value, int line)
+		       const char *value, int line, GError **error_r)
 {
 	struct block_param *bp;
+
+	bp = config_get_block_param(param, name);
+	if (bp != NULL) {
+		g_set_error(error_r, config_quark(), 0,
+			    "\"%s\" first defined on line %i, and "
+			    "redefined on line %i\n", name,
+			    bp->line, line);
+		return false;
+	}
 
 	param->num_block_params++;
 
@@ -235,67 +244,97 @@ config_add_block_param(struct config_param * param, const char *name,
 	bp->name = g_strdup(name);
 	bp->value = g_strdup(value);
 	bp->line = line;
+	bp->used = false;
+
+	return true;
 }
 
 static struct config_param *
-config_read_block(FILE *fp, int *count, char *string)
+config_read_block(FILE *fp, int *count, char *string, GError **error_r)
 {
 	struct config_param *ret = config_new_param(NULL, *count);
+	GError *error = NULL;
+	bool success;
 
-	int i;
-	int numberOfArgs;
-	int argsMinusComment;
+	while (true) {
+		char *line;
+		const char *name, *value;
 
-	while (fgets(string, MAX_STRING_SIZE, fp)) {
-		char *array[CONF_LINE_TOKEN_MAX] = { NULL };
+		line = fgets(string, MAX_STRING_SIZE, fp);
+		if (line == NULL) {
+			config_param_free(ret);
+			g_set_error(error_r, config_quark(), 0,
+				    "Expected '}' before end-of-file");
+			return NULL;
+		}
 
 		(*count)++;
-
-		numberOfArgs = buffer2array(string, array, CONF_LINE_TOKEN_MAX);
-
-		for (i = 0; i < numberOfArgs; i++) {
-			if (array[i][0] == CONF_COMMENT)
-				break;
-		}
-
-		argsMinusComment = i;
-
-		if (0 == argsMinusComment) {
+		line = g_strchug(line);
+		if (*line == 0 || *line == CONF_COMMENT)
 			continue;
+
+		if (*line == '}') {
+			/* end of this block; return from the function
+			   (and from this "while" loop) */
+
+			line = g_strchug(line + 1);
+			if (*line != 0 && *line != CONF_COMMENT) {
+				config_param_free(ret);
+				g_set_error(error_r, config_quark(), 0,
+					    "line %i: Unknown tokens after '}'",
+					    *count);
+				return false;
+			}
+
+			return ret;
 		}
 
-		if (1 == argsMinusComment &&
-		    0 == strcmp(array[0], CONF_BLOCK_END)) {
-			break;
+		/* parse name and value */
+
+		name = tokenizer_next_word(&line, &error);
+		if (name == NULL) {
+			assert(*line != 0);
+			config_param_free(ret);
+			g_propagate_prefixed_error(error_r, error,
+						   "line %i: ", *count);
+			return NULL;
 		}
 
-		if (2 != argsMinusComment) {
-			g_error("improperly formatted config file at line %i:"
-				" %s\n", *count, string);
+		value = tokenizer_next_string(&line, &error);
+		if (value == NULL) {
+			config_param_free(ret);
+			if (*line == 0)
+				g_set_error(error_r, config_quark(), 0,
+					    "line %i: Value missing", *count);
+			else
+				g_propagate_prefixed_error(error_r, error,
+							   "line %i: ",
+							   *count);
+			return NULL;
 		}
 
-		if (0 == strcmp(array[0], CONF_BLOCK_BEGIN) ||
-		    0 == strcmp(array[1], CONF_BLOCK_BEGIN) ||
-		    0 == strcmp(array[0], CONF_BLOCK_END) ||
-		    0 == strcmp(array[1], CONF_BLOCK_END)) {
-			g_error("improperly formatted config file at line %i: %s "
-				"in block beginning at line %i\n",
-				*count, string, ret->line);
+		if (*line != 0 && *line != CONF_COMMENT) {
+			config_param_free(ret);
+			g_set_error(error_r, config_quark(), 0,
+				    "line %i: Unknown tokens after value",
+				    *count);
+			return NULL;
 		}
 
-		config_add_block_param(ret, array[0], array[1], *count);
+		success = config_add_block_param(ret, name, value, *count,
+						 error_r);
+		if (!success) {
+			config_param_free(ret);
+			return false;
+		}
 	}
-
-	return ret;
 }
 
-void config_read_file(const char *file)
+bool
+config_read_file(const char *file, GError **error_r)
 {
 	FILE *fp;
 	char string[MAX_STRING_SIZE + 1];
-	int i;
-	int numberOfArgs;
-	int argsMinusComment;
 	int count = 0;
 	struct config_entry *entry;
 	struct config_param *param;
@@ -303,67 +342,110 @@ void config_read_file(const char *file)
 	g_debug("loading file %s", file);
 
 	if (!(fp = fopen(file, "r"))) {
-		g_error("problems opening file %s for reading: %s\n",
-			file, strerror(errno));
+		g_set_error(error_r, config_quark(), errno,
+			    "Failed to open %s: %s",
+			    file, strerror(errno));
+		return false;
 	}
 
 	while (fgets(string, MAX_STRING_SIZE, fp)) {
-		char *array[CONF_LINE_TOKEN_MAX] = { NULL };
+		char *line;
+		const char *name, *value;
+		GError *error = NULL;
 
 		count++;
 
-		numberOfArgs = buffer2array(string, array, CONF_LINE_TOKEN_MAX);
-
-		for (i = 0; i < numberOfArgs; i++) {
-			if (array[i][0] == CONF_COMMENT)
-				break;
-		}
-
-		argsMinusComment = i;
-
-		if (0 == argsMinusComment) {
+		line = g_strchug(string);
+		if (*line == 0 || *line == CONF_COMMENT)
 			continue;
+
+		/* the first token in each line is the name, followed
+		   by either the value or '{' */
+
+		name = tokenizer_next_word(&line, &error);
+		if (name == NULL) {
+			assert(*line != 0);
+			g_propagate_prefixed_error(error_r, error,
+						   "line %i: ", count);
+			return false;
 		}
 
-		if (2 != argsMinusComment) {
-			g_error("improperly formatted config file at line %i:"
-				" %s\n", count, string);
+		/* get the definition of that option, and check the
+		   "repeatable" flag */
+
+		entry = config_entry_get(name);
+		if (entry == NULL) {
+			g_set_error(error_r, config_quark(), 0,
+				    "unrecognized parameter in config file at "
+				    "line %i: %s\n", count, name);
+			return false;
 		}
 
-		entry = config_entry_get(array[0]);
-		if (entry == NULL)
-			g_error("unrecognized parameter in config file at "
-				"line %i: %s\n", count, string);
-
-		if (!(entry->mask & CONF_REPEATABLE_MASK) &&
-		    entry->params != NULL) {
+		if (entry->params != NULL && !entry->repeatable) {
 			param = entry->params->data;
-			g_error("config parameter \"%s\" is first defined on "
-				"line %i and redefined on line %i\n",
-				array[0], param->line, count);
+			g_set_error(error_r, config_quark(), 0,
+				    "config parameter \"%s\" is first defined "
+				    "on line %i and redefined on line %i\n",
+				    name, param->line, count);
+			return false;
 		}
 
-		if (entry->mask & CONF_BLOCK_MASK) {
-			if (0 != strcmp(array[1], CONF_BLOCK_BEGIN)) {
-				g_error("improperly formatted config file at "
-					"line %i: %s\n", count, string);
+		/* now parse the block or the value */
+
+		if (entry->block) {
+			/* it's a block, call config_read_block() */
+
+			if (*line != '{') {
+				g_set_error(error_r, config_quark(), 0,
+					    "line %i: '{' expected", count);
+				return false;
 			}
-			param = config_read_block(fp, &count, string);
-		} else
-			param = config_new_param(array[1], count);
+
+			line = g_strchug(line + 1);
+			if (*line != 0 && *line != CONF_COMMENT) {
+				g_set_error(error_r, config_quark(), 0,
+					    "line %i: Unknown tokens after '{'",
+					    count);
+				return false;
+			}
+
+			param = config_read_block(fp, &count, string, error_r);
+			if (param == NULL)
+				return false;
+		} else {
+			/* a string value */
+
+			value = tokenizer_next_string(&line, &error);
+			if (value == NULL) {
+				if (*line == 0)
+					g_set_error(error_r, config_quark(), 0,
+						    "line %i: Value missing",
+						    count);
+				else {
+					g_set_error(error_r, config_quark(), 0,
+						    "line %i: %s", count,
+						    error->message);
+					g_error_free(error);
+				}
+
+				return false;
+			}
+
+			if (*line != 0 && *line != CONF_COMMENT) {
+				g_set_error(error_r, config_quark(), 0,
+					    "line %i: Unknown tokens after value",
+					    count);
+				return false;
+			}
+
+			param = config_new_param(value, count);
+		}
 
 		entry->params = g_slist_append(entry->params, param);
 	}
 	fclose(fp);
-}
 
-void
-config_add_param(const char *name, struct config_param *param)
-{
-	struct config_entry *entry = config_entry_get(name);
-	assert(entry != NULL);
-
-	entry->params = g_slist_append(entry->params, param);
+	return true;
 }
 
 struct config_param *
@@ -391,7 +473,7 @@ config_get_next_param(const char *name, const struct config_param * last)
 		return NULL;
 
 	param = node->data;
-
+	param->used = true;
 	return param;
 }
 
@@ -417,11 +499,29 @@ config_get_path(const char *name)
 
 	path = parsePath(param->value);
 	if (path == NULL)
-		g_error("error parsing \"%s\" at line %i\n",
-			name, param->line);
+		MPD_ERROR("error parsing \"%s\" at line %i\n",
+			  name, param->line);
 
 	g_free(param->value);
 	return param->value = path;
+}
+
+unsigned
+config_get_unsigned(const char *name, unsigned default_value)
+{
+	const struct config_param *param = config_get_param(name);
+	long value;
+	char *endptr;
+
+	if (param == NULL)
+		return default_value;
+
+	value = strtol(param->value, &endptr, 0);
+	if (*endptr != 0 || value < 0)
+		MPD_ERROR("Not a valid non-negative number in line %i",
+			  param->line);
+
+	return (unsigned)value;
 }
 
 unsigned
@@ -436,10 +536,10 @@ config_get_positive(const char *name, unsigned default_value)
 
 	value = strtol(param->value, &endptr, 0);
 	if (*endptr != 0)
-		g_error("Not a valid number in line %i", param->line);
+		MPD_ERROR("Not a valid number in line %i", param->line);
 
 	if (value <= 0)
-		g_error("Not a positive number in line %i", param->line);
+		MPD_ERROR("Not a positive number in line %i", param->line);
 
 	return (unsigned)value;
 }
@@ -447,43 +547,35 @@ config_get_positive(const char *name, unsigned default_value)
 struct block_param *
 config_get_block_param(const struct config_param * param, const char *name)
 {
-	struct block_param *ret = NULL;
-
 	if (param == NULL)
 		return NULL;
 
 	for (unsigned i = 0; i < param->num_block_params; i++) {
 		if (0 == strcmp(name, param->block_params[i].name)) {
-			if (ret) {
-				g_warning("\"%s\" first defined on line %i, and "
-					  "redefined on line %i\n", name,
-					  ret->line, param->block_params[i].line);
-			}
-			ret = param->block_params + i;
+			struct block_param *bp = &param->block_params[i];
+			bp->used = true;
+			return bp;
 		}
 	}
 
-	return ret;
+	return NULL;
 }
 
 bool config_get_bool(const char *name, bool default_value)
 {
 	const struct config_param *param = config_get_param(name);
-	int value;
+	bool success, value;
 
 	if (param == NULL)
 		return default_value;
 
-	value = get_bool(param->value);
-	if (value == CONF_BOOL_INVALID)
-		g_error("%s is not a boolean value (yes, true, 1) or "
-			"(no, false, 0) on line %i\n",
-			name, param->line);
+	success = get_bool(param->value, &value);
+	if (!success)
+		MPD_ERROR("%s is not a boolean value (yes, true, 1) or "
+			  "(no, false, 0) on line %i\n",
+			  name, param->line);
 
-	if (value == CONF_BOOL_UNSET)
-		return default_value;
-
-	return !!value;
+	return value;
 }
 
 const char *
@@ -511,10 +603,10 @@ config_get_block_unsigned(const struct config_param *param, const char *name,
 
 	value = strtol(bp->value, &endptr, 0);
 	if (*endptr != 0)
-		g_error("Not a valid number in line %i", bp->line);
+		MPD_ERROR("Not a valid number in line %i", bp->line);
 
 	if (value < 0)
-		g_error("Not a positive number in line %i", bp->line);
+		MPD_ERROR("Not a positive number in line %i", bp->line);
 
 	return (unsigned)value;
 }
@@ -524,19 +616,16 @@ config_get_block_bool(const struct config_param *param, const char *name,
 		      bool default_value)
 {
 	struct block_param *bp = config_get_block_param(param, name);
-	int value;
+	bool success, value;
 
 	if (bp == NULL)
 		return default_value;
 
-	value = get_bool(bp->value);
-	if (value == CONF_BOOL_INVALID)
-		g_error("%s is not a boolean value (yes, true, 1) or "
-			"(no, false, 0) on line %i\n",
-			name, bp->line);
+	success = get_bool(bp->value, &value);
+	if (!success)
+		MPD_ERROR("%s is not a boolean value (yes, true, 1) or "
+			  "(no, false, 0) on line %i\n",
+			  name, bp->line);
 
-	if (value == CONF_BOOL_UNSET)
-		return default_value;
-
-	return !!value;
+	return value;
 }

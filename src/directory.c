@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "directory.h"
 #include "song.h"
 #include "path.h"
@@ -41,12 +42,16 @@ directory_new(const char *path, struct directory *parent)
 	directory->parent = parent;
 	memcpy(directory->path, path, pathlen + 1);
 
+	playlist_vector_init(&directory->playlists);
+
 	return directory;
 }
 
 void
 directory_free(struct directory *directory)
 {
+	playlist_vector_deinit(&directory->playlists);
+
 	for (unsigned i = 0; i < directory->songs.nr; ++i)
 		song_free(directory->songs.base[i]);
 

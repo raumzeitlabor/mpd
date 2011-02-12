@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,15 +17,11 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "pcm_channels.h"
 #include "pcm_buffer.h"
 
-#include <glib.h>
-
 #include <assert.h>
-
-#undef G_LOG_DOMAIN
-#define G_LOG_DOMAIN "pcm"
 
 static void
 pcm_convert_channels_16_1_to_2(int16_t *dest, const int16_t *src,
@@ -75,8 +71,8 @@ pcm_convert_channels_16_n_to_2(int16_t *dest,
 
 const int16_t *
 pcm_convert_channels_16(struct pcm_buffer *buffer,
-			int8_t dest_channels,
-			int8_t src_channels, const int16_t *src,
+			uint8_t dest_channels,
+			uint8_t src_channels, const int16_t *src,
 			size_t src_size, size_t *dest_size_r)
 {
 	unsigned num_frames = src_size / src_channels / sizeof(*src);
@@ -92,11 +88,8 @@ pcm_convert_channels_16(struct pcm_buffer *buffer,
 	else if (dest_channels == 2)
 		pcm_convert_channels_16_n_to_2(dest, src_channels, src,
 					       num_frames);
-	else {
-		g_warning("conversion %u->%u channels is not supported",
-			  src_channels, dest_channels);
+	else
 		return NULL;
-	}
 
 	return dest;
 }
@@ -149,8 +142,8 @@ pcm_convert_channels_24_n_to_2(int32_t *dest,
 
 const int32_t *
 pcm_convert_channels_24(struct pcm_buffer *buffer,
-			int8_t dest_channels,
-			int8_t src_channels, const int32_t *src,
+			uint8_t dest_channels,
+			uint8_t src_channels, const int32_t *src,
 			size_t src_size, size_t *dest_size_r)
 {
 	unsigned num_frames = src_size / src_channels / sizeof(*src);
@@ -166,11 +159,8 @@ pcm_convert_channels_24(struct pcm_buffer *buffer,
 	else if (dest_channels == 2)
 		pcm_convert_channels_24_n_to_2(dest, src_channels, src,
 					       num_frames);
-	else {
-		g_warning("conversion %u->%u channels is not supported",
-			  src_channels, dest_channels);
+	else
 		return NULL;
-	}
 
 	return dest;
 }
@@ -218,8 +208,8 @@ pcm_convert_channels_32_n_to_2(int32_t *dest,
 
 const int32_t *
 pcm_convert_channels_32(struct pcm_buffer *buffer,
-			int8_t dest_channels,
-			int8_t src_channels, const int32_t *src,
+			uint8_t dest_channels,
+			uint8_t src_channels, const int32_t *src,
 			size_t src_size, size_t *dest_size_r)
 {
 	unsigned num_frames = src_size / src_channels / sizeof(*src);
@@ -235,11 +225,8 @@ pcm_convert_channels_32(struct pcm_buffer *buffer,
 	else if (dest_channels == 2)
 		pcm_convert_channels_32_n_to_2(dest, src_channels, src,
 					       num_frames);
-	else {
-		g_warning("conversion %u->%u channels is not supported",
-			  src_channels, dest_channels);
+	else
 		return NULL;
-	}
 
 	return dest;
 }

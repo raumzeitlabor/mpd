@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,8 +17,10 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "path.h"
 #include "conf.h"
+#include "mpd_error.h"
 
 #include <glib.h>
 
@@ -63,7 +65,7 @@ path_set_fs_charset(const char *charset)
 	/* convert a space to ensure that the charset is valid */
 	test = g_convert(" ", 1, charset, "UTF-8", NULL, NULL, NULL);
 	if (test == NULL)
-		g_error("invalid filesystem charset: %s", charset);
+		MPD_ERROR("invalid filesystem charset: %s", charset);
 	g_free(test);
 
 	g_free(fs_charset);

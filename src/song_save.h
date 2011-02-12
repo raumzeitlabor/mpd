@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,14 +20,32 @@
 #ifndef MPD_SONG_SAVE_H
 #define MPD_SONG_SAVE_H
 
+#include <glib.h>
+
 #include <stdio.h>
 
+#define SONG_BEGIN "song_begin: "
+
+struct song;
 struct songvec;
 struct directory;
 
-void songvec_save(FILE *fp, struct songvec *sv);
+void
+song_save(FILE *fp, const struct song *song);
 
-void readSongInfoIntoList(FILE * fp, struct songvec *sv,
-			  struct directory *parent);
+void
+songvec_save(FILE *fp, const struct songvec *sv);
+
+/**
+ * Loads a song from the input file.  Reading stops after the
+ * "song_end" line.
+ *
+ * @param error_r location to store the error occuring, or NULL to
+ * ignore errors
+ * @return true on success, false on error
+ */
+struct song *
+song_load(FILE *fp, struct directory *parent, const char *uri,
+	  GString *buffer, GError **error_r);
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -39,6 +39,12 @@ void timer_start(Timer *timer);
 void timer_reset(Timer *timer);
 
 void timer_add(Timer *timer, int size);
+
+/**
+ * Returns the number of milliseconds to sleep to get back to sync.
+ */
+unsigned
+timer_delay(const Timer *timer);
 
 void timer_sync(Timer *timer);
 

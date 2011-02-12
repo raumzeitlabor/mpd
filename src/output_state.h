@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,12 +25,21 @@
 #ifndef OUTPUT_STATE_H
 #define OUTPUT_STATE_H
 
+#include <stdbool.h>
 #include <stdio.h>
 
-void
-readAudioDevicesState(FILE *fp);
+bool
+audio_output_state_read(const char *line);
 
 void
-saveAudioDevicesState(FILE *fp);
+audio_output_state_save(FILE *fp);
+
+/**
+ * Generates a version number for the current state of the audio
+ * outputs.  This is used by timer_save_state_file() to determine
+ * whether the state has changed and the state file should be saved.
+ */
+unsigned
+audio_output_state_get_version(void);
 
 #endif

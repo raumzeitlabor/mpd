@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,8 +21,8 @@
  * Common functions used for Ogg data streams (Ogg-Vorbis and OggFLAC)
  */
 
+#include "config.h"
 #include "_ogg_common.h"
-#include "../utils.h"
 
 ogg_stream_type ogg_stream_type_detect(struct input_stream *inStream)
 {

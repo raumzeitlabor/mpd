@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -50,9 +50,13 @@ struct sticker;
 
 /**
  * Opens the sticker database (if path is not NULL).
+ *
+ * @param error_r location to store the error occuring, or NULL to
+ * ignore errors
+ * @return true on success, false on error
  */
-void
-sticker_global_init(const char *path);
+bool
+sticker_global_init(const char *path, GError **error_r);
 
 /**
  * Close the sticker database.

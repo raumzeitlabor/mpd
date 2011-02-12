@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,50 +17,44 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "archive_list.h"
-#include "archive_api.h"
-#include "utils.h"
 #include "config.h"
+#include "archive_list.h"
+#include "archive_plugin.h"
+#include "utils.h"
+#include "archive/bz2_archive_plugin.h"
+#include "archive/iso9660_archive_plugin.h"
+#include "archive/zzip_archive_plugin.h"
 
 #include <string.h>
 #include <glib.h>
 
-extern const struct archive_plugin bz2_plugin;
-extern const struct archive_plugin zip_plugin;
-extern const struct archive_plugin iso_plugin;
-
 static const struct archive_plugin *const archive_plugins[] = {
 #ifdef HAVE_BZ2
-	&bz2_plugin,
+	&bz2_archive_plugin,
 #endif
-#ifdef HAVE_ZIP
-	&zip_plugin,
+#ifdef HAVE_ZZIP
+	&zzip_archive_plugin,
 #endif
-#ifdef HAVE_ISO
-	&iso_plugin,
+#ifdef HAVE_ISO9660
+	&iso9660_archive_plugin,
 #endif
 	NULL
 };
 
-enum {
-	num_archive_plugins = G_N_ELEMENTS(archive_plugins)-1,
-};
-
 /** which plugins have been initialized successfully? */
-static bool archive_plugins_enabled[num_archive_plugins+1];
+static bool archive_plugins_enabled[G_N_ELEMENTS(archive_plugins) - 1];
 
 const struct archive_plugin *
 archive_plugin_from_suffix(const char *suffix)
 {
-	unsigned i;
-
 	if (suffix == NULL)
 		return NULL;
 
-	for (i=0; i < num_archive_plugins; ++i) {
+	for (unsigned i = 0; archive_plugins[i] != NULL; ++i) {
 		const struct archive_plugin *plugin = archive_plugins[i];
 		if (archive_plugins_enabled[i] &&
-		    stringFoundInStringArray(plugin->suffixes, suffix)) {
+		    plugin->suffixes != NULL &&
+		    string_array_contains(plugin->suffixes, suffix)) {
 			++i;
 			return plugin;
 		}
@@ -71,7 +65,7 @@ archive_plugin_from_suffix(const char *suffix)
 const struct archive_plugin *
 archive_plugin_from_name(const char *name)
 {
-	for (unsigned i = 0; i < num_archive_plugins; ++i) {
+	for (unsigned i = 0; archive_plugins[i] != NULL; ++i) {
 		const struct archive_plugin *plugin = archive_plugins[i];
 		if (archive_plugins_enabled[i] &&
 		    strcmp(plugin->name, name) == 0)
@@ -84,7 +78,7 @@ void archive_plugin_print_all_suffixes(FILE * fp)
 {
 	const char *const*suffixes;
 
-	for (unsigned i = 0; i < num_archive_plugins; ++i) {
+	for (unsigned i = 0; archive_plugins[i] != NULL; ++i) {
 		const struct archive_plugin *plugin = archive_plugins[i];
 		if (!archive_plugins_enabled[i])
 			continue;
@@ -101,7 +95,7 @@ void archive_plugin_print_all_suffixes(FILE * fp)
 
 void archive_plugin_init_all(void)
 {
-	for (unsigned i = 0; i < num_archive_plugins; ++i) {
+	for (unsigned i = 0; archive_plugins[i] != NULL; ++i) {
 		const struct archive_plugin *plugin = archive_plugins[i];
 		if (plugin->init == NULL || archive_plugins[i]->init())
 			archive_plugins_enabled[i] = true;
@@ -110,7 +104,7 @@ void archive_plugin_init_all(void)
 
 void archive_plugin_deinit_all(void)
 {
-	for (unsigned i = 0; i < num_archive_plugins; ++i) {
+	for (unsigned i = 0; archive_plugins[i] != NULL; ++i) {
 		const struct archive_plugin *plugin = archive_plugins[i];
 		if (archive_plugins_enabled[i] && plugin->finish != NULL)
 			archive_plugins[i]->finish();

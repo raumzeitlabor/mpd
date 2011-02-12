@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "notify.h"
 
 void notify_init(struct notify *notify)
@@ -46,5 +47,12 @@ void notify_signal(struct notify *notify)
 	g_mutex_lock(notify->mutex);
 	notify->pending = true;
 	g_cond_signal(notify->cond);
+	g_mutex_unlock(notify->mutex);
+}
+
+void notify_clear(struct notify *notify)
+{
+	g_mutex_lock(notify->mutex);
+	notify->pending = false;
 	g_mutex_unlock(notify->mutex);
 }

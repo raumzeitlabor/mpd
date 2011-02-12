@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "audio.h"
 #include "audio_format.h"
 #include "audio_parser.h"
@@ -24,6 +25,7 @@
 #include "output_plugin.h"
 #include "output_all.h"
 #include "conf.h"
+#include "mpd_error.h"
 
 #include <glib.h>
 
@@ -35,9 +37,8 @@ static struct audio_format configured_audio_format;
 void getOutputAudioFormat(const struct audio_format *inAudioFormat,
 			  struct audio_format *outAudioFormat)
 {
-	*outAudioFormat = audio_format_defined(&configured_audio_format)
-		? configured_audio_format
-		: *inAudioFormat;
+	*outAudioFormat = *inAudioFormat;
+	audio_format_mask_apply(outAudioFormat, &configured_audio_format);
 }
 
 void initAudioConfig(void)
@@ -46,17 +47,13 @@ void initAudioConfig(void)
 	GError *error = NULL;
 	bool ret;
 
-	if (NULL == param || NULL == param->value)
+	if (param == NULL)
 		return;
 
 	ret = audio_format_parse(&configured_audio_format, param->value,
-				 &error);
+				 true, &error);
 	if (!ret)
-		g_error("error parsing \"%s\" at line %i: %s",
-			CONF_AUDIO_OUTPUT_FORMAT, param->line, error->message);
-}
-
-void finishAudioConfig(void)
-{
-	audio_format_clear(&configured_audio_format);
+		MPD_ERROR("error parsing \"%s\" at line %i: %s",
+			  CONF_AUDIO_OUTPUT_FORMAT, param->line,
+			  error->message);
 }

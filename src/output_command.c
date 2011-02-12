@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,12 +24,16 @@
  *
  */
 
+#include "config.h"
 #include "output_command.h"
 #include "output_all.h"
 #include "output_internal.h"
 #include "output_plugin.h"
 #include "mixer_control.h"
+#include "player_control.h"
 #include "idle.h"
+
+extern unsigned audio_output_state_version;
 
 bool
 audio_output_enable_index(unsigned idx)
@@ -40,9 +44,15 @@ audio_output_enable_index(unsigned idx)
 		return false;
 
 	ao = audio_output_get(idx);
+	if (ao->enabled)
+		return true;
 
 	ao->enabled = true;
 	idle_add(IDLE_OUTPUT);
+
+	pc_update_audio();
+
+	++audio_output_state_version;
 
 	return true;
 }
@@ -57,6 +67,8 @@ audio_output_disable_index(unsigned idx)
 		return false;
 
 	ao = audio_output_get(idx);
+	if (!ao->enabled)
+		return true;
 
 	ao->enabled = false;
 	idle_add(IDLE_OUTPUT);
@@ -66,6 +78,10 @@ audio_output_disable_index(unsigned idx)
 		mixer_close(mixer);
 		idle_add(IDLE_MIXER);
 	}
+
+	pc_update_audio();
+
+	++audio_output_state_version;
 
 	return true;
 }

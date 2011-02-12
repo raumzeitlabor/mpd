@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,10 +17,10 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "ls.h"
 #include "uri.h"
 #include "client.h"
-#include "config.h"
 
 #include <assert.h>
 #include <string.h>
@@ -32,17 +32,22 @@
   * connected by IPC socket.
   */
 static const char *remoteUrlPrefixes[] = {
-#ifdef HAVE_CURL
+#ifdef ENABLE_CURL
 	"http://",
-#endif
-#ifdef ENABLE_LASTFM
-	"lastfm://",
 #endif
 #ifdef ENABLE_MMS
 	"mms://",
 	"mmsh://",
 	"mmst://",
 	"mmsu://",
+#endif
+#ifdef HAVE_FFMPEG
+	"gopher://",
+	"rtp://",
+	"rtsp://",
+	"rtmp://",
+	"rtmpt://",
+	"rtmps://",
 #endif
 	NULL
 };

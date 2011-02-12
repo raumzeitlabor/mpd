@@ -300,10 +300,30 @@ cd mpd-version</programlisting>
                 <varname>format</varname>
               </entry>
               <entry>
-                Always open the audio output with the specified audio
-                format (samplerate:bits:channels), regardless of the
-                format of the input file.  This is optional for most
-                plugins.
+                <para>
+                  Always open the audio output with the specified audio
+                  format (samplerate:bits:channels), regardless of the
+                  format of the input file.  This is optional for most
+                  plugins.
+                </para>
+                <para>
+                  Any of the three attributes may be an asterisk to
+                  specify that this attribute should not be enforced,
+                  example: <parameter>48000:16:*</parameter>.
+                  <parameter>*:*:*</parameter> is equal to not having
+                  a <varname>format</varname> specification.
+                </para>
+                <para>
+                  The following values are valid for
+                  <varname>bits</varname>: <varname>8</varname>
+                  (signed 8 bit integer samples),
+                  <varname>16</varname>, <varname>24</varname> (signed
+                  24 bit integer samples padded to 32 bit),
+                  <varname>24_3</varname> (signed 24 bit integer
+                  samples, no padding, 3 bytes per sample),
+                  <varname>32</varname> (signed 32 bit integer
+                  samples).
+                </para>
               </entry>
             </row>
             <row>
@@ -319,18 +339,226 @@ cd mpd-version</programlisting>
             </row>
             <row>
               <entry>
-                <varname>mixer_enabled</varname>
-                <parameter>yes|no</parameter>
+                <varname>always_on</varname>
+                  <parameter>yes|no</parameter>
               </entry>
               <entry>
-                Specifies whether the hardware mixer of this audio
-                output should be used.  By default, all hardware
-                mixers are enabled if available.
+                If set to "yes", then MPD attempts to keep this audio
+                output always open.  This may be useful for streaming
+                servers, when you don't want to disconnect all
+                listeners even when playback is accidently stopped.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <varname>mixer_type</varname>
+                <parameter>hardware|software|none</parameter>
+              </entry>
+              <entry>
+                Specifies which mixer should be used for this audio
+                output: the hardware mixer (available for ALSA, OSS
+                and PulseAudio), the software mixer or no mixer
+                ("none").  By default, the hardware mixer is used for
+                devices which support it, and none for the others.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <varname>replay_gain_handler</varname>
+                <parameter>software|mixer|none</parameter>
+              </entry>
+              <entry>
+                Specifies how replay gain is applied.  The default is
+                "software", which uses an internal software volume
+                control.  "mixer" uses the configured (hardware) mixer
+                control.  "none" disables replay gain on this audio
+                output.
               </entry>
             </row>
           </tbody>
         </tgroup>
       </informaltable>
+    </section>
+
+    <section>
+      <title>Configuring filters</title>
+
+      <para>
+        Filters are plugins which modify an audio stream.
+      </para>
+
+      <para>
+        To configure a filter, add a <varname>filter</varname> block
+        to <filename>mpd.conf</filename>:
+      </para>
+
+      <programlisting>filter {
+    plugin "volume"
+    name "software volume"
+}
+      </programlisting>
+
+      <para>
+        The following table lists the <varname>filter</varname>
+        options valid for all plugins:
+      </para>
+
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>
+                Name
+              </entry>
+              <entry>
+                Description
+              </entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <varname>plugin</varname>
+              </entry>
+              <entry>
+                The name of the plugin.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <varname>name</varname>
+              </entry>
+              <entry>
+                The name of the filter.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </section>
+
+    <section>
+      <title>Configuring playlist plugins</title>
+
+      <para>
+        Playlist plugins are used to load remote playlists.  This is
+        not related to MPD's playlist directory.
+      </para>
+
+      <para>
+        To configure a filter, add a
+        <varname>playlist_plugin</varname> block to
+        <filename>mpd.conf</filename>:
+      </para>
+
+      <programlisting>playlist_plugin {
+    name "m3u"
+    enabled "true"
+}
+      </programlisting>
+
+      <para>
+        The following table lists the
+        <varname>playlist_plugin</varname> options valid for all
+        plugins:
+      </para>
+
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>
+                Name
+              </entry>
+              <entry>
+                Description
+              </entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <varname>name</varname>
+              </entry>
+              <entry>
+                The name of the plugin.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <varname>enabled</varname>
+                <parameter>yes|no</parameter>
+              </entry>
+              <entry>
+                Allows you to disable a input plugin without
+                recompiling.  By default, all plugins are enabled.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </section>
+  </chapter>
+
+  <chapter>
+    <title>Using MPD</title>
+
+    <section>
+      <title>The client</title>
+
+      <para>
+        After you have installed, configured and started MPD, you
+        choose a client to control the playback.
+      </para>
+
+      <para>
+        The most basic client is <filename>mpc</filename>, which
+        provides a command line interface.  It is useful in shell
+        scripts.  Many people bind specific <filename>mpc</filename>
+        commands to hotkeys.
+      </para>
+
+      <para>
+        The <ulink url="http://mpd.wikia.com/wiki/Clients">MPD
+        Wiki</ulink> contains an extensive list of clients to choose
+        from.
+      </para>
+    </section>
+
+    <section>
+      <title>The music directory and the database</title>
+
+      <para>
+        The "music directory" is where you store your music files.
+        MPD stores all relevant meta information about all songs in
+        its "database".  Whenever you add, modify or remove songs in
+        the music directory, you have to update the database, for
+        example with <filename>mpc</filename>:
+      </para>
+
+      <programlisting>mpc update</programlisting>
+
+      <para>
+        Depending on the size of your music collection and the speed
+        of the storage, this can take a while.
+      </para>
+
+      <para>
+        To exclude a file from the update, create a file called
+        <filename>.mpdignore</filename> in its parent directory.  Each
+        line of that file may contain a list of shell wildcards.
+      </para>
+    </section>
+
+    <section>
+      <title>The queue</title>
+
+      <para>
+        The queue (sometimes called "current playlist") is a list of
+        songs to be played by MPD.  To play a song, add it to the
+        queue and start playback.  Most clients offer an interface to
+        edit the queue.
+      </para>
     </section>
   </chapter>
 
@@ -387,20 +615,45 @@ cd mpd-version</programlisting>
       </section>
 
       <section>
-        <title><varname>lastfm</varname></title>
-
-        <para>
-          Plays last.fm radio.  This plugin is experimental, and will
-          be superseded by a better solution in MPD 0.16.
-        </para>
-      </section>
-
-      <section>
         <title><varname>mms</varname></title>
 
         <para>
           Plays streams with the MMS protocol.
         </para>
+      </section>
+    </section>
+
+    <section>
+      <title>Decoder plugins</title>
+
+      <section>
+        <title><varname>mikmod</varname></title>
+
+        <para>
+          Module player based on MikMod.
+        </para>
+
+        <informaltable>
+          <tgroup cols="2">
+            <thead>
+              <row>
+                <entry>Setting</entry>
+                <entry>Description</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry>
+                  <varname>sample_rate</varname>
+                </entry>
+                <entry>
+                  Sets the sample rate generated by
+                  <filename>libmikmod</filename>.  Default is 44100.
+                </entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </informaltable>
       </section>
     </section>
 
@@ -536,12 +789,124 @@ cd mpd-version</programlisting>
       </section>
 
       <section>
+        <title><varname>ffado</varname></title>
+
+        <para>
+          The <varname>ffado</varname> plugin connects to FireWire
+          audio devices via <filename>libffado</filename>.
+        </para>
+
+        <para>
+          Warning: this plugin was not tested successfully.  I just
+          couldn't keep libffado2 from crashing.  Use at your own
+          risk.
+        </para>
+
+        <informaltable>
+          <tgroup cols="2">
+            <thead>
+              <row>
+                <entry>Setting</entry>
+                <entry>Description</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry>
+                  <varname>device</varname>
+                  <parameter>NAME</parameter>
+                </entry>
+                <entry>
+                  Sets the device which should be used, e.g. "hw:0".
+                </entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </informaltable>
+      </section>
+
+      <section>
         <title><varname>jack</varname></title>
 
         <para>
           The <varname>jack</varname> plugin connects to a JACK
           server.
         </para>
+
+        <informaltable>
+          <tgroup cols="2">
+            <thead>
+              <row>
+                <entry>Setting</entry>
+                <entry>Description</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry>
+                  <varname>client_name</varname>
+                  <parameter>NAME</parameter>
+                </entry>
+                <entry>
+                  The name of the JACK client.  Defaults to "Music
+                  Player Daemon".
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <varname>server_name</varname>
+                  <parameter>NAME</parameter>
+                </entry>
+                <entry>
+                  Optional name of the JACK server.
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <varname>autostart</varname>
+                  <parameter>yes|no</parameter>
+                </entry>
+                <entry>
+                  If set to <parameter>yes</parameter>, then
+                  <filename>libjack</filename> will automatically
+                  launch the JACK daemon.  Disabled by default.
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <varname>source_ports</varname>
+                  <parameter>A,B</parameter>
+                </entry>
+                <entry>
+                  The names of the JACK source ports to be created.
+                  By default, the ports "left" and "right" are
+                  created.  To use more ports, you have to tweak this
+                  option.
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <varname>destination_ports</varname>
+                  <parameter>A,B</parameter>
+                </entry>
+                <entry>
+                  The names of the JACK destination ports to connect to.
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <varname>ringbuffer_size</varname>
+                  <parameter>NBYTES</parameter>
+                </entry>
+                <entry>
+                  Sets the size of the ring buffer for each channel.
+                  Do not configure this value unless you know what
+                  you're doing.
+                </entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </informaltable>
       </section>
 
       <section>
@@ -586,8 +951,17 @@ cd mpd-version</programlisting>
                   <parameter>P</parameter>
                 </entry>
                 <entry>
-                  Binds the HTTP server to the specified port (on all
-                  interfaces).
+                  Binds the HTTP server to the specified port.
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <varname>bind_to_address</varname>
+                  <parameter>ADDR</parameter>
+                </entry>
+                <entry>
+                  Binds the HTTP server to the specified address (IPv4 or
+                  IPv6). Multiple addresses in parallel are not supported.
                 </entry>
               </row>
               <row>
@@ -618,6 +992,16 @@ cd mpd-version</programlisting>
                 <entry>
                   Sets a constant encoder bit rate, in kilobit per
                   second.
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <varname>max_clients</varname>
+                  <parameter>MC</parameter>
+                </entry>
+                <entry>
+                  Sets a limit, number of concurrent clients. When set
+                  to 0 no limit will apply.
                 </entry>
               </row>
             </tbody>
@@ -686,6 +1070,39 @@ cd mpd-version</programlisting>
                   then MPD will attempt to open
                   <filename>/dev/sound/dsp</filename> and
                   <filename>/dev/dsp</filename>.
+                </entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </informaltable>
+      </section>
+
+      <section>
+        <title><varname>openal</varname></title>
+
+        <para>
+          The "OpenAL" plugin uses <filename>libopenal</filename>.
+          It is supported on many platforms.
+        </para>
+
+        <informaltable>
+          <tgroup cols="2">
+            <thead>
+              <row>
+                <entry>Setting</entry>
+                <entry>Description</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry>
+                  <varname>device</varname>
+                  <parameter>NAME</parameter>
+                </entry>
+                <entry>
+                  Sets the device which should be used.  This can be
+                  any valid OpenAL device name. If not specified, then
+                  <filename>libopenal</filename> will choose a default device.
                 </entry>
               </row>
             </tbody>
@@ -768,6 +1185,73 @@ cd mpd-version</programlisting>
                 <entry>
                   Specifies the name of the PulseAudio sink MPD should
                   play on.
+                </entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </informaltable>
+      </section>
+
+      <section>
+        <title><varname>recorder</varname></title>
+
+        <para>
+          The <varname>recorder</varname> plugin writes the audio
+          played by MPD to a file.  This may be useful for recording
+          radio streams.
+        </para>
+
+        <para>
+          You must configure either <varname>quality</varname> or
+          <varname>bitrate</varname>.
+        </para>
+
+        <informaltable>
+          <tgroup cols="2">
+            <thead>
+              <row>
+                <entry>Setting</entry>
+                <entry>Description</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry>
+                  <varname>path</varname>
+                  <parameter>P</parameter>
+                </entry>
+                <entry>
+                  Write to this file.
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <varname>encoder</varname>
+                  <parameter>NAME</parameter>
+                </entry>
+                <entry>
+                  Chooses an encoder plugin,
+                  e.g. <parameter>vorbis</parameter>.
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <varname>quality</varname>
+                  <parameter>Q</parameter>
+                </entry>
+                <entry>
+                  Configures the encoder quality (for VBR) in the
+                  range -1 .. 10.
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <varname>bitrate</varname>
+                  <parameter>BR</parameter>
+                </entry>
+                <entry>
+                  Sets a constant encoder bit rate, in kilobit per
+                  second.
                 </entry>
               </row>
             </tbody>
@@ -937,6 +1421,82 @@ cd mpd-version</programlisting>
             </tbody>
           </tgroup>
         </informaltable>
+      </section>
+    </section>
+
+    <section>
+      <title>Playlist plugins</title>
+
+      <section>
+        <title><varname>lastfm</varname></title>
+
+        <para>
+          Plays last.fm radio.
+        </para>
+
+        <informaltable>
+          <tgroup cols="2">
+            <thead>
+              <row>
+                <entry>Setting</entry>
+                <entry>Description</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry>
+                  <varname>user</varname>
+                  <parameter>USERNAME</parameter>
+                </entry>
+                <entry>
+                  The last.fm user name.
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <varname>password</varname>
+                  <parameter>PWD</parameter>
+                </entry>
+                <entry>
+                  The last.fm password.
+                </entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </informaltable>
+      </section>
+
+      <section>
+        <title><varname>m3u</varname></title>
+
+        <para>
+          Reads <filename>.m3u</filename> playlist files.
+        </para>
+      </section>
+
+      <section>
+        <title><varname>extm3u</varname></title>
+
+        <para>
+          Reads extended <filename>.m3u</filename> playlist files.
+        </para>
+      </section>
+
+      <section>
+        <title><varname>pls</varname></title>
+
+        <para>
+          Reads <filename>.pls</filename> playlist files.
+        </para>
+      </section>
+
+      <section>
+        <title><varname>xspf</varname></title>
+
+        <para>
+          Reads <ulink url="http://www.xspf.org/">XSPF</ulink>
+          playlist files.
+        </para>
       </section>
     </section>
   </chapter>

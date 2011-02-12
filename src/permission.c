@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,8 +17,10 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "permission.h"
 #include "conf.h"
+#include "mpd_error.h"
 
 #include <glib.h>
 
@@ -58,7 +60,7 @@ static unsigned parsePermissions(const char *string)
 		} else if (strcmp(temp, PERMISSION_ADMIN_STRING) == 0) {
 			permission |= PERMISSION_ADMIN;
 		} else {
-			g_error("unknown permission \"%s\"", temp);
+			MPD_ERROR("unknown permission \"%s\"", temp);
 		}
 	}
 
@@ -89,7 +91,7 @@ void initPermissions(void)
 				strchr(param->value, PERMISSION_PASSWORD_CHAR);
 
 			if (separator == NULL)
-				g_error("\"%c\" not found in password string "
+				MPD_ERROR("\"%c\" not found in password string "
 					"\"%s\", line %i",
 					PERMISSION_PASSWORD_CHAR,
 					param->value, param->line);
@@ -111,7 +113,7 @@ void initPermissions(void)
 		permission_default = parsePermissions(param->value);
 }
 
-int getPermissionFromPassword(char *password, unsigned *permission)
+int getPermissionFromPassword(char const* password, unsigned* permission)
 {
 	bool found;
 	gpointer key, value;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "zeroconf-internal.h"
 #include "listen.h"
 
@@ -62,7 +63,7 @@ void init_zeroconf_osx(const char *serviceName)
 	DNSServiceErrorType error = DNSServiceRegister(&dnsReference,
 						       0, 0, serviceName,
 						       SERVICE_TYPE, NULL, NULL,
-						       htons(listen_port), 0,
+						       g_htons(listen_port), 0,
 						       NULL,
 						       dnsRegisterCallback,
 						       NULL);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,23 +25,24 @@
 #ifndef MPD_MIXER_CONTROL_H
 #define MPD_MIXER_CONTROL_H
 
+#include <glib.h>
+
 #include <stdbool.h>
 
 struct mixer;
 struct mixer_plugin;
 struct config_param;
 
-void
-mixer_disable_all(void);
-
 struct mixer *
-mixer_new(const struct mixer_plugin *plugin, const struct config_param *param);
+mixer_new(const struct mixer_plugin *plugin, void *ao,
+	  const struct config_param *param,
+	  GError **error_r);
 
 void
 mixer_free(struct mixer *mixer);
 
 bool
-mixer_open(struct mixer *mixer);
+mixer_open(struct mixer *mixer, GError **error_r);
 
 void
 mixer_close(struct mixer *mixer);
@@ -54,9 +55,9 @@ void
 mixer_auto_close(struct mixer *mixer);
 
 int
-mixer_get_volume(struct mixer *mixer);
+mixer_get_volume(struct mixer *mixer, GError **error_r);
 
 bool
-mixer_set_volume(struct mixer *mixer, unsigned volume);
+mixer_set_volume(struct mixer *mixer, unsigned volume, GError **error_r);
 
 #endif

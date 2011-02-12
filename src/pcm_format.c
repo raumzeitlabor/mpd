@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,11 +17,11 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "pcm_format.h"
 #include "pcm_dither.h"
 #include "pcm_buffer.h"
-
-#include <glib.h>
+#include "pcm_pack.h"
 
 static void
 pcm_convert_8_to_16(int16_t *out, const int8_t *in,
@@ -49,16 +49,29 @@ pcm_convert_32_to_16(struct pcm_dither *dither,
 	pcm_dither_32_to_16(dither, out, in, num_samples);
 }
 
+static int32_t *
+pcm_convert_24_to_24p32(struct pcm_buffer *buffer, const uint8_t *src,
+			unsigned num_samples)
+{
+	int32_t *dest = pcm_buffer_get(buffer, num_samples * 4);
+	pcm_unpack_24(dest, src, num_samples, false);
+	return dest;
+}
+
 const int16_t *
 pcm_convert_to_16(struct pcm_buffer *buffer, struct pcm_dither *dither,
-		  uint8_t bits, const void *src,
+		  enum sample_format src_format, const void *src,
 		  size_t src_size, size_t *dest_size_r)
 {
 	unsigned num_samples;
 	int16_t *dest;
+	int32_t *dest32;
 
-	switch (bits) {
-	case 8:
+	switch (src_format) {
+	case SAMPLE_FORMAT_UNDEFINED:
+		break;
+
+	case SAMPLE_FORMAT_S8:
 		num_samples = src_size;
 		*dest_size_r = src_size * sizeof(*dest);
 		dest = pcm_buffer_get(buffer, *dest_size_r);
@@ -68,11 +81,24 @@ pcm_convert_to_16(struct pcm_buffer *buffer, struct pcm_dither *dither,
 				    num_samples);
 		return dest;
 
-	case 16:
+	case SAMPLE_FORMAT_S16:
 		*dest_size_r = src_size;
 		return src;
 
-	case 24:
+	case SAMPLE_FORMAT_S24:
+		/* convert to S24_P32 first */
+		num_samples = src_size / 3;
+
+		dest32 = pcm_convert_24_to_24p32(buffer, src, num_samples);
+		dest = (int16_t *)dest32;
+
+		/* convert to 16 bit in-place */
+		*dest_size_r = num_samples * sizeof(*dest);
+		pcm_convert_24_to_16(dither, dest, dest32,
+				     num_samples);
+		return dest;
+
+	case SAMPLE_FORMAT_S24_P32:
 		num_samples = src_size / 4;
 		*dest_size_r = num_samples * sizeof(*dest);
 		dest = pcm_buffer_get(buffer, *dest_size_r);
@@ -82,7 +108,7 @@ pcm_convert_to_16(struct pcm_buffer *buffer, struct pcm_dither *dither,
 				     num_samples);
 		return dest;
 
-	case 32:
+	case SAMPLE_FORMAT_S32:
 		num_samples = src_size / 4;
 		*dest_size_r = num_samples * sizeof(*dest);
 		dest = pcm_buffer_get(buffer, *dest_size_r);
@@ -93,7 +119,6 @@ pcm_convert_to_16(struct pcm_buffer *buffer, struct pcm_dither *dither,
 		return dest;
 	}
 
-	g_warning("only 8 or 16 bits are supported for conversion!\n");
 	return NULL;
 }
 
@@ -129,14 +154,17 @@ pcm_convert_32_to_24(int32_t *out, const int16_t *in,
 
 const int32_t *
 pcm_convert_to_24(struct pcm_buffer *buffer,
-		  uint8_t bits, const void *src,
+		  enum sample_format src_format, const void *src,
 		  size_t src_size, size_t *dest_size_r)
 {
 	unsigned num_samples;
 	int32_t *dest;
 
-	switch (bits) {
-	case 8:
+	switch (src_format) {
+	case SAMPLE_FORMAT_UNDEFINED:
+		break;
+
+	case SAMPLE_FORMAT_S8:
 		num_samples = src_size;
 		*dest_size_r = src_size * sizeof(*dest);
 		dest = pcm_buffer_get(buffer, *dest_size_r);
@@ -145,7 +173,7 @@ pcm_convert_to_24(struct pcm_buffer *buffer,
 				    num_samples);
 		return dest;
 
-	case 16:
+	case SAMPLE_FORMAT_S16:
 		num_samples = src_size / 2;
 		*dest_size_r = num_samples * sizeof(*dest);
 		dest = pcm_buffer_get(buffer, *dest_size_r);
@@ -154,11 +182,17 @@ pcm_convert_to_24(struct pcm_buffer *buffer,
 				     num_samples);
 		return dest;
 
-	case 24:
+	case SAMPLE_FORMAT_S24:
+		num_samples = src_size / 3;
+		*dest_size_r = num_samples * sizeof(*dest);
+
+		return pcm_convert_24_to_24p32(buffer, src, num_samples);
+
+	case SAMPLE_FORMAT_S24_P32:
 		*dest_size_r = src_size;
 		return src;
 
-	case 32:
+	case SAMPLE_FORMAT_S32:
 		num_samples = src_size / 4;
 		*dest_size_r = num_samples * sizeof(*dest);
 		dest = pcm_buffer_get(buffer, *dest_size_r);
@@ -168,7 +202,6 @@ pcm_convert_to_24(struct pcm_buffer *buffer,
 		return dest;
 	}
 
-	g_warning("only 8 or 24 bits are supported for conversion!\n");
 	return NULL;
 }
 
@@ -204,14 +237,17 @@ pcm_convert_24_to_32(int32_t *out, const int32_t *in,
 
 const int32_t *
 pcm_convert_to_32(struct pcm_buffer *buffer,
-		  uint8_t bits, const void *src,
+		  enum sample_format src_format, const void *src,
 		  size_t src_size, size_t *dest_size_r)
 {
 	unsigned num_samples;
 	int32_t *dest;
 
-	switch (bits) {
-	case 8:
+	switch (src_format) {
+	case SAMPLE_FORMAT_UNDEFINED:
+		break;
+
+	case SAMPLE_FORMAT_S8:
 		num_samples = src_size;
 		*dest_size_r = src_size * sizeof(*dest);
 		dest = pcm_buffer_get(buffer, *dest_size_r);
@@ -220,7 +256,7 @@ pcm_convert_to_32(struct pcm_buffer *buffer,
 				    num_samples);
 		return dest;
 
-	case 16:
+	case SAMPLE_FORMAT_S16:
 		num_samples = src_size / 2;
 		*dest_size_r = num_samples * sizeof(*dest);
 		dest = pcm_buffer_get(buffer, *dest_size_r);
@@ -229,7 +265,18 @@ pcm_convert_to_32(struct pcm_buffer *buffer,
 				     num_samples);
 		return dest;
 
-	case 24:
+	case SAMPLE_FORMAT_S24:
+		/* convert to S24_P32 first */
+		num_samples = src_size / 3;
+
+		dest = pcm_convert_24_to_24p32(buffer, src, num_samples);
+
+		/* convert to 32 bit in-place */
+		*dest_size_r = num_samples * sizeof(*dest);
+		pcm_convert_24_to_32(dest, dest, num_samples);
+		return dest;
+
+	case SAMPLE_FORMAT_S24_P32:
 		num_samples = src_size / 4;
 		*dest_size_r = num_samples * sizeof(*dest);
 		dest = pcm_buffer_get(buffer, *dest_size_r);
@@ -238,11 +285,10 @@ pcm_convert_to_32(struct pcm_buffer *buffer,
 				     num_samples);
 		return dest;
 
-	case 32:
+	case SAMPLE_FORMAT_S32:
 		*dest_size_r = src_size;
 		return src;
 	}
 
-	g_warning("only 8 or 32 bits are supported for conversion!\n");
 	return NULL;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,11 +22,13 @@
  *
  */
 
+#include "config.h"
 #include "playlist_state.h"
 #include "playlist.h"
 #include "player_control.h"
 #include "queue_save.h"
 #include "path.h"
+#include "text_file.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -39,6 +41,8 @@
 #define PLAYLIST_STATE_FILE_CURRENT		"current: "
 #define PLAYLIST_STATE_FILE_TIME		"time: "
 #define PLAYLIST_STATE_FILE_CROSSFADE		"crossfade: "
+#define PLAYLIST_STATE_FILE_MIXRAMPDB		"mixrampdb: "
+#define PLAYLIST_STATE_FILE_MIXRAMPDELAY	"mixrampdelay: "
 #define PLAYLIST_STATE_FILE_PLAYLIST_BEGIN	"playlist_begin"
 #define PLAYLIST_STATE_FILE_PLAYLIST_END	"playlist_end"
 
@@ -51,57 +55,65 @@
 void
 playlist_state_save(FILE *fp, const struct playlist *playlist)
 {
-	fprintf(fp, "%s", PLAYLIST_STATE_FILE_STATE);
+	struct player_status player_status;
+
+	pc_get_status(&player_status);
+
+	fputs(PLAYLIST_STATE_FILE_STATE, fp);
 
 	if (playlist->playing) {
-		switch (getPlayerState()) {
+		switch (player_status.state) {
 		case PLAYER_STATE_PAUSE:
-			fprintf(fp, "%s\n", PLAYLIST_STATE_FILE_STATE_PAUSE);
+			fputs(PLAYLIST_STATE_FILE_STATE_PAUSE "\n", fp);
 			break;
 		default:
-			fprintf(fp, "%s\n", PLAYLIST_STATE_FILE_STATE_PLAY);
+			fputs(PLAYLIST_STATE_FILE_STATE_PLAY "\n", fp);
 		}
-		fprintf(fp, "%s%i\n", PLAYLIST_STATE_FILE_CURRENT,
+		fprintf(fp, PLAYLIST_STATE_FILE_CURRENT "%i\n",
 			queue_order_to_position(&playlist->queue,
 						playlist->current));
-		fprintf(fp, "%s%i\n", PLAYLIST_STATE_FILE_TIME,
-			getPlayerElapsedTime());
-	} else
-		fprintf(fp, "%s\n", PLAYLIST_STATE_FILE_STATE_STOP);
+		fprintf(fp, PLAYLIST_STATE_FILE_TIME "%i\n",
+			(int)player_status.elapsed_time);
+	} else {
+		fputs(PLAYLIST_STATE_FILE_STATE_STOP "\n", fp);
 
-	fprintf(fp, "%s%i\n", PLAYLIST_STATE_FILE_RANDOM,
-		playlist->queue.random);
-	fprintf(fp, "%s%i\n", PLAYLIST_STATE_FILE_REPEAT,
-		playlist->queue.repeat);
-	fprintf(fp, "%s%i\n", PLAYLIST_STATE_FILE_SINGLE,
-		playlist->queue.single);
-	fprintf(fp, "%s%i\n", PLAYLIST_STATE_FILE_CONSUME,
+		if (playlist->current >= 0)
+			fprintf(fp, PLAYLIST_STATE_FILE_CURRENT "%i\n",
+				queue_order_to_position(&playlist->queue,
+							playlist->current));
+	}
+
+	fprintf(fp, PLAYLIST_STATE_FILE_RANDOM "%i\n", playlist->queue.random);
+	fprintf(fp, PLAYLIST_STATE_FILE_REPEAT "%i\n", playlist->queue.repeat);
+	fprintf(fp, PLAYLIST_STATE_FILE_SINGLE "%i\n", playlist->queue.single);
+	fprintf(fp, PLAYLIST_STATE_FILE_CONSUME "%i\n",
 		playlist->queue.consume);
-	fprintf(fp, "%s%i\n", PLAYLIST_STATE_FILE_CROSSFADE,
-		(int)(getPlayerCrossFade()));
-	fprintf(fp, "%s\n", PLAYLIST_STATE_FILE_PLAYLIST_BEGIN);
+	fprintf(fp, PLAYLIST_STATE_FILE_CROSSFADE "%i\n",
+		(int)(pc_get_cross_fade()));
+	fprintf(fp, PLAYLIST_STATE_FILE_MIXRAMPDB "%f\n", pc_get_mixramp_db());
+	fprintf(fp, PLAYLIST_STATE_FILE_MIXRAMPDELAY "%f\n",
+		pc_get_mixramp_delay());
+	fputs(PLAYLIST_STATE_FILE_PLAYLIST_BEGIN "\n", fp);
 	queue_save(fp, &playlist->queue);
-	fprintf(fp, "%s\n", PLAYLIST_STATE_FILE_PLAYLIST_END);
+	fputs(PLAYLIST_STATE_FILE_PLAYLIST_END "\n", fp);
 }
 
 static void
-playlist_state_load(FILE *fp, struct playlist *playlist, char *buffer)
+playlist_state_load(FILE *fp, GString *buffer, struct playlist *playlist)
 {
-	int song;
-
-	if (!fgets(buffer, PLAYLIST_BUFFER_SIZE, fp)) {
+	const char *line = read_text_line(fp, buffer);
+	if (line == NULL) {
 		g_warning("No playlist in state file");
 		return;
 	}
 
-	while (!g_str_has_prefix(buffer, PLAYLIST_STATE_FILE_PLAYLIST_END)) {
-		g_strchomp(buffer);
+	while (!g_str_has_prefix(line, PLAYLIST_STATE_FILE_PLAYLIST_END)) {
+		queue_load_song(fp, buffer, line, &playlist->queue);
 
-		song = queue_load_song(&playlist->queue, buffer);
-
-		if (!fgets(buffer, PLAYLIST_BUFFER_SIZE, fp)) {
-			g_warning("'%s' not found in state file",
-				  PLAYLIST_STATE_FILE_PLAYLIST_END);
+		line = read_text_line(fp, buffer);
+		if (line == NULL) {
+			g_warning("'" PLAYLIST_STATE_FILE_PLAYLIST_END
+				  "' not found in state file");
 			break;
 		}
 	}
@@ -109,87 +121,116 @@ playlist_state_load(FILE *fp, struct playlist *playlist, char *buffer)
 	queue_increment_version(&playlist->queue);
 }
 
-void
-playlist_state_restore(FILE *fp, struct playlist *playlist)
+bool
+playlist_state_restore(const char *line, FILE *fp, GString *buffer,
+		       struct playlist *playlist)
 {
 	int current = -1;
 	int seek_time = 0;
 	int state = PLAYER_STATE_STOP;
-	char buffer[PLAYLIST_BUFFER_SIZE];
 	bool random_mode = false;
 
-	while (fgets(buffer, sizeof(buffer), fp)) {
-		g_strchomp(buffer);
+	if (!g_str_has_prefix(line, PLAYLIST_STATE_FILE_STATE))
+		return false;
 
-		if (g_str_has_prefix(buffer, PLAYLIST_STATE_FILE_STATE)) {
-			if (strcmp(&(buffer[strlen(PLAYLIST_STATE_FILE_STATE)]),
-				   PLAYLIST_STATE_FILE_STATE_PLAY) == 0) {
-				state = PLAYER_STATE_PLAY;
-			} else
-			    if (strcmp
-				(&(buffer[strlen(PLAYLIST_STATE_FILE_STATE)]),
-				 PLAYLIST_STATE_FILE_STATE_PAUSE)
-				== 0) {
-				state = PLAYER_STATE_PAUSE;
-			}
-		} else if (g_str_has_prefix(buffer, PLAYLIST_STATE_FILE_TIME)) {
+	line += sizeof(PLAYLIST_STATE_FILE_STATE) - 1;
+
+	if (strcmp(line, PLAYLIST_STATE_FILE_STATE_PLAY) == 0)
+		state = PLAYER_STATE_PLAY;
+	else if (strcmp(line, PLAYLIST_STATE_FILE_STATE_PAUSE) == 0)
+		state = PLAYER_STATE_PAUSE;
+
+	while ((line = read_text_line(fp, buffer)) != NULL) {
+		if (g_str_has_prefix(line, PLAYLIST_STATE_FILE_TIME)) {
 			seek_time =
-			    atoi(&(buffer[strlen(PLAYLIST_STATE_FILE_TIME)]));
-		} else if (g_str_has_prefix(buffer, PLAYLIST_STATE_FILE_REPEAT)) {
+			    atoi(&(line[strlen(PLAYLIST_STATE_FILE_TIME)]));
+		} else if (g_str_has_prefix(line, PLAYLIST_STATE_FILE_REPEAT)) {
 			if (strcmp
-			    (&(buffer[strlen(PLAYLIST_STATE_FILE_REPEAT)]),
+			    (&(line[strlen(PLAYLIST_STATE_FILE_REPEAT)]),
 			     "1") == 0) {
-				setPlaylistRepeatStatus(playlist, true);
+				playlist_set_repeat(playlist, true);
 			} else
-				setPlaylistRepeatStatus(playlist, false);
-		} else if (g_str_has_prefix(buffer, PLAYLIST_STATE_FILE_SINGLE)) {
+				playlist_set_repeat(playlist, false);
+		} else if (g_str_has_prefix(line, PLAYLIST_STATE_FILE_SINGLE)) {
 			if (strcmp
-			    (&(buffer[strlen(PLAYLIST_STATE_FILE_SINGLE)]),
+			    (&(line[strlen(PLAYLIST_STATE_FILE_SINGLE)]),
 			     "1") == 0) {
-				setPlaylistSingleStatus(playlist, true);
+				playlist_set_single(playlist, true);
 			} else
-				setPlaylistSingleStatus(playlist, false);
-		} else if (g_str_has_prefix(buffer, PLAYLIST_STATE_FILE_CONSUME)) {
+				playlist_set_single(playlist, false);
+		} else if (g_str_has_prefix(line, PLAYLIST_STATE_FILE_CONSUME)) {
 			if (strcmp
-			    (&(buffer[strlen(PLAYLIST_STATE_FILE_CONSUME)]),
+			    (&(line[strlen(PLAYLIST_STATE_FILE_CONSUME)]),
 			     "1") == 0) {
-				setPlaylistConsumeStatus(playlist, true);
+				playlist_set_consume(playlist, true);
 			} else
-				setPlaylistConsumeStatus(playlist, false);
-		} else if (g_str_has_prefix(buffer, PLAYLIST_STATE_FILE_CROSSFADE)) {
-			setPlayerCrossFade(atoi
-					   (&
-					    (buffer
-					     [strlen
-					      (PLAYLIST_STATE_FILE_CROSSFADE)])));
-		} else if (g_str_has_prefix(buffer, PLAYLIST_STATE_FILE_RANDOM)) {
+				playlist_set_consume(playlist, false);
+		} else if (g_str_has_prefix(line, PLAYLIST_STATE_FILE_CROSSFADE)) {
+			pc_set_cross_fade(atoi(line + strlen(PLAYLIST_STATE_FILE_CROSSFADE)));
+		} else if (g_str_has_prefix(line, PLAYLIST_STATE_FILE_MIXRAMPDB)) {
+			pc_set_mixramp_db(atof(line + strlen(PLAYLIST_STATE_FILE_MIXRAMPDB)));
+		} else if (g_str_has_prefix(line, PLAYLIST_STATE_FILE_MIXRAMPDELAY)) {
+			pc_set_mixramp_delay(atof(line + strlen(PLAYLIST_STATE_FILE_MIXRAMPDELAY)));
+		} else if (g_str_has_prefix(line, PLAYLIST_STATE_FILE_RANDOM)) {
 			random_mode =
-				strcmp(buffer + strlen(PLAYLIST_STATE_FILE_RANDOM),
+				strcmp(line + strlen(PLAYLIST_STATE_FILE_RANDOM),
 				       "1") == 0;
-		} else if (g_str_has_prefix(buffer, PLAYLIST_STATE_FILE_CURRENT)) {
-			current = atoi(&(buffer
+		} else if (g_str_has_prefix(line, PLAYLIST_STATE_FILE_CURRENT)) {
+			current = atoi(&(line
 					 [strlen
 					  (PLAYLIST_STATE_FILE_CURRENT)]));
-		} else if (g_str_has_prefix(buffer,
+		} else if (g_str_has_prefix(line,
 					    PLAYLIST_STATE_FILE_PLAYLIST_BEGIN)) {
-			if (state == PLAYER_STATE_STOP)
-				current = -1;
-			playlist_state_load(fp, playlist, buffer);
+			playlist_state_load(fp, buffer, playlist);
 		}
 	}
 
-	setPlaylistRandomStatus(playlist, random_mode);
+	playlist_set_random(playlist, random_mode);
 
-	if (state != PLAYER_STATE_STOP && !queue_is_empty(&playlist->queue)) {
+	if (!queue_is_empty(&playlist->queue)) {
 		if (!queue_valid_position(&playlist->queue, current))
 			current = 0;
 
-		if (seek_time == 0)
-			playPlaylist(playlist, current);
+		/* enable all devices for the first time; this must be
+		   called here, after the audio output states were
+		   restored, before playback begins */
+		if (state != PLAYER_STATE_STOP)
+			pc_update_audio();
+
+		if (state == PLAYER_STATE_STOP /* && config_option */)
+			playlist->current = current;
+		else if (seek_time == 0)
+			playlist_play(playlist, current);
 		else
-			seekSongInPlaylist(playlist, current, seek_time);
+			playlist_seek_song(playlist, current, seek_time);
 
 		if (state == PLAYER_STATE_PAUSE)
-			playerPause();
+			pc_pause();
 	}
+
+	return true;
+}
+
+unsigned
+playlist_state_get_hash(const struct playlist *playlist)
+{
+	struct player_status player_status;
+
+	pc_get_status(&player_status);
+
+	return playlist->queue.version ^
+		(player_status.state != PLAYER_STATE_STOP
+		 ? ((int)player_status.elapsed_time << 8)
+		 : 0) ^
+		(playlist->current >= 0
+		 ? (queue_order_to_position(&playlist->queue,
+					    playlist->current) << 16)
+		 : 0) ^
+		((int)pc_get_cross_fade() << 20) ^
+		(player_status.state << 24) ^
+		(playlist->queue.random << 27) ^
+		(playlist->queue.repeat << 28) ^
+		(playlist->queue.single << 29) ^
+		(playlist->queue.consume << 30) ^
+		(playlist->queue.random << 31);
 }

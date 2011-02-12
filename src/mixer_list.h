@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,8 +25,10 @@
 #ifndef MPD_MIXER_LIST_H
 #define MPD_MIXER_LIST_H
 
-extern const struct mixer_plugin alsa_mixer;
-extern const struct mixer_plugin oss_mixer;
-extern const struct mixer_plugin pulse_mixer;
+extern const struct mixer_plugin software_mixer_plugin;
+extern const struct mixer_plugin alsa_mixer_plugin;
+extern const struct mixer_plugin oss_mixer_plugin;
+extern const struct mixer_plugin pulse_mixer_plugin;
+extern const struct mixer_plugin winmm_mixer_plugin;
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,9 +24,6 @@
 #include <stdbool.h>
 #include <sys/time.h>
 
-#define SONG_BEGIN	"songList begin"
-#define SONG_END	"songList end"
-
 #define SONG_FILE	"file: "
 #define SONG_TIME	"Time: "
 
@@ -34,12 +31,24 @@ struct song {
 	struct tag *tag;
 	struct directory *parent;
 	time_t mtime;
-	char url[sizeof(int)];
+
+	/**
+	 * Start of this sub-song within the file in milliseconds.
+	 */
+	unsigned start_ms;
+
+	/**
+	 * End of this sub-song within the file in milliseconds.
+	 * Unused if zero.
+	 */
+	unsigned end_ms;
+
+	char uri[sizeof(int)];
 };
 
 /** allocate a new song with a remote URL */
 struct song *
-song_remote_new(const char *url);
+song_remote_new(const char *uri);
 
 /** allocate a new song with a local file name */
 struct song *
@@ -72,6 +81,9 @@ song_file_update_inarchive(struct song *song);
 char *
 song_get_uri(const struct song *song);
 
+double
+song_get_duration(const struct song *song);
+
 static inline bool
 song_in_database(const struct song *song)
 {
@@ -81,7 +93,7 @@ song_in_database(const struct song *song)
 static inline bool
 song_is_file(const struct song *song)
 {
-	return song_in_database(song) || song->url[0] == '/';
+	return song_in_database(song) || song->uri[0] == '/';
 }
 
 #endif

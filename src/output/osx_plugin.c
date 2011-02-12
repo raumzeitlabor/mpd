@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "../output_api.h"
+#include "config.h"
+#include "output_api.h"
 
 #include <glib.h>
 #include <AudioUnit/AudioUnit.h>
@@ -165,9 +166,6 @@ osx_output_open(void *data, struct audio_format *audio_format, GError **error)
 	OSStatus status;
 	ComponentResult result;
 
-	if (audio_format->bits > 16)
-		audio_format->bits = 16;
-
 	desc.componentType = kAudioUnitType_Output;
 	desc.componentSubType = kAudioUnitSubType_DefaultOutput;
 	desc.componentManufacturer = kAudioUnitManufacturer_Apple;
@@ -216,6 +214,22 @@ osx_output_open(void *data, struct audio_format *audio_format, GError **error)
 	stream_description.mSampleRate = audio_format->sample_rate;
 	stream_description.mFormatID = kAudioFormatLinearPCM;
 	stream_description.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger;
+
+	switch (audio_format->format) {
+	case SAMPLE_FORMAT_S8:
+		stream_description.mBitsPerChannel = 8;
+		break;
+
+	case SAMPLE_FORMAT_S16:
+		stream_description.mBitsPerChannel = 16;
+		break;
+
+	default:
+		audio_format->format = SAMPLE_FORMAT_S16;
+		stream_description.mBitsPerChannel = 16;
+		break;
+	}
+
 #if G_BYTE_ORDER == G_BIG_ENDIAN
 	stream_description.mFormatFlags |= kLinearPCMFormatFlagIsBigEndian;
 #endif
@@ -225,7 +239,6 @@ osx_output_open(void *data, struct audio_format *audio_format, GError **error)
 	stream_description.mFramesPerPacket = 1;
 	stream_description.mBytesPerFrame = stream_description.mBytesPerPacket;
 	stream_description.mChannelsPerFrame = audio_format->channels;
-	stream_description.mBitsPerChannel = audio_format->bits;
 
 	result = AudioUnitSetProperty(od->au, kAudioUnitProperty_StreamFormat,
 				      kAudioUnitScope_Input, 0,

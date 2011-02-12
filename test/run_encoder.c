@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,11 +17,13 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "encoder_list.h"
 #include "encoder_plugin.h"
 #include "audio_format.h"
 #include "audio_parser.h"
 #include "conf.h"
+#include "stdbin.h"
 
 #include <glib.h>
 
@@ -41,11 +43,7 @@ encoder_to_stdout(struct encoder *encoder)
 int main(int argc, char **argv)
 {
 	GError *error = NULL;
-	struct audio_format audio_format = {
-		.sample_rate = 44100,
-		.bits = 16,
-		.channels = 2,
-	};
+	struct audio_format audio_format;
 	bool ret;
 	const char *encoder_name;
 	const struct encoder_plugin *plugin;
@@ -66,6 +64,8 @@ int main(int argc, char **argv)
 	else
 		encoder_name = "vorbis";
 
+	audio_format_init(&audio_format, 44100, SAMPLE_FORMAT_S16, 2);
+
 	/* create the encoder */
 
 	plugin = encoder_plugin_get(encoder_name);
@@ -75,7 +75,7 @@ int main(int argc, char **argv)
 	}
 
 	param = config_new_param(NULL, -1);
-	config_add_block_param(param, "quality", "5.0", -1);
+	config_add_block_param(param, "quality", "5.0", -1, NULL);
 
 	encoder = encoder_init(plugin, param, &error);
 	if (encoder == NULL) {
@@ -88,7 +88,8 @@ int main(int argc, char **argv)
 	/* open the encoder */
 
 	if (argc > 2) {
-		ret = audio_format_parse(&audio_format, argv[2], &error);
+		ret = audio_format_parse(&audio_format, argv[2],
+					 false, &error);
 		if (!ret) {
 			g_printerr("Failed to parse audio format: %s\n",
 				   error->message);

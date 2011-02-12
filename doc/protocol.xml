@@ -67,6 +67,20 @@
         successful command executed in the command list.
       </para>
     </section>
+
+    <section>
+      <title>Ranges</title>
+
+      <para>
+        Some commands (e.g. <link
+        linkend="command_delete"><command>delete</command></link>)
+        allow specifying a range in the form
+        <parameter>START:END</parameter> (the <varname>END</varname>
+        item is not included in the range, similar to ranges in the
+        Python programming language).  If <varname>END</varname> is
+        omitted, then the maximum possible value is assumed.
+      </para>
+    </section>
   </chapter>
 
   <chapter>
@@ -123,7 +137,7 @@
           </term>
           <listitem>
             <para>
-              <footnote id="since_0_14"><simpara>Since MPD 0.14</simpara></footnote>
+              <footnote id="since_0_14"><simpara>Introduced with MPD 0.14</simpara></footnote>
               Waits until there is a noteworthy change in one or more
               of MPD's subsystems.  As soon as there is one, it lists
               all changed systems in a line in the format
@@ -135,6 +149,15 @@
                 <para>
                   <returnvalue>database</returnvalue>: the song database
                   has been modified after <command>update</command>.
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  <returnvalue>update</returnvalue>: a database update
+                  has started or finished.  If the database was
+                  modified during the update, the
+                  <returnvalue>database</returnvalue> event is also
+                  emitted.
                 </para>
               </listitem>
               <listitem>
@@ -172,7 +195,7 @@
                 <para>
                   <returnvalue>options</returnvalue>: options like
                   <option>repeat</option>, <option>random</option>,
-                  <option>crossfade</option>
+                  <option>crossfade</option>, replay gain
                 </para>
               </listitem>
             </itemizedlist>
@@ -191,9 +214,6 @@
               MPD will only send notifications when something changed in
               one of the specified subsytems.
             </para>
-            <simpara>
-              Since <application>MPD</application> 0.14
-            </simpara>
           </listitem>
         </varlistentry>
         <varlistentry id="command_status">
@@ -221,17 +241,23 @@
                 </para>
               </listitem>
               <listitem>
+                <para>
+                  <varname>random</varname>:
+                  <returnvalue>0 or 1</returnvalue>
+                </para>
+              </listitem>
+              <listitem>
                <para>
                 <varname>single</varname>:
+                <footnote id="since_0_15"><simpara>Introduced with MPD 0.15</simpara></footnote>
                 <returnvalue>0 or 1</returnvalue>
-                <footnote id="since_0_15"><simpara>Since MPD 0.15</simpara></footnote>
                </para>
               </listitem>
               <listitem>
                <para>
                 <varname>consume</varname>:
-                <returnvalue>0 or 1</returnvalue>
                 <footnoteref linkend="since_0_15"/>
+                <returnvalue>0 or 1</returnvalue>
                </para>
               </listitem>
               <listitem>
@@ -297,6 +323,16 @@
               </listitem>
               <listitem>
                 <para>
+                  <varname>elapsed</varname>:
+                  <footnote id="since_0_16"><simpara>Introduced with MPD 0.16</simpara></footnote>
+                  <returnvalue>
+                    Total time elapsed within the current song, but
+                    with higher resolution.
+                  </returnvalue>
+                </para>
+              </listitem>
+              <listitem>
+                <para>
                   <varname>bitrate</varname>:
                   <returnvalue>instantaneous bitrate in
                   kbps</returnvalue>
@@ -306,6 +342,18 @@
                 <para>
                   <varname>xfade</varname>:
                   <returnvalue>crossfade in seconds</returnvalue>
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  <varname>mixrampdb</varname>:
+                  <returnvalue>mixramp threshold in dB</returnvalue>
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  <varname>mixrampdelay</varname>:
+                  <returnvalue>mixrampdelay in seconds</returnvalue>
                 </para>
               </listitem>
               <listitem>
@@ -412,6 +460,32 @@
             </para>
           </listitem>
         </varlistentry>
+        <varlistentry id="command_mixrampdb">
+          <term>
+            <cmdsynopsis>
+              <command>mixrampdb</command>
+              <arg choice="req"><replaceable>deciBels</replaceable></arg>
+            </cmdsynopsis>
+          </term>
+          <listitem>
+            <para>
+              Sets the threshold at which songs will be overlapped. Like crossfading but doesn't fade the track volume, just overlaps. The songs need to have MixRamp tags added by an external tool. 0dB is the normalized maximum volume so use negative values, I prefer -17dB. In the absence of mixramp tags crossfading will be used. See http://sourceforge.net/projects/mixramp
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry id="command_mixrampdelay">
+          <term>
+            <cmdsynopsis>
+              <command>mixrampdelay</command>
+              <arg choice="req"><replaceable>SECONDS</replaceable></arg>
+            </cmdsynopsis>
+          </term>
+          <listitem>
+            <para>
+              Additional time subtracted from the overlap calculated by mixrampdb. A value of "nan" disables MixRamp overlapping and falls back to crossfading.
+            </para>
+          </listitem>
+        </varlistentry>
         <varlistentry id="command_random">
           <term>
             <cmdsynopsis>
@@ -471,23 +545,43 @@
             </para>
           </listitem>
         </varlistentry>
-        <varlistentry id="command_volume">
+        <varlistentry id="command_replay_gain_mode">
           <term>
             <cmdsynopsis>
-              <command>volume</command>
-              <arg choice="req"><replaceable>CHANGE</replaceable></arg>
+              <command>replay_gain_mode</command>
+              <arg choice="req"><replaceable>MODE</replaceable></arg>
             </cmdsynopsis>
           </term>
           <listitem>
             <para>
-              Changes volume by amount <varname>CHANGE</varname>.
+              Sets the replay gain mode.  One of
+              <parameter>off</parameter>,
+              <parameter>track</parameter>,
+              <parameter>album</parameter>.
             </para>
-            <note>
-              <para>
-                <command>volume</command> is deprecated, use
-                <command>setvol</command> instead.
-              </para>
-            </note>
+            <para>
+              Changing the mode during playback may take several
+              seconds, because the new settings does not affect the
+              buffered data.
+            </para>
+            <para>
+              This command triggers the
+              <returnvalue>options</returnvalue> idle event.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry id="command_replay_gain_status">
+          <term>
+            <cmdsynopsis>
+              <command>replay_gain_status</command>
+            </cmdsynopsis>
+          </term>
+          <listitem>
+            <para>
+              Prints replay gain options.  Currently, only the
+              variable <varname>replay_gain_mode</varname> is
+              returned.
+            </para>
           </listitem>
         </varlistentry>
       </variablelist>
@@ -648,10 +742,7 @@
             </para>
             <para>
               <varname>URI</varname> is always a single file or
-              URL.  <varname>POSITION</varname> is optional, a
-              negative number means it is relative to the currently
-              playing song in the playlist (if there is one).
-              For example:
+              URL.  For example:
             </para>
             <screen>
 addid "foo.mp3"
@@ -676,7 +767,10 @@ OK
           <term>
             <cmdsynopsis>
               <command>delete</command>
-              <arg choice="req"><replaceable>SONGPOS</replaceable></arg>
+              <group>
+                <arg choice="req"><replaceable>POS</replaceable></arg>
+                <arg choice="req"><replaceable>START:END</replaceable></arg>
+              </group>
             </cmdsynopsis>
           </term>
           <listitem>
@@ -910,6 +1004,20 @@ OK
     <section>
       <title>Stored playlists</title>
 
+      <para>
+        Playlists are stored inside the configured playlist directory.
+        They are addressed with their file name (without the directory
+        and without the <filename>.m3u</filename> suffix).
+      </para>
+
+      <para>
+        Some of the commands described in this section can be used to
+        run playlist plugins instead of the hard-coded simple
+        <filename>m3u</filename> parser.  They can access playlists in
+        the music directory (relative path including the suffix) or
+        remote playlists (absolute URI with a supported scheme).
+      </para>
+
       <variablelist>
         <varlistentry id="command_listplaylist">
           <term>
@@ -920,8 +1028,8 @@ OK
           </term>
           <listitem>
             <para>
-              Lists the files in the playlist
-              <filename>NAME.m3u</filename>.
+              Lists the songs in the playlist.  Playlist plugins are
+              supported.
             </para>
           </listitem>
         </varlistentry>
@@ -934,7 +1042,8 @@ OK
           </term>
           <listitem>
             <para>
-              Lists songs in the playlist <filename>NAME.m3u</filename>.
+              Lists the songs with metadata in the playlist.  Playlist
+              plugins are supported.
             </para>
           </listitem>
         </varlistentry>
@@ -966,8 +1075,8 @@ OK
           </term>
           <listitem>
             <para>
-              Loads the playlist <filename>NAME.m3u</filename> from
-              the playlist directory.
+              Loads the playlist into the current queue.  Playlist
+              plugins are supported.
             </para>
           </listitem>
         </varlistentry>
@@ -1105,16 +1214,35 @@ OK
               <command>find</command>
               <arg choice="req"><replaceable>TYPE</replaceable></arg>
               <arg choice="req"><replaceable>WHAT</replaceable></arg>
+              <arg choice="opt"><replaceable>...</replaceable></arg>
             </cmdsynopsis>
           </term>
           <listitem>
             <para>
               Finds songs in the db that are exactly
-              <varname>WHAT</varname>.  <varname>TYPE</varname> should
-              be <parameter>album</parameter>,
-              <parameter>artist</parameter>, or
-              <parameter>title</parameter>.  <varname>WHAT</varname>
-              is what to find.
+              <varname>WHAT</varname>.  <varname>TYPE</varname> can
+              be any tag supported by MPD, or one of the two special
+              parameters — <parameter>file</parameter> to search by
+              full path (relative to database root), and
+              <parameter>any</parameter> to match against all
+              available tags.  <varname>WHAT</varname> is what to find.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry id="command_findadd">
+          <term>
+            <cmdsynopsis>
+              <command>findadd</command>
+              <arg choice="req"><replaceable>TYPE</replaceable></arg>
+              <arg choice="req"><replaceable>WHAT</replaceable></arg>
+              <arg choice="opt"><replaceable>...</replaceable></arg>
+            </cmdsynopsis>
+          </term>
+          <listitem>
+            <para>
+              Finds songs in the db that are exactly
+              <varname>WHAT</varname> and adds them to current playlist.
+              Parameters have the same meaning as for <command>find</command>.
             </para>
           </listitem>
         </varlistentry>
@@ -1129,7 +1257,8 @@ OK
           <listitem>
             <para>
               Lists all tags of the specified type.
-              <varname>TYPE</varname> should be album or artist.
+              <varname>TYPE</varname> can be any tag supported by MPD or
+              <parameter>file</parameter>.
             </para>
             <para>
               <varname>ARTIST</varname> is an optional parameter when
@@ -1192,17 +1321,15 @@ OK
               <command>search</command>
               <arg choice="req"><replaceable>TYPE</replaceable></arg>
               <arg choice="req"><replaceable>WHAT</replaceable></arg>
+              <arg choice="opt"><replaceable>...</replaceable></arg>
             </cmdsynopsis>
           </term>
           <listitem>
             <para>
               Searches for any song that contains
-              <varname>WHAT</varname>.  <varname>TYPE</varname> can be
-              <parameter>title</parameter>,
-              <parameter>artist</parameter>,
-              <parameter>album</parameter> or
-              <parameter>filename</parameter>.  Search is not case
-              sensitive.
+              <varname>WHAT</varname>. Parameters have the same meaning
+              as for <command>find</command>, except that search is not
+              case sensitive.
             </para>
           </listitem>
         </varlistentry>
@@ -1228,6 +1355,20 @@ OK
               <varname>JOBID</varname> is a positive number
               identifying the update job.  You can read the current
               job id in the <command>status</command> response.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry id="command_rescan">
+          <term>
+            <cmdsynopsis>
+              <command>rescan</command>
+              <arg choice="opt"><replaceable>URI</replaceable></arg>
+            </cmdsynopsis>
+          </term>
+          <listitem>
+            <para>
+              Same as <command>update</command>, but also rescans
+              unmodified files.
             </para>
           </listitem>
         </varlistentry>
@@ -1506,6 +1647,25 @@ OK
             <para>
               Gets a list of available URL handlers.
             </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry id="command_decoders">
+          <term>
+            <cmdsynopsis>
+              <command>decoders</command>
+            </cmdsynopsis>
+          </term>
+          <listitem>
+            <para>
+              Print a list of decoder plugins, followed by their
+              supported suffixes and MIME types.  Example response:
+            </para>
+            <programlisting>plugin: mad
+suffix: mp3
+suffix: mp2
+mime_type: audio/mpeg
+plugin: mpcdec
+suffix: mpc</programlisting>
           </listitem>
         </varlistentry>
       </variablelist>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,9 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "player_control.h"
+#include "decoder_control.h"
 #include "path.h"
 #include "log.h"
 #include "tag.h"
@@ -28,24 +30,41 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <math.h>
 
 struct player_control pc;
+
+static void
+pc_enqueue_song_locked(struct song *song);
 
 void pc_init(unsigned buffer_chunks, unsigned int buffered_before_play)
 {
 	pc.buffer_chunks = buffer_chunks;
 	pc.buffered_before_play = buffered_before_play;
-	notify_init(&pc.notify);
+
+	pc.mutex = g_mutex_new();
+	pc.cond = g_cond_new();
+
 	pc.command = PLAYER_COMMAND_NONE;
 	pc.error = PLAYER_ERROR_NOERROR;
 	pc.state = PLAYER_STATE_STOP;
 	pc.cross_fade_seconds = 0;
-	pc.software_volume = PCM_VOLUME_1;
+	pc.mixramp_db = 0;
+	pc.mixramp_delay_seconds = nanf("");
 }
 
 void pc_deinit(void)
 {
-	notify_deinit(&pc.notify);
+	g_cond_free(pc.cond);
+	g_mutex_free(pc.mutex);
+}
+
+void
+player_wait_decoder(struct decoder_control *dc)
+{
+	/* during this function, the decoder lock is held, because
+	   we're waiting for the decoder thread */
+	g_cond_wait(pc.cond, dc->mutex);
 }
 
 void
@@ -57,27 +76,48 @@ pc_song_deleted(const struct song *song)
 	}
 }
 
-static void player_command(enum player_command cmd)
+static void
+player_command_wait_locked(void)
+{
+	while (pc.command != PLAYER_COMMAND_NONE)
+		g_cond_wait(main_cond, pc.mutex);
+}
+
+static void
+player_command_locked(enum player_command cmd)
 {
 	assert(pc.command == PLAYER_COMMAND_NONE);
 
 	pc.command = cmd;
-	while (pc.command != PLAYER_COMMAND_NONE) {
-		notify_signal(&pc.notify);
-		notify_wait(&main_notify);
-	}
+	player_signal();
+	player_command_wait_locked();
+}
+
+static void
+player_command(enum player_command cmd)
+{
+	player_lock();
+	player_command_locked(cmd);
+	player_unlock();
 }
 
 void
-playerPlay(struct song *song)
+pc_play(struct song *song)
 {
 	assert(song != NULL);
 
-	if (pc.state != PLAYER_STATE_STOP)
-		player_command(PLAYER_COMMAND_STOP);
+	player_lock();
 
-	pc.next_song = song;
-	player_command(PLAYER_COMMAND_PLAY);
+	if (pc.state != PLAYER_STATE_STOP)
+		player_command_locked(PLAYER_COMMAND_STOP);
+
+	assert(pc.next_song == NULL);
+
+	pc_enqueue_song_locked(song);
+
+	assert(pc.next_song == NULL);
+
+	player_unlock();
 
 	idle_add(IDLE_PLAYER);
 }
@@ -85,16 +125,26 @@ playerPlay(struct song *song)
 void pc_cancel(void)
 {
 	player_command(PLAYER_COMMAND_CANCEL);
+	assert(pc.next_song == NULL);
 }
 
-void playerWait(void)
+void
+pc_stop(void)
 {
 	player_command(PLAYER_COMMAND_CLOSE_AUDIO);
+	assert(pc.next_song == NULL);
 
 	idle_add(IDLE_PLAYER);
 }
 
-void playerKill(void)
+void
+pc_update_audio(void)
+{
+	player_command(PLAYER_COMMAND_UPDATE_AUDIO);
+}
+
+void
+pc_kill(void)
 {
 	assert(pc.thread != NULL);
 
@@ -105,57 +155,86 @@ void playerKill(void)
 	idle_add(IDLE_PLAYER);
 }
 
-void playerPause(void)
+void
+pc_pause(void)
+{
+	player_lock();
+
+	if (pc.state != PLAYER_STATE_STOP) {
+		player_command_locked(PLAYER_COMMAND_PAUSE);
+		idle_add(IDLE_PLAYER);
+	}
+
+	player_unlock();
+}
+
+static void
+pc_pause_locked(void)
 {
 	if (pc.state != PLAYER_STATE_STOP) {
-		player_command(PLAYER_COMMAND_PAUSE);
+		player_command_locked(PLAYER_COMMAND_PAUSE);
 		idle_add(IDLE_PLAYER);
 	}
 }
 
-void playerSetPause(int pause_flag)
+void
+pc_set_pause(bool pause_flag)
 {
+	player_lock();
+
 	switch (pc.state) {
 	case PLAYER_STATE_STOP:
 		break;
 
 	case PLAYER_STATE_PLAY:
 		if (pause_flag)
-			playerPause();
+			pc_pause_locked();
 		break;
+
 	case PLAYER_STATE_PAUSE:
 		if (!pause_flag)
-			playerPause();
+			pc_pause_locked();
 		break;
 	}
+
+	player_unlock();
 }
 
-int getPlayerElapsedTime(void)
+void
+pc_get_status(struct player_status *status)
 {
-	return (int)(pc.elapsed_time + 0.5);
+	player_lock();
+	player_command_locked(PLAYER_COMMAND_REFRESH);
+
+	status->state = pc.state;
+
+	if (pc.state != PLAYER_STATE_STOP) {
+		status->bit_rate = pc.bit_rate;
+		status->audio_format = pc.audio_format;
+		status->total_time = pc.total_time;
+		status->elapsed_time = pc.elapsed_time;
+	}
+
+	player_unlock();
 }
 
-unsigned long getPlayerBitRate(void)
-{
-	return pc.bit_rate;
-}
-
-int getPlayerTotalTime(void)
-{
-	return (int)(pc.total_time + 0.5);
-}
-
-enum player_state getPlayerState(void)
+enum player_state
+pc_get_state(void)
 {
 	return pc.state;
 }
 
-void clearPlayerError(void)
+void
+pc_clear_error(void)
 {
-	pc.error = 0;
+	player_lock();
+	pc.error = PLAYER_ERROR_NOERROR;
+	pc.errored_song = NULL;
+	player_unlock();
 }
 
-enum player_error getPlayerError(void)
+enum player_error
+pc_get_error(void)
 {
 	return pc.error;
 }
@@ -166,58 +245,63 @@ pc_errored_song_uri(void)
 	return song_get_uri(pc.errored_song);
 }
 
-char *getPlayerErrorStr(void)
+char *
+pc_get_error_message(void)
 {
-	/* static OK here, only one user in main task */
-	static char error[MPD_PATH_MAX + 64]; /* still too much */
-	static const size_t errorlen = sizeof(error);
+	char *error;
 	char *uri;
-
-	*error = '\0'; /* likely */
 
 	switch (pc.error) {
 	case PLAYER_ERROR_NOERROR:
-		break;
+		return NULL;
 
 	case PLAYER_ERROR_FILENOTFOUND:
 		uri = pc_errored_song_uri();
-		snprintf(error, errorlen,
-			 "file \"%s\" does not exist or is inaccessible", uri);
+		error = g_strdup_printf("file \"%s\" does not exist or is inaccessible", uri);
 		g_free(uri);
-		break;
+		return error;
 
 	case PLAYER_ERROR_FILE:
 		uri = pc_errored_song_uri();
-		snprintf(error, errorlen, "problems decoding \"%s\"", uri);
+		error = g_strdup_printf("problems decoding \"%s\"", uri);
 		g_free(uri);
-		break;
+		return error;
 
 	case PLAYER_ERROR_AUDIO:
-		strcpy(error, "problems opening audio device");
-		break;
+		return g_strdup("problems opening audio device");
 
 	case PLAYER_ERROR_SYSTEM:
-		strcpy(error, "system error occured");
-		break;
+		return g_strdup("system error occured");
 
 	case PLAYER_ERROR_UNKTYPE:
 		uri = pc_errored_song_uri();
-		snprintf(error, errorlen,
-			 "file type of \"%s\" is unknown", uri);
+		error = g_strdup_printf("file type of \"%s\" is unknown", uri);
 		g_free(uri);
-		break;
+		return error;
 	}
-	return *error ? error : NULL;
+
+	assert(false);
+	return NULL;
 }
 
-void
-queueSong(struct song *song)
+static void
+pc_enqueue_song_locked(struct song *song)
 {
 	assert(song != NULL);
 	assert(pc.next_song == NULL);
 
 	pc.next_song = song;
-	player_command(PLAYER_COMMAND_QUEUE);
+	player_command_locked(PLAYER_COMMAND_QUEUE);
+}
+
+void
+pc_enqueue_song(struct song *song)
+{
+	assert(song != NULL);
+
+	player_lock();
+	pc_enqueue_song_locked(song);
+	player_unlock();
 }
 
 bool
@@ -228,9 +312,11 @@ pc_seek(struct song *song, float seek_time)
 	if (pc.state == PLAYER_STATE_STOP)
 		return false;
 
+	player_lock();
 	pc.next_song = song;
 	pc.seek_where = seek_time;
-	player_command(PLAYER_COMMAND_SEEK);
+	player_command_locked(PLAYER_COMMAND_SEEK);
+	player_unlock();
 
 	assert(pc.next_song == NULL);
 
@@ -239,31 +325,52 @@ pc_seek(struct song *song, float seek_time)
 	return true;
 }
 
-float getPlayerCrossFade(void)
+float
+pc_get_cross_fade(void)
 {
 	return pc.cross_fade_seconds;
 }
 
-void setPlayerCrossFade(float crossFadeInSeconds)
+void
+pc_set_cross_fade(float cross_fade_seconds)
 {
-	if (crossFadeInSeconds < 0)
-		crossFadeInSeconds = 0;
-	pc.cross_fade_seconds = crossFadeInSeconds;
+	if (cross_fade_seconds < 0)
+		cross_fade_seconds = 0;
+	pc.cross_fade_seconds = cross_fade_seconds;
 
 	idle_add(IDLE_OPTIONS);
 }
 
-void setPlayerSoftwareVolume(int volume)
+float
+pc_get_mixramp_db(void)
 {
-	if (volume > PCM_VOLUME_1)
-		volume = PCM_VOLUME_1;
-	else if (volume < 0)
-		volume = 0;
-
-	pc.software_volume = volume;
+	return pc.mixramp_db;
 }
 
-double getPlayerTotalPlayTime(void)
+void
+pc_set_mixramp_db(float mixramp_db)
+{
+	pc.mixramp_db = mixramp_db;
+
+	idle_add(IDLE_OPTIONS);
+}
+
+float
+pc_get_mixramp_delay(void)
+{
+	return pc.mixramp_delay_seconds;
+}
+
+void
+pc_set_mixramp_delay(float mixramp_delay_seconds)
+{
+	pc.mixramp_delay_seconds = mixramp_delay_seconds;
+
+	idle_add(IDLE_OPTIONS);
+}
+
+double
+pc_get_total_play_time(void)
 {
 	return pc.total_play_time;
 }

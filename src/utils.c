@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,9 +17,9 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "utils.h"
 #include "conf.h"
-#include "config.h"
 
 #include <glib.h>
 
@@ -44,7 +44,7 @@
 char *parsePath(char *path)
 {
 #ifndef WIN32
-	if (path[0] != '/' && path[0] != '~') {
+	if (!g_path_is_absolute(path) && path[0] != '~') {
 		g_warning("\"%s\" is not an absolute path", path);
 		return NULL;
 	} else if (path[0] == '~') {
@@ -102,43 +102,15 @@ char *parsePath(char *path)
 #endif
 }
 
-int set_nonblocking(int fd)
+bool
+string_array_contains(const char *const* haystack, const char *needle)
 {
-#ifdef WIN32
-	u_long val = 1;
-	int retval;
-	int lasterr = 0;
-	retval = ioctlsocket(fd, FIONBIO, &val);
-	if(retval == SOCKET_ERROR)
-		g_error("Error: ioctlsocket could not set FIONBIO;"
-		" Error %d on socket %d", lasterr = WSAGetLastError(), fd);
-	if(lasterr == 10038)
-		g_debug("Code-up error! Attempt to set non-blocking I/O on "
-			"something that is not a Winsock2 socket. This can't "
-			"be done on Windows!\n");
-	return retval;
-#else
-	int ret, flags;
+	assert(haystack != NULL);
+	assert(needle != NULL);
 
-	assert(fd >= 0);
+	for (; *haystack != NULL; ++haystack)
+		if (g_ascii_strcasecmp(*haystack, needle) == 0)
+			return true;
 
-	while ((flags = fcntl(fd, F_GETFL)) < 0 && errno == EINTR) ;
-	if (flags < 0)
-		return flags;
-
-	flags |= O_NONBLOCK;
-	while ((ret = fcntl(fd, F_SETFL, flags)) < 0 && errno == EINTR) ;
-	return ret;
-#endif
-}
-
-int stringFoundInStringArray(const char *const*array, const char *suffix)
-{
-	while (array && *array) {
-		if (g_ascii_strcasecmp(*array, suffix) == 0)
-			return 1;
-		array++;
-	}
-
-	return 0;
+	return false;
 }

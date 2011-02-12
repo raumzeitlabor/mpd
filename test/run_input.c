@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,10 +18,12 @@
  */
 
 #include "config.h"
+#include "input_init.h"
 #include "input_stream.h"
 #include "tag_pool.h"
 #include "tag_save.h"
 #include "conf.h"
+#include "stdbin.h"
 
 #ifdef ENABLE_ARCHIVE
 #include "archive_list.h"
@@ -44,6 +46,7 @@ my_log_func(const gchar *log_domain, G_GNUC_UNUSED GLogLevelFlags log_level,
 static int
 dump_input_stream(struct input_stream *is)
 {
+	GError *error = NULL;
 	char buffer[4096];
 	size_t num_read;
 	ssize_t num_written;
@@ -51,10 +54,13 @@ dump_input_stream(struct input_stream *is)
 	/* wait until the stream becomes ready */
 
 	while (!is->ready) {
-		int ret = input_stream_buffer(is);
-		if (ret < 0)
+		int ret = input_stream_buffer(is, &error);
+		if (ret < 0) {
 			/* error */
+			g_warning("%s", error->message);
+			g_error_free(error);
 			return 2;
+		}
 
 		if (ret == 0)
 			/* nothing was buffered - wait */
@@ -76,9 +82,16 @@ dump_input_stream(struct input_stream *is)
 			tag_free(tag);
 		}
 
-		num_read = input_stream_read(is, buffer, sizeof(buffer));
-		if (num_read == 0)
+		num_read = input_stream_read(is, buffer, sizeof(buffer),
+					     &error);
+		if (num_read == 0) {
+			if (error != NULL) {
+				g_warning("%s", error->message);
+				g_error_free(error);
+			}
+
 			break;
+		}
 
 		num_written = write(1, buffer, num_read);
 		if (num_written <= 0)
@@ -90,7 +103,8 @@ dump_input_stream(struct input_stream *is)
 
 int main(int argc, char **argv)
 {
-	struct input_stream is;
+	GError *error = NULL;
+	struct input_stream *is;
 	int ret;
 
 	if (argc != 2) {
@@ -112,15 +126,24 @@ int main(int argc, char **argv)
 	archive_plugin_init_all();
 #endif
 
-	input_stream_global_init();
+	if (!input_stream_global_init(&error)) {
+		g_warning("%s", error->message);
+		g_error_free(error);
+		return 2;
+	}
 
 	/* open the stream and dump it */
 
-	if (input_stream_open(&is, argv[1])) {
-		ret = dump_input_stream(&is);
-		input_stream_close(&is);
+	is = input_stream_open(argv[1], &error);
+	if (is != NULL) {
+		ret = dump_input_stream(is);
+		input_stream_close(is);
 	} else {
-		g_printerr("input_stream_open() failed\n");
+		if (error != NULL) {
+			g_warning("%s", error->message);
+			g_error_free(error);
+		} else
+			g_printerr("input_stream_open() failed\n");
 		ret = 2;
 	}
 

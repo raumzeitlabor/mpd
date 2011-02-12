@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -44,5 +44,10 @@ void notify_wait(struct notify *notify);
  * Notify the thread.  This function never blocks.
  */
 void notify_signal(struct notify *notify);
+
+/**
+ * Clears a pending notification.
+ */
+void notify_clear(struct notify *notify);
 
 #endif

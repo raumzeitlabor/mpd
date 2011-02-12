@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,8 +17,9 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "socket_util.h"
 #include "config.h"
+#include "socket_util.h"
+#include "fd_util.h"
 
 #include <errno.h>
 #include <unistd.h>
@@ -27,6 +28,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #else /* G_OS_WIN32 */
+#define WINVER 0x0501
 #include <ws2tcpip.h>
 #include <winsock.h>
 #endif /* G_OS_WIN32 */
@@ -102,15 +104,21 @@ socket_bind_listen(int domain, int type, int protocol,
 	int passcred = 1;
 #endif
 
-	fd = socket(domain, type, protocol);
+	fd = socket_cloexec_nonblock(domain, type, protocol);
 	if (fd < 0) {
 		g_set_error(error, listen_quark(), errno,
 			    "Failed to create socket: %s", g_strerror(errno));
 		return -1;
 	}
 
+#ifdef WIN32
+	const char *optval = (const char *)&reuse;
+#else
+	const void *optval = &reuse;
+#endif
+
 	ret = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
-			 &reuse, sizeof(reuse));
+			 optval, sizeof(reuse));
 	if (ret < 0) {
 		g_set_error(error, listen_quark(), errno,
 			    "setsockopt() failed: %s", g_strerror(errno));

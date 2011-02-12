@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,7 @@
  *
  */
 
+#include "config.h"
 #include "playlist.h"
 #include "playlist_state.h"
 #include "event_pipe.h"
@@ -37,10 +38,11 @@ playlist_tag_event(void)
 static void
 playlist_event(void)
 {
-	syncPlayerAndPlaylist(&g_playlist);
+	playlist_sync(&g_playlist);
 }
 
-void initPlaylist(void)
+void
+playlist_global_init(void)
 {
 	playlist_init(&g_playlist);
 
@@ -48,17 +50,8 @@ void initPlaylist(void)
 	event_pipe_register(PIPE_EVENT_PLAYLIST, playlist_event);
 }
 
-void finishPlaylist(void)
+void
+playlist_global_finish(void)
 {
 	playlist_finish(&g_playlist);
-}
-
-void savePlaylistState(FILE *fp)
-{
-	playlist_state_save(fp, &g_playlist);
-}
-
-void readPlaylistState(FILE *fp)
-{
-	playlist_state_restore(fp, &g_playlist);
 }

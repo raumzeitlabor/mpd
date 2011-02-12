@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,8 +17,10 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "event_pipe.h"
-#include "utils.h"
+#include "fd_util.h"
+#include "mpd_error.h"
 
 #include <stdbool.h>
 #include <assert.h>
@@ -37,6 +39,7 @@
 #define G_LOG_DOMAIN "event_pipe"
 
 static int event_pipe[2];
+static GIOChannel *event_channel;
 static guint event_pipe_source_id;
 static GMutex *event_pipe_mutex;
 static bool pipe_events[PIPE_EVENT_MAX];
@@ -60,12 +63,15 @@ main_notify_event(G_GNUC_UNUSED GIOChannel *source,
 		  G_GNUC_UNUSED gpointer data)
 {
 	char buffer[256];
-	ssize_t r = read(event_pipe[0], buffer, sizeof(buffer));
+	gsize bytes_read;
+	GError *error = NULL;
+	GIOStatus status = g_io_channel_read_chars(event_channel,
+						   buffer, sizeof(buffer),
+						   &bytes_read, &error);
+	if (status == G_IO_STATUS_ERROR)
+		MPD_ERROR("error reading from pipe: %s", error->message);
+
 	bool events[PIPE_EVENT_MAX];
-
-	if (r < 0 && errno != EAGAIN && errno != EINTR)
-		g_error("error reading from pipe: %s", strerror(errno));
-
 	g_mutex_lock(event_pipe_mutex);
 	memcpy(events, pipe_events, sizeof(events));
 	memset(pipe_events, 0, sizeof(pipe_events));
@@ -84,22 +90,22 @@ void event_pipe_init(void)
 	GIOChannel *channel;
 	int ret;
 
-#ifdef WIN32
-	ret = _pipe(event_pipe, 512, _O_BINARY);
-#else
-	ret = pipe(event_pipe);
-#endif
+	ret = pipe_cloexec_nonblock(event_pipe);
 	if (ret < 0)
-		g_error("Couldn't open pipe: %s", strerror(errno));
-#ifndef WIN32
-	if (set_nonblocking(event_pipe[1]) < 0)
-		g_error("Couldn't set non-blocking I/O: %s", strerror(errno));
-#endif
+		MPD_ERROR("Couldn't open pipe: %s", strerror(errno));
 
+#ifndef G_OS_WIN32
 	channel = g_io_channel_unix_new(event_pipe[0]);
+#else
+	channel = g_io_channel_win32_new_fd(event_pipe[0]);
+#endif
+	g_io_channel_set_encoding(channel, NULL, NULL);
+	g_io_channel_set_buffered(channel, false);
+
 	event_pipe_source_id = g_io_add_watch(channel, G_IO_IN,
 					      main_notify_event, NULL);
-	g_io_channel_unref(channel);
+
+	event_channel = channel;
 
 	event_pipe_mutex = g_mutex_new();
 }
@@ -109,8 +115,12 @@ void event_pipe_deinit(void)
 	g_mutex_free(event_pipe_mutex);
 
 	g_source_remove(event_pipe_source_id);
+	g_io_channel_unref(event_channel);
 
+#ifndef WIN32
+	/* By some strange reason this call hangs on Win32 */
 	close(event_pipe[0]);
+#endif
 	close(event_pipe[1]);
 }
 
@@ -141,7 +151,7 @@ void event_pipe_emit(enum pipe_event event)
 
 	w = write(event_pipe[1], "", 1);
 	if (w < 0 && errno != EAGAIN && errno != EINTR)
-		g_error("error writing to pipe: %s", strerror(errno));
+		MPD_ERROR("error writing to pipe: %s", strerror(errno));
 }
 
 void event_pipe_emit_fast(enum pipe_event event)

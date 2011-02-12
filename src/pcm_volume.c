@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "pcm_volume.h"
 #include "pcm_utils.h"
 #include "audio_format.h"
@@ -113,6 +114,29 @@ pcm_volume_change_24(int32_t *buffer, unsigned num_samples, int volume)
 	}
 }
 
+static void
+pcm_volume_change_32(int32_t *buffer, unsigned num_samples, int volume)
+{
+	while (num_samples > 0) {
+#ifdef __i386__
+		/* assembly version for i386 */
+		int32_t sample = *buffer;
+
+		*buffer++ = pcm_volume_sample_24(sample, volume, 0);
+#else
+		/* portable version */
+		int64_t sample = *buffer;
+
+		sample = (sample * volume + pcm_volume_dither() +
+			  PCM_VOLUME_1 / 2)
+			/ PCM_VOLUME_1;
+		*buffer++ = pcm_range_64(sample, 32);
+#endif
+
+		--num_samples;
+	}
+}
+
 bool
 pcm_volume(void *buffer, int length,
 	   const struct audio_format *format,
@@ -126,18 +150,23 @@ pcm_volume(void *buffer, int length,
 		return true;
 	}
 
-	switch (format->bits) {
-	case 8:
+	switch (format->format) {
+	case SAMPLE_FORMAT_S8:
 		pcm_volume_change_8((int8_t *)buffer, length, volume);
 		return true;
 
-	case 16:
+	case SAMPLE_FORMAT_S16:
 		pcm_volume_change_16((int16_t *)buffer, length / 2,
 				     volume);
 		return true;
 
-	case 24:
+	case SAMPLE_FORMAT_S24_P32:
 		pcm_volume_change_24((int32_t*)buffer, length / 4,
+				     volume);
+		return true;
+
+	case SAMPLE_FORMAT_S32:
+		pcm_volume_change_32((int32_t*)buffer, length / 4,
 				     volume);
 		return true;
 

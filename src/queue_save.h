@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,6 +25,7 @@
 #ifndef QUEUE_SAVE_H
 #define QUEUE_SAVE_H
 
+#include <glib.h>
 #include <stdio.h>
 
 struct queue;
@@ -33,10 +34,10 @@ void
 queue_save(FILE *fp, const struct queue *queue);
 
 /**
- * Loads one song from the state file line and returns its number.
- * Returns -1 on failure.
+ * Loads one song from the state file and appends it to the queue.
  */
-int
-queue_load_song(struct queue *queue, const char *line);
+void
+queue_load_song(FILE *fp, GString *buffer, const char *line,
+		struct queue *queue);
 
 #endif

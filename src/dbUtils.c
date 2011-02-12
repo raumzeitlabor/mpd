@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "dbUtils.h"
 #include "locate.h"
 #include "directory.h"
@@ -59,7 +60,7 @@ static int
 printSongInDirectory(struct song *song, G_GNUC_UNUSED void *data)
 {
 	struct client *client = data;
-	song_print_url(client, song);
+	song_print_uri(client, song);
 	return 0;
 }
 
@@ -74,7 +75,7 @@ searchInDirectory(struct song *song, void *_data)
 	struct search_data *data = _data;
 
 	if (locate_song_search(song, data->criteria))
-		return song_print_info(data->client, song);
+		song_print_info(data->client, song);
 
 	return 0;
 }
@@ -104,7 +105,7 @@ findInDirectory(struct song *song, void *_data)
 	struct search_data *data = _data;
 
 	if (locate_song_match(song, data->criteria))
-		return song_print_info(data->client, song);
+		song_print_info(data->client, song);
 
 	return 0;
 }
@@ -134,8 +135,7 @@ searchStatsInDirectory(struct song *song, void *data)
 
 	if (locate_song_match(song, stats->criteria)) {
 		stats->numberOfSongs++;
-		if (song->tag->time > 0)
-			stats->playTime += song->tag->time;
+		stats->playTime += song_get_duration(song);
 	}
 
 	return 0;
@@ -168,7 +168,7 @@ int printAllIn(struct client *client, const char *name)
 static int
 directoryAddSongToPlaylist(struct song *song, G_GNUC_UNUSED void *data)
 {
-	return addSongToPlaylist(&g_playlist, song, NULL);
+	return playlist_append_song(&g_playlist, song, NULL);
 }
 
 struct add_data {
@@ -197,6 +197,28 @@ int addAllInToStoredPlaylist(const char *name, const char *utf8file)
 	};
 
 	return db_walk(name, directoryAddSongToStoredPlaylist, NULL, &data);
+}
+
+static int
+findAddInDirectory(struct song *song, void *_data)
+{
+	struct search_data *data = _data;
+
+	if (locate_song_match(song, data->criteria))
+		return directoryAddSongToPlaylist(song, data);
+
+	return 0;
+}
+
+int findAddIn(struct client *client, const char *name,
+	      const struct locate_item_list *criteria)
+{
+	struct search_data data;
+
+	data.client   = client;
+	data.criteria = criteria;
+
+	return db_walk(name, findAddInDirectory, NULL, &data);
 }
 
 static int
@@ -237,7 +259,7 @@ visitTag(struct client *client, struct strset *set,
 	bool found = false;
 
 	if (tagType == LOCATE_TAG_FILE_TYPE) {
-		song_print_url(client, song);
+		song_print_uri(client, song);
 		return;
 	}
 

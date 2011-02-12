@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,14 +22,17 @@
 
 #include <glib.h>
 
-typedef struct _Options {
+#include <stdbool.h>
+
+struct options {
 	gboolean kill;
 	gboolean daemon;
-	gboolean stdOutput;
+	gboolean log_stderr;
 	gboolean verbose;
-	int createDB;
-} Options;
+};
 
-void parseOptions(int argc, char **argv, Options *options);
+bool
+parse_cmdline(int argc, char **argv, struct options *options,
+	      GError **error_r);
 
 #endif

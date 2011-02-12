@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "icy_server.h"
 
 #include <glib.h>
@@ -95,6 +96,7 @@ icy_server_metadata_page(const struct tag *tag, ...)
 	gchar stream_title[(1 + 255 - 28) * 16]; // Length + Metadata -
 						 // "StreamTitle='';StreamUrl='';"
 						 // = 4081 - 28
+	stream_title[0] =  '\0';
 
 	last_item = -1;
 

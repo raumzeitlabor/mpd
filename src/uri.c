@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2009 The Music Player Daemon Project
+ * Copyright (C) 2003-2010 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,10 +17,12 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "uri.h"
 
 #include <glib.h>
 
+#include <assert.h>
 #include <string.h>
 
 bool uri_has_scheme(const char *uri)
@@ -32,9 +34,51 @@ bool uri_has_scheme(const char *uri)
 const char *
 uri_get_suffix(const char *uri)
 {
-	const char *dot = strrchr(g_basename(uri), '.');
+	const char *suffix = strrchr(g_basename(uri), '.');
+	if (suffix == NULL)
+		return NULL;
 
-	return dot != NULL ? dot + 1 : NULL;
+	++suffix;
+
+	if (strchr(suffix, '/') != NULL)
+		return NULL;
+
+	return suffix;
+}
+
+static const char *
+verify_uri_segment(const char *p)
+{
+	const char *q;
+
+	unsigned dots = 0;
+	while (*p == '.') {
+		++p;
+		++dots;
+	}
+
+	if (dots <= 2 && (*p == 0 || *p == '/'))
+		return NULL;
+
+	q = strchr(p + 1, '/');
+	return q != NULL ? q : "";
+}
+
+bool
+uri_safe_local(const char *uri)
+{
+	while (true) {
+		uri = verify_uri_segment(uri);
+		if (uri == NULL)
+			return false;
+
+		if (*uri == 0)
+			return true;
+
+		assert(*uri == '/');
+
+		++uri;
+	}
 }
 
 char *
