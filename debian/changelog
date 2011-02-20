@@ -1,3 +1,26 @@
+mpd (0.16.1-2) unstable; urgency=low
+
+  * Update maintainer
+  * Bump standards version (No changes)
+  * Add vcs headers to control file
+  * Recreate /var/run/mpd in init script if its missing
+  * Add lintian override for /var/run/mpd - we recreate 
+    it in initscript if necessary
+  * Add README.source
+  * Warn if configfile contains the deprecated error_file 
+    option (Closes: #613736)
+  * Add init.d status support and add lsb-base to deps.
+    Thanks to Peter Eisentraut (Closes: #536296)
+  * wrap and sort build dependencies.
+    Thanks to Benjamin Drung for mentioning wrap-and-sort (Closes: #609601)
+  * Update mpd.conf and mention vbrfix package (Closes: #568388)
+  * Add libavahi-glib-dev to build-deps to build avahi support 
+    (Closes: #560860)
+  * Re-enable mikmod support (Closes: #607643, #510675)
+  * Remove wrong changelog entry
+
+ -- Alexander Wirt <formorer@debian.org>  Sun, 20 Feb 2011 21:35:03 +0100
+
 mpd (0.16.1-1) unstable; urgency=low
 
   * New upstream release
