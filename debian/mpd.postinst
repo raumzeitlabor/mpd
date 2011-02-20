@@ -35,15 +35,22 @@ do_mpd_conf () {
 }
 
 do_mpd_init () {
-    if [ -x /etc/init.d/mpd ]; then
-        # Start after ALSA/icecast/etc and stop before them
-        update-rc.d mpd defaults 30 14 >/dev/null
-        if [ -x /usr/sbin/invoke-rc.d ]; then
-            invoke-rc.d mpd "$@"
-        else
-            /etc/init.d/mpd "$@"
-        fi
-    fi
+		  if [ -x /etc/init.d/mpd ]; then
+					 # Start after ALSA/icecast/etc and stop before them
+					 update-rc.d mpd defaults 30 14 >/dev/null
+					 # check for a deprecated option
+					 if [ -f /etc/mpd.conf ] && grep -q '^\s*error_file\s*=' /etc/mpd.conf
+					 then
+								echo "Your configuration file contains the deprecated option error_file" 
+								echo "mpd won't start until you migrated your configuration"
+					 else
+								if [ -x /usr/sbin/invoke-rc.d ]; then
+										  invoke-rc.d mpd "$@"
+								else
+										  /etc/init.d/mpd "$@"
+								fi
+					 fi
+		  fi
 }
 
 do_mpd_restart () {
