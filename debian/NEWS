@@ -1,4 +1,4 @@
-mpd (0.14.0) unstable; urgency=low
+mpd (0.14-1) unstable; urgency=low
 
     MPD now supports listening on a local socket rather than a TCP port.
     If you wish to use this feature, change the bind_to_address in mpd.conf.
