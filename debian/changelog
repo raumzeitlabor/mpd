@@ -1,11 +1,3 @@
-mpd (0.16.1-2~1.gbpf917c7) UNRELEASED; urgency=low
-
-  ** SNAPSHOT build @f917c7d9d7572b587a3eb71b871f8a93256d21b8 **
-
-  * Update maintainer
-
- -- Alexander Wirt <formorer@debian.org>  Sat, 12 Feb 2011 19:26:43 +0100
-
 mpd (0.16.1-1) unstable; urgency=low
 
   * New upstream release
