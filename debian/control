@@ -3,7 +3,36 @@ Section: sound
 Priority: optional
 Maintainer: mpd maintainers <pkg-mpd-maintainers@lists.alioth.debian.org>
 Uploaders: Alexander Wirt <formorer@debian.org>
-Build-Depends: debhelper (>= 6), cdbs, libsqlite3-dev, libcurl4-gnutls-dev | libcurl-dev, libmms-dev, libavahi-client-dev, libsamplerate0-dev, libaudiofile-dev, libasound2-dev  [!kfreebsd-amd64 !kfreebsd-i386 !hurd-i386], libao-dev (>= 0.8.3), libpulse-dev, libjack-dev, libshout3-dev, libogg-dev, libvorbis-dev [!arm !armel !armeb], libvorbisidec-dev [arm armel armeb], libflac-dev (>= 1.1.4), libmpcdec-dev, libmad0-dev, libfaad-dev, libmikmod2-dev, libwavpack-dev, libsidplay2-dev, libresid-builder-dev, libavcodec-dev, libavformat-dev, libid3tag0-dev, zlib1g-dev, quilt, xmlto
+Build-Depends: cdbs,
+               debhelper (>= 6),
+               libao-dev (>= 0.8.3),
+               libasound2-dev  [!kfreebsd-amd64 !kfreebsd-i386 !hurd-i386],
+               libaudiofile-dev,
+               libavahi-client-dev,
+               libavcodec-dev,
+               libavformat-dev,
+               libcurl4-gnutls-dev | libcurl-dev,
+               libfaad-dev,
+               libflac-dev (>= 1.1.4),
+               libid3tag0-dev,
+               libjack-dev,
+               libmad0-dev,
+               libmikmod2-dev,
+               libmms-dev,
+               libmpcdec-dev,
+               libogg-dev,
+               libpulse-dev,
+               libresid-builder-dev,
+               libsamplerate0-dev,
+               libshout3-dev,
+               libsidplay2-dev,
+               libsqlite3-dev,
+               libvorbis-dev [!arm !armel !armeb],
+               libvorbisidec-dev [arm armel armeb],
+               libwavpack-dev,
+               quilt,
+               xmlto,
+               zlib1g-dev
 Standards-Version: 3.9.1
 Homepage: http://mpd.wikia.com/wiki/Music_Player_Daemon_Wiki
 Vcs-Browser: http://git.debian.org/?p=pkg-mpd/pkg-mpd.git
@@ -11,8 +40,8 @@ Vcs-Git: git://git.debian.org/pkg-mpd/pkg-mpd.git
 
 Package: mpd
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, adduser, lsb-base (>= 3.2-13)
-Suggests: mpd-client, icecast2, pulseaudio, avahi-daemon
+Depends: adduser, lsb-base (>= 3.2-13), ${misc:Depends}, ${shlibs:Depends}
+Suggests: avahi-daemon, icecast2, mpd-client, pulseaudio
 Description: Music Player Daemon
  Music Player Daemon (MPD) is a server that allows remote access for
  playing audio files (Ogg-Vorbis, FLAC, MP3, Wave, and AIFF), streams
