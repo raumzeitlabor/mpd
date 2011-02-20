@@ -105,6 +105,9 @@ case "$1" in
     stop)
         mpd_stop
         ;;
+    status)
+    	status_of_proc -p $PIDFILE $DAEMON $NAME
+	;;
     restart|force-reload)
         mpd_stop
         mpd_start
