@@ -121,8 +121,13 @@ case "$1" in
         mpd_stop
         mpd_start
         ;;
+    force-reload)
+    	FORCE_CREATE_DB=1
+	mpd_stop
+	mpd_start
+	;;
     *)
-        echo "Usage: $0 {start|start-create-db|stop|restart}"
+        echo "Usage: $0 {start|start-create-db|stop|restart|force-reload}"
         exit 2
         ;;
 esac
