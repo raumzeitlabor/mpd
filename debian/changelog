@@ -1,6 +1,6 @@
 mpd (0.16.1-2) unstable; urgency=low
 
-  * Update maintainer
+  * Update maintainer. Thanks Decklin!
   * Bump standards version (No changes)
   * Add vcs headers to control file
   * Recreate /var/run/mpd in init script if its missing
@@ -17,9 +17,11 @@ mpd (0.16.1-2) unstable; urgency=low
   * Add libavahi-glib-dev to build-deps to build avahi support 
     (Closes: #560860)
   * Re-enable mikmod support (Closes: #607643, #510675)
-  * Remove wrong changelog entry
+  * Fix NEWS entry
+  * Implement force-reload in initscript (Closes: #515623)
+  * Force deb source format 1.0
 
- -- Alexander Wirt <formorer@debian.org>  Sun, 20 Feb 2011 21:35:03 +0100
+ -- Alexander Wirt <formorer@debian.org>  Thu, 03 Mar 2011 22:37:12 +0100
 
 mpd (0.16.1-1) unstable; urgency=low
 
