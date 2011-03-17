@@ -68,11 +68,6 @@ mpd_start () {
         chown mpd:audio $PIDDIR
     fi
 
-    if [ "$FORCE_CREATE_DB" -o ! -f "$DBFILE" ]; then
-        log_warning_msg "creating $DBFILE... "
-        $DAEMON --create-db "$MPDCONF" > /dev/null 2>&1
-    fi
-
     start-stop-daemon --start --quiet --oknodo --pidfile "$PIDFILE" \
         --exec "$DAEMON" -- $MPD_OPTS "$MPDCONF"
     log_end_msg $?
@@ -112,17 +107,14 @@ case "$1" in
         mpd_stop
         mpd_start
         ;;
-    force-start|start-create-db)
-        FORCE_CREATE_DB=1
+    force-start)
         mpd_start
         ;;
     force-restart)
-        FORCE_CREATE_DB=1
         mpd_stop
         mpd_start
         ;;
     force-reload)
-    	FORCE_CREATE_DB=1
 	mpd_stop
 	mpd_start
 	;;
