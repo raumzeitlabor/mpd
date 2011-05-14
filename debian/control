@@ -34,7 +34,7 @@ Build-Depends: cdbs,
                quilt,
                xmlto,
                zlib1g-dev
-Standards-Version: 3.9.1
+Standards-Version: 3.9.2
 Homepage: http://mpd.wikia.com/wiki/Music_Player_Daemon_Wiki
 Vcs-Browser: http://git.debian.org/?p=pkg-mpd/pkg-mpd.git
 Vcs-Git: git://git.debian.org/pkg-mpd/pkg-mpd.git
