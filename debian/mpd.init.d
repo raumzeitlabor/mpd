@@ -4,8 +4,8 @@
 # Provides:          mpd
 # Required-Start:    $local_fs $remote_fs
 # Required-Stop:     $local_fs $remote_fs
-# Should-Start:      autofs $network alsa-utils pulseaudio
-# Should-Stop:       autofs $network alsa-utils pulseaudio
+# Should-Start:      autofs $network $named alsa-utils pulseaudio
+# Should-Stop:       autofs $network $named alsa-utils pulseaudio
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Short-Description: Music Player Daemon
