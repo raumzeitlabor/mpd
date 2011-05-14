@@ -187,6 +187,9 @@
 /* Define to 1 if you have the `sidutils' library (-lsidutils). */
 #undef HAVE_LIBSIDUTILS
 
+/* Define to 1 if you have the `vorbisidec' library (-lvorbisidec). */
+#undef HAVE_LIBVORBISIDEC
+
 /* Define to 1 if you have the `WildMidi' library (-lWildMidi). */
 #undef HAVE_LIBWILDMIDI
 

@@ -913,9 +913,9 @@ am__test_run_convert_SOURCES_DIST = test/run_convert.c \
 test_run_convert_OBJECTS = $(am_test_run_convert_OBJECTS)
 @ENABLE_TEST_TRUE@test_run_convert_DEPENDENCIES =  \
 @ENABLE_TEST_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
-am__test_run_decoder_SOURCES_DIST = test/run_decoder.c src/conf.c \
-	src/tokenizer.c src/utils.c src/log.c src/tag.c src/tag_pool.c \
-	src/replay_gain_info.c src/uri.c src/fd_util.c \
+am__test_run_decoder_SOURCES_DIST = test/run_decoder.c test/stdbin.h \
+	src/conf.c src/tokenizer.c src/utils.c src/log.c src/tag.c \
+	src/tag_pool.c src/replay_gain_info.c src/uri.c src/fd_util.c \
 	src/audio_check.c src/audio_format.c src/timer.c \
 	src/archive/bz2_archive_plugin.c \
 	src/archive/zzip_archive_plugin.c \
@@ -1028,39 +1028,39 @@ test_run_decoder_OBJECTS = $(am_test_run_decoder_OBJECTS)
 @ENABLE_TEST_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_4) \
 @ENABLE_TEST_TRUE@	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3) \
 @ENABLE_TEST_TRUE@	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1)
-am__test_run_encoder_SOURCES_DIST = test/run_encoder.c src/conf.c \
-	src/tokenizer.c src/utils.c src/tag.c src/tag_pool.c \
-	src/audio_check.c src/audio_format.c src/audio_parser.c \
-	src/encoder_list.c src/encoder/null_encoder.c \
-	src/encoder/wave_encoder.c src/encoder/vorbis_encoder.c \
-	src/encoder/lame_encoder.c src/encoder/twolame_encoder.c \
-	src/encoder/flac_encoder.c
-@ENABLE_ENCODER_TRUE@am__objects_161 = src/encoder_list.$(OBJEXT) \
-@ENABLE_ENCODER_TRUE@	src/encoder/null_encoder.$(OBJEXT)
-@ENABLE_ENCODER_TRUE@@ENABLE_WAVE_ENCODER_TRUE@am__objects_162 = src/encoder/wave_encoder.$(OBJEXT)
-@ENABLE_ENCODER_TRUE@@ENABLE_VORBIS_ENCODER_TRUE@am__objects_163 = src/encoder/vorbis_encoder.$(OBJEXT)
-@ENABLE_ENCODER_TRUE@@ENABLE_LAME_ENCODER_TRUE@am__objects_164 = src/encoder/lame_encoder.$(OBJEXT)
-@ENABLE_ENCODER_TRUE@@ENABLE_TWOLAME_ENCODER_TRUE@am__objects_165 = src/encoder/twolame_encoder.$(OBJEXT)
-@ENABLE_ENCODER_TRUE@@ENABLE_FLAC_ENCODER_TRUE@am__objects_166 = src/encoder/flac_encoder.$(OBJEXT)
+am__test_run_encoder_SOURCES_DIST = test/run_encoder.c test/stdbin.h \
+	src/conf.c src/tokenizer.c src/utils.c src/tag.c \
+	src/tag_pool.c src/audio_check.c src/audio_format.c \
+	src/audio_parser.c src/encoder_list.c \
+	src/encoder/null_encoder.c src/encoder/wave_encoder.c \
+	src/encoder/vorbis_encoder.c src/encoder/lame_encoder.c \
+	src/encoder/twolame_encoder.c src/encoder/flac_encoder.c
+@ENABLE_ENCODER_TRUE@am__objects_161 = src/test_run_encoder-encoder_list.$(OBJEXT) \
+@ENABLE_ENCODER_TRUE@	src/encoder/test_run_encoder-null_encoder.$(OBJEXT)
+@ENABLE_ENCODER_TRUE@@ENABLE_WAVE_ENCODER_TRUE@am__objects_162 = src/encoder/test_run_encoder-wave_encoder.$(OBJEXT)
+@ENABLE_ENCODER_TRUE@@ENABLE_VORBIS_ENCODER_TRUE@am__objects_163 = src/encoder/test_run_encoder-vorbis_encoder.$(OBJEXT)
+@ENABLE_ENCODER_TRUE@@ENABLE_LAME_ENCODER_TRUE@am__objects_164 = src/encoder/test_run_encoder-lame_encoder.$(OBJEXT)
+@ENABLE_ENCODER_TRUE@@ENABLE_TWOLAME_ENCODER_TRUE@am__objects_165 = src/encoder/test_run_encoder-twolame_encoder.$(OBJEXT)
+@ENABLE_ENCODER_TRUE@@ENABLE_FLAC_ENCODER_TRUE@am__objects_166 = src/encoder/test_run_encoder-flac_encoder.$(OBJEXT)
 am__objects_167 = $(am__objects_161) $(am__objects_162) \
 	$(am__objects_163) $(am__objects_164) $(am__objects_165) \
 	$(am__objects_166)
-@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@am_test_run_encoder_OBJECTS = test/run_encoder.$(OBJEXT) \
-@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/conf.$(OBJEXT) \
-@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/tokenizer.$(OBJEXT) \
-@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/utils.$(OBJEXT) \
-@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/tag.$(OBJEXT) \
-@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/tag_pool.$(OBJEXT) \
-@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/audio_check.$(OBJEXT) \
-@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/audio_format.$(OBJEXT) \
-@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/audio_parser.$(OBJEXT) \
+@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@am_test_run_encoder_OBJECTS = test/test_run_encoder-run_encoder.$(OBJEXT) \
+@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/test_run_encoder-conf.$(OBJEXT) \
+@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/test_run_encoder-tokenizer.$(OBJEXT) \
+@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/test_run_encoder-utils.$(OBJEXT) \
+@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/test_run_encoder-tag.$(OBJEXT) \
+@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/test_run_encoder-tag_pool.$(OBJEXT) \
+@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/test_run_encoder-audio_check.$(OBJEXT) \
+@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/test_run_encoder-audio_format.$(OBJEXT) \
+@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/test_run_encoder-audio_parser.$(OBJEXT) \
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	$(am__objects_167)
 test_run_encoder_OBJECTS = $(am_test_run_encoder_OBJECTS)
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@test_run_encoder_DEPENDENCIES =  \
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	$(am__DEPENDENCIES_1) \
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	$(am__DEPENDENCIES_7) \
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	$(am__DEPENDENCIES_1)
-am__test_run_filter_SOURCES_DIST = test/run_filter.c \
+am__test_run_filter_SOURCES_DIST = test/run_filter.c test/stdbin.h \
 	src/filter_plugin.c src/filter_registry.c src/conf.c \
 	src/tokenizer.c src/utils.c src/pcm_volume.c src/pcm_convert.c \
 	src/pcm_byteswap.c src/pcm_format.c src/pcm_channels.c \
@@ -1123,9 +1123,10 @@ am__test_run_inotify_SOURCES_DIST = test/run_inotify.c src/fd_util.c \
 test_run_inotify_OBJECTS = $(am_test_run_inotify_OBJECTS)
 @ENABLE_INOTIFY_TRUE@@ENABLE_TEST_TRUE@test_run_inotify_DEPENDENCIES =  \
 @ENABLE_INOTIFY_TRUE@@ENABLE_TEST_TRUE@	$(am__DEPENDENCIES_1)
-am__test_run_input_SOURCES_DIST = test/run_input.c src/conf.c \
-	src/tokenizer.c src/utils.c src/tag.c src/tag_pool.c \
-	src/tag_save.c src/fd_util.c src/archive/bz2_archive_plugin.c \
+am__test_run_input_SOURCES_DIST = test/run_input.c test/stdbin.h \
+	src/conf.c src/tokenizer.c src/utils.c src/tag.c \
+	src/tag_pool.c src/tag_save.c src/fd_util.c \
+	src/archive/bz2_archive_plugin.c \
 	src/archive/zzip_archive_plugin.c \
 	src/archive/iso9660_archive_plugin.c src/archive_api.c \
 	src/archive_list.c src/archive_plugin.c \
@@ -1169,7 +1170,7 @@ test_run_input_OBJECTS = $(am_test_run_input_OBJECTS)
 @ENABLE_TEST_TRUE@	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3) \
 @ENABLE_TEST_TRUE@	$(am__DEPENDENCIES_1)
 am__test_run_normalize_SOURCES_DIST = test/run_normalize.c \
-	src/audio_check.c src/audio_parser.c \
+	test/stdbin.h src/audio_check.c src/audio_parser.c \
 	src/AudioCompress/compress.c
 @ENABLE_TEST_TRUE@am_test_run_normalize_OBJECTS =  \
 @ENABLE_TEST_TRUE@	test/run_normalize.$(OBJEXT) \
@@ -1179,11 +1180,12 @@ am__test_run_normalize_SOURCES_DIST = test/run_normalize.c \
 test_run_normalize_OBJECTS = $(am_test_run_normalize_OBJECTS)
 @ENABLE_TEST_TRUE@test_run_normalize_DEPENDENCIES =  \
 @ENABLE_TEST_TRUE@	$(am__DEPENDENCIES_1)
-am__test_run_output_SOURCES_DIST = test/run_output.c src/conf.c \
-	src/tokenizer.c src/utils.c src/log.c src/audio_check.c \
-	src/audio_format.c src/audio_parser.c src/timer.c src/tag.c \
-	src/tag_pool.c src/fifo_buffer.c src/page.c src/socket_util.c \
-	src/output_init.c src/output_list.c src/encoder_list.c \
+am__test_run_output_SOURCES_DIST = test/run_output.c test/stdbin.h \
+	src/conf.c src/tokenizer.c src/utils.c src/log.c \
+	src/audio_check.c src/audio_format.c src/audio_parser.c \
+	src/timer.c src/tag.c src/tag_pool.c src/fifo_buffer.c \
+	src/page.c src/socket_util.c src/output_init.c \
+	src/output_list.c src/encoder_list.c \
 	src/encoder/null_encoder.c src/encoder/wave_encoder.c \
 	src/encoder/vorbis_encoder.c src/encoder/lame_encoder.c \
 	src/encoder/twolame_encoder.c src/encoder/flac_encoder.c \
@@ -1299,7 +1301,8 @@ test_run_output_OBJECTS = $(am_test_run_output_OBJECTS)
 test_run_output_LINK = $(CCLD) $(test_run_output_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 am__test_software_volume_SOURCES_DIST = test/software_volume.c \
-	src/audio_check.c src/audio_parser.c src/pcm_volume.c
+	test/stdbin.h src/audio_check.c src/audio_parser.c \
+	src/pcm_volume.c
 @ENABLE_TEST_TRUE@am_test_software_volume_OBJECTS =  \
 @ENABLE_TEST_TRUE@	test/software_volume.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/audio_check.$(OBJEXT) \
@@ -2038,6 +2041,7 @@ SPARSE_CPPFLAGS = $(DEFAULT_INCLUDES) -I$(shell $(CC) \
 @ENABLE_TEST_TRUE@	$(GLIB_LIBS)
 
 @ENABLE_TEST_TRUE@test_run_input_SOURCES = test/run_input.c \
+@ENABLE_TEST_TRUE@	test/stdbin.h \
 @ENABLE_TEST_TRUE@	src/conf.c src/tokenizer.c src/utils.c \
 @ENABLE_TEST_TRUE@	src/tag.c src/tag_pool.c src/tag_save.c \
 @ENABLE_TEST_TRUE@	src/fd_util.c \
@@ -2077,6 +2081,7 @@ SPARSE_CPPFLAGS = $(DEFAULT_INCLUDES) -I$(shell $(CC) \
 @ENABLE_TEST_TRUE@	$(GLIB_LIBS)
 
 @ENABLE_TEST_TRUE@test_run_decoder_SOURCES = test/run_decoder.c \
+@ENABLE_TEST_TRUE@	test/stdbin.h \
 @ENABLE_TEST_TRUE@	src/conf.c src/tokenizer.c src/utils.c src/log.c \
 @ENABLE_TEST_TRUE@	src/tag.c src/tag_pool.c \
 @ENABLE_TEST_TRUE@	src/replay_gain_info.c \
@@ -2120,12 +2125,13 @@ SPARSE_CPPFLAGS = $(DEFAULT_INCLUDES) -I$(shell $(CC) \
 @ENABLE_TEST_TRUE@	$(GLIB_LIBS)
 
 @ENABLE_TEST_TRUE@test_run_filter_SOURCES = test/run_filter.c \
-@ENABLE_TEST_TRUE@	src/filter_plugin.c src/filter_registry.c \
-@ENABLE_TEST_TRUE@	src/conf.c src/tokenizer.c src/utils.c \
-@ENABLE_TEST_TRUE@	src/pcm_volume.c src/pcm_convert.c \
-@ENABLE_TEST_TRUE@	src/pcm_byteswap.c src/pcm_format.c \
-@ENABLE_TEST_TRUE@	src/pcm_channels.c src/pcm_dither.c \
-@ENABLE_TEST_TRUE@	src/pcm_pack.c src/pcm_resample.c \
+@ENABLE_TEST_TRUE@	test/stdbin.h src/filter_plugin.c \
+@ENABLE_TEST_TRUE@	src/filter_registry.c src/conf.c \
+@ENABLE_TEST_TRUE@	src/tokenizer.c src/utils.c src/pcm_volume.c \
+@ENABLE_TEST_TRUE@	src/pcm_convert.c src/pcm_byteswap.c \
+@ENABLE_TEST_TRUE@	src/pcm_format.c src/pcm_channels.c \
+@ENABLE_TEST_TRUE@	src/pcm_dither.c src/pcm_pack.c \
+@ENABLE_TEST_TRUE@	src/pcm_resample.c \
 @ENABLE_TEST_TRUE@	src/pcm_resample_fallback.c \
 @ENABLE_TEST_TRUE@	src/audio_check.c src/audio_format.c \
 @ENABLE_TEST_TRUE@	src/audio_parser.c src/replay_gain_config.c \
@@ -2133,6 +2139,7 @@ SPARSE_CPPFLAGS = $(DEFAULT_INCLUDES) -I$(shell $(CC) \
 @ENABLE_TEST_TRUE@	src/AudioCompress/compress.c $(FILTER_SRC) \
 @ENABLE_TEST_TRUE@	$(am__append_69)
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@test_run_encoder_SOURCES = test/run_encoder.c \
+@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	test/stdbin.h \
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/conf.c src/tokenizer.c \
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/utils.c \
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/tag.c src/tag_pool.c \
@@ -2141,11 +2148,15 @@ SPARSE_CPPFLAGS = $(DEFAULT_INCLUDES) -I$(shell $(CC) \
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/audio_parser.c \
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	$(ENCODER_SRC)
 
+@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@test_run_encoder_CPPFLAGS = $(AM_CPPFLAGS) \
+@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	$(ENCODER_CFLAGS)
+
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@test_run_encoder_LDADD = $(MPD_LIBS) \
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	$(ENCODER_LIBS) \
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	$(GLIB_LIBS)
 
 @ENABLE_TEST_TRUE@test_software_volume_SOURCES = test/software_volume.c \
+@ENABLE_TEST_TRUE@	test/stdbin.h \
 @ENABLE_TEST_TRUE@	src/audio_check.c \
 @ENABLE_TEST_TRUE@	src/audio_parser.c \
 @ENABLE_TEST_TRUE@	src/pcm_volume.c
@@ -2154,6 +2165,7 @@ SPARSE_CPPFLAGS = $(DEFAULT_INCLUDES) -I$(shell $(CC) \
 @ENABLE_TEST_TRUE@	$(GLIB_LIBS)
 
 @ENABLE_TEST_TRUE@test_run_normalize_SOURCES = test/run_normalize.c \
+@ENABLE_TEST_TRUE@	test/stdbin.h \
 @ENABLE_TEST_TRUE@	src/audio_check.c \
 @ENABLE_TEST_TRUE@	src/audio_parser.c \
 @ENABLE_TEST_TRUE@	src/AudioCompress/compress.c
@@ -2185,6 +2197,7 @@ SPARSE_CPPFLAGS = $(DEFAULT_INCLUDES) -I$(shell $(CC) \
 @ENABLE_TEST_TRUE@	$(GLIB_LIBS)
 
 @ENABLE_TEST_TRUE@test_run_output_SOURCES = test/run_output.c \
+@ENABLE_TEST_TRUE@	test/stdbin.h \
 @ENABLE_TEST_TRUE@	src/conf.c src/tokenizer.c src/utils.c src/log.c \
 @ENABLE_TEST_TRUE@	src/audio_check.c \
 @ENABLE_TEST_TRUE@	src/audio_format.c \
@@ -3425,34 +3438,43 @@ src/cue/test_run_decoder-cue_tag.$(OBJEXT): src/cue/$(am__dirstamp) \
 test/run_decoder$(EXEEXT): $(test_run_decoder_OBJECTS) $(test_run_decoder_DEPENDENCIES) test/$(am__dirstamp)
 	@rm -f test/run_decoder$(EXEEXT)
 	$(CXXLINK) $(test_run_decoder_OBJECTS) $(test_run_decoder_LDADD) $(LIBS)
-test/run_encoder.$(OBJEXT): test/$(am__dirstamp) \
+test/test_run_encoder-run_encoder.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
-src/conf.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
-src/tokenizer.$(OBJEXT): src/$(am__dirstamp) \
+src/test_run_encoder-conf.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/utils.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
-src/tag.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
-src/tag_pool.$(OBJEXT): src/$(am__dirstamp) \
+src/test_run_encoder-tokenizer.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/audio_check.$(OBJEXT): src/$(am__dirstamp) \
+src/test_run_encoder-utils.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/audio_format.$(OBJEXT): src/$(am__dirstamp) \
+src/test_run_encoder-tag.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/audio_parser.$(OBJEXT): src/$(am__dirstamp) \
+src/test_run_encoder-tag_pool.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/encoder_list.$(OBJEXT): src/$(am__dirstamp) \
+src/test_run_encoder-audio_check.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/encoder/null_encoder.$(OBJEXT): src/encoder/$(am__dirstamp) \
+src/test_run_encoder-audio_format.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/test_run_encoder-audio_parser.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/test_run_encoder-encoder_list.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/encoder/test_run_encoder-null_encoder.$(OBJEXT):  \
+	src/encoder/$(am__dirstamp) \
 	src/encoder/$(DEPDIR)/$(am__dirstamp)
-src/encoder/wave_encoder.$(OBJEXT): src/encoder/$(am__dirstamp) \
+src/encoder/test_run_encoder-wave_encoder.$(OBJEXT):  \
+	src/encoder/$(am__dirstamp) \
 	src/encoder/$(DEPDIR)/$(am__dirstamp)
-src/encoder/vorbis_encoder.$(OBJEXT): src/encoder/$(am__dirstamp) \
+src/encoder/test_run_encoder-vorbis_encoder.$(OBJEXT):  \
+	src/encoder/$(am__dirstamp) \
 	src/encoder/$(DEPDIR)/$(am__dirstamp)
-src/encoder/lame_encoder.$(OBJEXT): src/encoder/$(am__dirstamp) \
+src/encoder/test_run_encoder-lame_encoder.$(OBJEXT):  \
+	src/encoder/$(am__dirstamp) \
 	src/encoder/$(DEPDIR)/$(am__dirstamp)
-src/encoder/twolame_encoder.$(OBJEXT): src/encoder/$(am__dirstamp) \
+src/encoder/test_run_encoder-twolame_encoder.$(OBJEXT):  \
+	src/encoder/$(am__dirstamp) \
 	src/encoder/$(DEPDIR)/$(am__dirstamp)
-src/encoder/flac_encoder.$(OBJEXT): src/encoder/$(am__dirstamp) \
+src/encoder/test_run_encoder-flac_encoder.$(OBJEXT):  \
+	src/encoder/$(am__dirstamp) \
 	src/encoder/$(DEPDIR)/$(am__dirstamp)
 test/run_encoder$(EXEEXT): $(test_run_encoder_OBJECTS) $(test_run_encoder_DEPENDENCIES) test/$(am__dirstamp)
 	@rm -f test/run_encoder$(EXEEXT)
@@ -3596,6 +3618,10 @@ test/run_input$(EXEEXT): $(test_run_input_OBJECTS) $(test_run_input_DEPENDENCIES
 	$(LINK) $(test_run_input_OBJECTS) $(test_run_input_LDADD) $(LIBS)
 test/run_normalize.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
+src/audio_check.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/audio_parser.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/AudioCompress/compress.$(OBJEXT):  \
 	src/AudioCompress/$(am__dirstamp) \
 	src/AudioCompress/$(DEPDIR)/$(am__dirstamp)
@@ -3794,9 +3820,7 @@ mostlyclean-compile:
 	-rm -f src/archive/test_run_input-iso9660_archive_plugin.$(OBJEXT)
 	-rm -f src/archive/test_run_input-zzip_archive_plugin.$(OBJEXT)
 	-rm -f src/audio_check.$(OBJEXT)
-	-rm -f src/audio_format.$(OBJEXT)
 	-rm -f src/audio_parser.$(OBJEXT)
-	-rm -f src/conf.$(OBJEXT)
 	-rm -f src/cue/src_mpd-cue_tag.$(OBJEXT)
 	-rm -f src/cue/test_dump_playlist-cue_tag.$(OBJEXT)
 	-rm -f src/cue/test_read_tags-cue_tag.$(OBJEXT)
@@ -3866,25 +3890,24 @@ mostlyclean-compile:
 	-rm -f src/decoder/test_run_decoder-vorbis_decoder_plugin.$(OBJEXT)
 	-rm -f src/decoder/test_run_decoder-wavpack_decoder_plugin.$(OBJEXT)
 	-rm -f src/decoder/test_run_decoder-wildmidi_decoder_plugin.$(OBJEXT)
-	-rm -f src/encoder/flac_encoder.$(OBJEXT)
-	-rm -f src/encoder/lame_encoder.$(OBJEXT)
-	-rm -f src/encoder/null_encoder.$(OBJEXT)
 	-rm -f src/encoder/src_mpd-flac_encoder.$(OBJEXT)
 	-rm -f src/encoder/src_mpd-lame_encoder.$(OBJEXT)
 	-rm -f src/encoder/src_mpd-null_encoder.$(OBJEXT)
 	-rm -f src/encoder/src_mpd-twolame_encoder.$(OBJEXT)
 	-rm -f src/encoder/src_mpd-vorbis_encoder.$(OBJEXT)
 	-rm -f src/encoder/src_mpd-wave_encoder.$(OBJEXT)
+	-rm -f src/encoder/test_run_encoder-flac_encoder.$(OBJEXT)
+	-rm -f src/encoder/test_run_encoder-lame_encoder.$(OBJEXT)
+	-rm -f src/encoder/test_run_encoder-null_encoder.$(OBJEXT)
+	-rm -f src/encoder/test_run_encoder-twolame_encoder.$(OBJEXT)
+	-rm -f src/encoder/test_run_encoder-vorbis_encoder.$(OBJEXT)
+	-rm -f src/encoder/test_run_encoder-wave_encoder.$(OBJEXT)
 	-rm -f src/encoder/test_run_output-flac_encoder.$(OBJEXT)
 	-rm -f src/encoder/test_run_output-lame_encoder.$(OBJEXT)
 	-rm -f src/encoder/test_run_output-null_encoder.$(OBJEXT)
 	-rm -f src/encoder/test_run_output-twolame_encoder.$(OBJEXT)
 	-rm -f src/encoder/test_run_output-vorbis_encoder.$(OBJEXT)
 	-rm -f src/encoder/test_run_output-wave_encoder.$(OBJEXT)
-	-rm -f src/encoder/twolame_encoder.$(OBJEXT)
-	-rm -f src/encoder/vorbis_encoder.$(OBJEXT)
-	-rm -f src/encoder/wave_encoder.$(OBJEXT)
-	-rm -f src/encoder_list.$(OBJEXT)
 	-rm -f src/fd_util.$(OBJEXT)
 	-rm -f src/fifo_buffer.$(OBJEXT)
 	-rm -f src/filter/src_mpd-autoconvert_filter_plugin.$(OBJEXT)
@@ -4162,8 +4185,6 @@ mostlyclean-compile:
 	-rm -f src/src_mpd-zeroconf-avahi.$(OBJEXT)
 	-rm -f src/src_mpd-zeroconf-bonjour.$(OBJEXT)
 	-rm -f src/src_mpd-zeroconf.$(OBJEXT)
-	-rm -f src/tag.$(OBJEXT)
-	-rm -f src/tag_pool.$(OBJEXT)
 	-rm -f src/test_dump_playlist-archive_api.$(OBJEXT)
 	-rm -f src/test_dump_playlist-archive_list.$(OBJEXT)
 	-rm -f src/test_dump_playlist-archive_plugin.$(OBJEXT)
@@ -4265,6 +4286,15 @@ mostlyclean-compile:
 	-rm -f src/test_run_decoder-tokenizer.$(OBJEXT)
 	-rm -f src/test_run_decoder-uri.$(OBJEXT)
 	-rm -f src/test_run_decoder-utils.$(OBJEXT)
+	-rm -f src/test_run_encoder-audio_check.$(OBJEXT)
+	-rm -f src/test_run_encoder-audio_format.$(OBJEXT)
+	-rm -f src/test_run_encoder-audio_parser.$(OBJEXT)
+	-rm -f src/test_run_encoder-conf.$(OBJEXT)
+	-rm -f src/test_run_encoder-encoder_list.$(OBJEXT)
+	-rm -f src/test_run_encoder-tag.$(OBJEXT)
+	-rm -f src/test_run_encoder-tag_pool.$(OBJEXT)
+	-rm -f src/test_run_encoder-tokenizer.$(OBJEXT)
+	-rm -f src/test_run_encoder-utils.$(OBJEXT)
 	-rm -f src/test_run_filter-audio_check.$(OBJEXT)
 	-rm -f src/test_run_filter-audio_format.$(OBJEXT)
 	-rm -f src/test_run_filter-audio_parser.$(OBJEXT)
@@ -4326,9 +4356,6 @@ mostlyclean-compile:
 	-rm -f src/test_run_output-timer.$(OBJEXT)
 	-rm -f src/test_run_output-tokenizer.$(OBJEXT)
 	-rm -f src/test_run_output-utils.$(OBJEXT)
-	-rm -f src/tokenizer.$(OBJEXT)
-	-rm -f src/utils.$(OBJEXT)
-	-rm -f test/run_encoder.$(OBJEXT)
 	-rm -f test/run_inotify.$(OBJEXT)
 	-rm -f test/run_normalize.$(OBJEXT)
 	-rm -f test/software_volume.$(OBJEXT)
@@ -4338,6 +4365,7 @@ mostlyclean-compile:
 	-rm -f test/test_read_tags-read_tags.$(OBJEXT)
 	-rm -f test/test_run_convert-run_convert.$(OBJEXT)
 	-rm -f test/test_run_decoder-run_decoder.$(OBJEXT)
+	-rm -f test/test_run_encoder-run_encoder.$(OBJEXT)
 	-rm -f test/test_run_filter-run_filter.$(OBJEXT)
 	-rm -f test/test_run_input-run_input.$(OBJEXT)
 	-rm -f test/test_run_output-run_output.$(OBJEXT)
@@ -4346,10 +4374,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/audio_check.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/audio_format.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/audio_parser.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/conf.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/encoder_list.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/fd_util.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/fifo_buffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/inotify_source.Po@am__quote@
@@ -4505,8 +4530,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/src_mpd-zeroconf-avahi.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/src_mpd-zeroconf-bonjour.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/src_mpd-zeroconf.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/tag.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/tag_pool.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_dump_playlist-archive_api.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_dump_playlist-archive_list.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_dump_playlist-archive_plugin.Po@am__quote@
@@ -4608,6 +4631,15 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_decoder-tokenizer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_decoder-uri.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_decoder-utils.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_encoder-audio_check.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_encoder-audio_format.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_encoder-audio_parser.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_encoder-conf.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_encoder-encoder_list.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_encoder-tag.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_encoder-tag_pool.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_encoder-tokenizer.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_encoder-utils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_filter-audio_check.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_filter-audio_format.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_filter-audio_parser.Po@am__quote@
@@ -4669,8 +4701,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_output-timer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_output-tokenizer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_output-utils.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/tokenizer.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/utils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/AudioCompress/$(DEPDIR)/compress.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/AudioCompress/$(DEPDIR)/src_mpd-compress.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/AudioCompress/$(DEPDIR)/test_run_filter-compress.Po@am__quote@
@@ -4759,24 +4789,24 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/decoder/$(DEPDIR)/test_run_decoder-vorbis_decoder_plugin.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/decoder/$(DEPDIR)/test_run_decoder-wavpack_decoder_plugin.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/decoder/$(DEPDIR)/test_run_decoder-wildmidi_decoder_plugin.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/encoder/$(DEPDIR)/flac_encoder.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/encoder/$(DEPDIR)/lame_encoder.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/encoder/$(DEPDIR)/null_encoder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/encoder/$(DEPDIR)/src_mpd-flac_encoder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/encoder/$(DEPDIR)/src_mpd-lame_encoder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/encoder/$(DEPDIR)/src_mpd-null_encoder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/encoder/$(DEPDIR)/src_mpd-twolame_encoder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/encoder/$(DEPDIR)/src_mpd-vorbis_encoder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/encoder/$(DEPDIR)/src_mpd-wave_encoder.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/encoder/$(DEPDIR)/test_run_encoder-flac_encoder.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/encoder/$(DEPDIR)/test_run_encoder-lame_encoder.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/encoder/$(DEPDIR)/test_run_encoder-null_encoder.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/encoder/$(DEPDIR)/test_run_encoder-twolame_encoder.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/encoder/$(DEPDIR)/test_run_encoder-vorbis_encoder.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/encoder/$(DEPDIR)/test_run_encoder-wave_encoder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/encoder/$(DEPDIR)/test_run_output-flac_encoder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/encoder/$(DEPDIR)/test_run_output-lame_encoder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/encoder/$(DEPDIR)/test_run_output-null_encoder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/encoder/$(DEPDIR)/test_run_output-twolame_encoder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/encoder/$(DEPDIR)/test_run_output-vorbis_encoder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/encoder/$(DEPDIR)/test_run_output-wave_encoder.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/encoder/$(DEPDIR)/twolame_encoder.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/encoder/$(DEPDIR)/vorbis_encoder.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/encoder/$(DEPDIR)/wave_encoder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/filter/$(DEPDIR)/src_mpd-autoconvert_filter_plugin.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/filter/$(DEPDIR)/src_mpd-chain_filter_plugin.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/filter/$(DEPDIR)/src_mpd-convert_filter_plugin.Po@am__quote@
@@ -4899,7 +4929,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/playlist/$(DEPDIR)/test_dump_playlist-pls_playlist_plugin.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/playlist/$(DEPDIR)/test_dump_playlist-rss_playlist_plugin.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/playlist/$(DEPDIR)/test_dump_playlist-xspf_playlist_plugin.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/run_encoder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/run_inotify.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/run_normalize.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/software_volume.Po@am__quote@
@@ -4909,6 +4938,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/test_read_tags-read_tags.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/test_run_convert-run_convert.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/test_run_decoder-run_decoder.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/test_run_encoder-run_encoder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/test_run_filter-run_filter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/test_run_input-run_input.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/test_run_output-run_output.Po@am__quote@
@@ -10836,6 +10866,230 @@ src/cue/test_run_decoder-cue_tag.obj: src/cue/cue_tag.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/cue/cue_tag.c' object='src/cue/test_run_decoder-cue_tag.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_decoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/cue/test_run_decoder-cue_tag.obj `if test -f 'src/cue/cue_tag.c'; then $(CYGPATH_W) 'src/cue/cue_tag.c'; else $(CYGPATH_W) '$(srcdir)/src/cue/cue_tag.c'; fi`
+
+test/test_run_encoder-run_encoder.o: test/run_encoder.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT test/test_run_encoder-run_encoder.o -MD -MP -MF test/$(DEPDIR)/test_run_encoder-run_encoder.Tpo -c -o test/test_run_encoder-run_encoder.o `test -f 'test/run_encoder.c' || echo '$(srcdir)/'`test/run_encoder.c
+@am__fastdepCC_TRUE@	$(am__mv) test/$(DEPDIR)/test_run_encoder-run_encoder.Tpo test/$(DEPDIR)/test_run_encoder-run_encoder.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='test/run_encoder.c' object='test/test_run_encoder-run_encoder.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o test/test_run_encoder-run_encoder.o `test -f 'test/run_encoder.c' || echo '$(srcdir)/'`test/run_encoder.c
+
+test/test_run_encoder-run_encoder.obj: test/run_encoder.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT test/test_run_encoder-run_encoder.obj -MD -MP -MF test/$(DEPDIR)/test_run_encoder-run_encoder.Tpo -c -o test/test_run_encoder-run_encoder.obj `if test -f 'test/run_encoder.c'; then $(CYGPATH_W) 'test/run_encoder.c'; else $(CYGPATH_W) '$(srcdir)/test/run_encoder.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) test/$(DEPDIR)/test_run_encoder-run_encoder.Tpo test/$(DEPDIR)/test_run_encoder-run_encoder.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='test/run_encoder.c' object='test/test_run_encoder-run_encoder.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o test/test_run_encoder-run_encoder.obj `if test -f 'test/run_encoder.c'; then $(CYGPATH_W) 'test/run_encoder.c'; else $(CYGPATH_W) '$(srcdir)/test/run_encoder.c'; fi`
+
+src/test_run_encoder-conf.o: src/conf.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-conf.o -MD -MP -MF src/$(DEPDIR)/test_run_encoder-conf.Tpo -c -o src/test_run_encoder-conf.o `test -f 'src/conf.c' || echo '$(srcdir)/'`src/conf.c
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-conf.Tpo src/$(DEPDIR)/test_run_encoder-conf.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/conf.c' object='src/test_run_encoder-conf.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-conf.o `test -f 'src/conf.c' || echo '$(srcdir)/'`src/conf.c
+
+src/test_run_encoder-conf.obj: src/conf.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-conf.obj -MD -MP -MF src/$(DEPDIR)/test_run_encoder-conf.Tpo -c -o src/test_run_encoder-conf.obj `if test -f 'src/conf.c'; then $(CYGPATH_W) 'src/conf.c'; else $(CYGPATH_W) '$(srcdir)/src/conf.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-conf.Tpo src/$(DEPDIR)/test_run_encoder-conf.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/conf.c' object='src/test_run_encoder-conf.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-conf.obj `if test -f 'src/conf.c'; then $(CYGPATH_W) 'src/conf.c'; else $(CYGPATH_W) '$(srcdir)/src/conf.c'; fi`
+
+src/test_run_encoder-tokenizer.o: src/tokenizer.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-tokenizer.o -MD -MP -MF src/$(DEPDIR)/test_run_encoder-tokenizer.Tpo -c -o src/test_run_encoder-tokenizer.o `test -f 'src/tokenizer.c' || echo '$(srcdir)/'`src/tokenizer.c
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-tokenizer.Tpo src/$(DEPDIR)/test_run_encoder-tokenizer.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/tokenizer.c' object='src/test_run_encoder-tokenizer.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-tokenizer.o `test -f 'src/tokenizer.c' || echo '$(srcdir)/'`src/tokenizer.c
+
+src/test_run_encoder-tokenizer.obj: src/tokenizer.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-tokenizer.obj -MD -MP -MF src/$(DEPDIR)/test_run_encoder-tokenizer.Tpo -c -o src/test_run_encoder-tokenizer.obj `if test -f 'src/tokenizer.c'; then $(CYGPATH_W) 'src/tokenizer.c'; else $(CYGPATH_W) '$(srcdir)/src/tokenizer.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-tokenizer.Tpo src/$(DEPDIR)/test_run_encoder-tokenizer.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/tokenizer.c' object='src/test_run_encoder-tokenizer.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-tokenizer.obj `if test -f 'src/tokenizer.c'; then $(CYGPATH_W) 'src/tokenizer.c'; else $(CYGPATH_W) '$(srcdir)/src/tokenizer.c'; fi`
+
+src/test_run_encoder-utils.o: src/utils.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-utils.o -MD -MP -MF src/$(DEPDIR)/test_run_encoder-utils.Tpo -c -o src/test_run_encoder-utils.o `test -f 'src/utils.c' || echo '$(srcdir)/'`src/utils.c
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-utils.Tpo src/$(DEPDIR)/test_run_encoder-utils.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/utils.c' object='src/test_run_encoder-utils.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-utils.o `test -f 'src/utils.c' || echo '$(srcdir)/'`src/utils.c
+
+src/test_run_encoder-utils.obj: src/utils.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-utils.obj -MD -MP -MF src/$(DEPDIR)/test_run_encoder-utils.Tpo -c -o src/test_run_encoder-utils.obj `if test -f 'src/utils.c'; then $(CYGPATH_W) 'src/utils.c'; else $(CYGPATH_W) '$(srcdir)/src/utils.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-utils.Tpo src/$(DEPDIR)/test_run_encoder-utils.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/utils.c' object='src/test_run_encoder-utils.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-utils.obj `if test -f 'src/utils.c'; then $(CYGPATH_W) 'src/utils.c'; else $(CYGPATH_W) '$(srcdir)/src/utils.c'; fi`
+
+src/test_run_encoder-tag.o: src/tag.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-tag.o -MD -MP -MF src/$(DEPDIR)/test_run_encoder-tag.Tpo -c -o src/test_run_encoder-tag.o `test -f 'src/tag.c' || echo '$(srcdir)/'`src/tag.c
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-tag.Tpo src/$(DEPDIR)/test_run_encoder-tag.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/tag.c' object='src/test_run_encoder-tag.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-tag.o `test -f 'src/tag.c' || echo '$(srcdir)/'`src/tag.c
+
+src/test_run_encoder-tag.obj: src/tag.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-tag.obj -MD -MP -MF src/$(DEPDIR)/test_run_encoder-tag.Tpo -c -o src/test_run_encoder-tag.obj `if test -f 'src/tag.c'; then $(CYGPATH_W) 'src/tag.c'; else $(CYGPATH_W) '$(srcdir)/src/tag.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-tag.Tpo src/$(DEPDIR)/test_run_encoder-tag.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/tag.c' object='src/test_run_encoder-tag.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-tag.obj `if test -f 'src/tag.c'; then $(CYGPATH_W) 'src/tag.c'; else $(CYGPATH_W) '$(srcdir)/src/tag.c'; fi`
+
+src/test_run_encoder-tag_pool.o: src/tag_pool.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-tag_pool.o -MD -MP -MF src/$(DEPDIR)/test_run_encoder-tag_pool.Tpo -c -o src/test_run_encoder-tag_pool.o `test -f 'src/tag_pool.c' || echo '$(srcdir)/'`src/tag_pool.c
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-tag_pool.Tpo src/$(DEPDIR)/test_run_encoder-tag_pool.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/tag_pool.c' object='src/test_run_encoder-tag_pool.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-tag_pool.o `test -f 'src/tag_pool.c' || echo '$(srcdir)/'`src/tag_pool.c
+
+src/test_run_encoder-tag_pool.obj: src/tag_pool.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-tag_pool.obj -MD -MP -MF src/$(DEPDIR)/test_run_encoder-tag_pool.Tpo -c -o src/test_run_encoder-tag_pool.obj `if test -f 'src/tag_pool.c'; then $(CYGPATH_W) 'src/tag_pool.c'; else $(CYGPATH_W) '$(srcdir)/src/tag_pool.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-tag_pool.Tpo src/$(DEPDIR)/test_run_encoder-tag_pool.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/tag_pool.c' object='src/test_run_encoder-tag_pool.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-tag_pool.obj `if test -f 'src/tag_pool.c'; then $(CYGPATH_W) 'src/tag_pool.c'; else $(CYGPATH_W) '$(srcdir)/src/tag_pool.c'; fi`
+
+src/test_run_encoder-audio_check.o: src/audio_check.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-audio_check.o -MD -MP -MF src/$(DEPDIR)/test_run_encoder-audio_check.Tpo -c -o src/test_run_encoder-audio_check.o `test -f 'src/audio_check.c' || echo '$(srcdir)/'`src/audio_check.c
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-audio_check.Tpo src/$(DEPDIR)/test_run_encoder-audio_check.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/audio_check.c' object='src/test_run_encoder-audio_check.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-audio_check.o `test -f 'src/audio_check.c' || echo '$(srcdir)/'`src/audio_check.c
+
+src/test_run_encoder-audio_check.obj: src/audio_check.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-audio_check.obj -MD -MP -MF src/$(DEPDIR)/test_run_encoder-audio_check.Tpo -c -o src/test_run_encoder-audio_check.obj `if test -f 'src/audio_check.c'; then $(CYGPATH_W) 'src/audio_check.c'; else $(CYGPATH_W) '$(srcdir)/src/audio_check.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-audio_check.Tpo src/$(DEPDIR)/test_run_encoder-audio_check.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/audio_check.c' object='src/test_run_encoder-audio_check.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-audio_check.obj `if test -f 'src/audio_check.c'; then $(CYGPATH_W) 'src/audio_check.c'; else $(CYGPATH_W) '$(srcdir)/src/audio_check.c'; fi`
+
+src/test_run_encoder-audio_format.o: src/audio_format.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-audio_format.o -MD -MP -MF src/$(DEPDIR)/test_run_encoder-audio_format.Tpo -c -o src/test_run_encoder-audio_format.o `test -f 'src/audio_format.c' || echo '$(srcdir)/'`src/audio_format.c
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-audio_format.Tpo src/$(DEPDIR)/test_run_encoder-audio_format.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/audio_format.c' object='src/test_run_encoder-audio_format.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-audio_format.o `test -f 'src/audio_format.c' || echo '$(srcdir)/'`src/audio_format.c
+
+src/test_run_encoder-audio_format.obj: src/audio_format.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-audio_format.obj -MD -MP -MF src/$(DEPDIR)/test_run_encoder-audio_format.Tpo -c -o src/test_run_encoder-audio_format.obj `if test -f 'src/audio_format.c'; then $(CYGPATH_W) 'src/audio_format.c'; else $(CYGPATH_W) '$(srcdir)/src/audio_format.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-audio_format.Tpo src/$(DEPDIR)/test_run_encoder-audio_format.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/audio_format.c' object='src/test_run_encoder-audio_format.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-audio_format.obj `if test -f 'src/audio_format.c'; then $(CYGPATH_W) 'src/audio_format.c'; else $(CYGPATH_W) '$(srcdir)/src/audio_format.c'; fi`
+
+src/test_run_encoder-audio_parser.o: src/audio_parser.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-audio_parser.o -MD -MP -MF src/$(DEPDIR)/test_run_encoder-audio_parser.Tpo -c -o src/test_run_encoder-audio_parser.o `test -f 'src/audio_parser.c' || echo '$(srcdir)/'`src/audio_parser.c
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-audio_parser.Tpo src/$(DEPDIR)/test_run_encoder-audio_parser.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/audio_parser.c' object='src/test_run_encoder-audio_parser.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-audio_parser.o `test -f 'src/audio_parser.c' || echo '$(srcdir)/'`src/audio_parser.c
+
+src/test_run_encoder-audio_parser.obj: src/audio_parser.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-audio_parser.obj -MD -MP -MF src/$(DEPDIR)/test_run_encoder-audio_parser.Tpo -c -o src/test_run_encoder-audio_parser.obj `if test -f 'src/audio_parser.c'; then $(CYGPATH_W) 'src/audio_parser.c'; else $(CYGPATH_W) '$(srcdir)/src/audio_parser.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-audio_parser.Tpo src/$(DEPDIR)/test_run_encoder-audio_parser.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/audio_parser.c' object='src/test_run_encoder-audio_parser.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-audio_parser.obj `if test -f 'src/audio_parser.c'; then $(CYGPATH_W) 'src/audio_parser.c'; else $(CYGPATH_W) '$(srcdir)/src/audio_parser.c'; fi`
+
+src/test_run_encoder-encoder_list.o: src/encoder_list.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-encoder_list.o -MD -MP -MF src/$(DEPDIR)/test_run_encoder-encoder_list.Tpo -c -o src/test_run_encoder-encoder_list.o `test -f 'src/encoder_list.c' || echo '$(srcdir)/'`src/encoder_list.c
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-encoder_list.Tpo src/$(DEPDIR)/test_run_encoder-encoder_list.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/encoder_list.c' object='src/test_run_encoder-encoder_list.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-encoder_list.o `test -f 'src/encoder_list.c' || echo '$(srcdir)/'`src/encoder_list.c
+
+src/test_run_encoder-encoder_list.obj: src/encoder_list.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-encoder_list.obj -MD -MP -MF src/$(DEPDIR)/test_run_encoder-encoder_list.Tpo -c -o src/test_run_encoder-encoder_list.obj `if test -f 'src/encoder_list.c'; then $(CYGPATH_W) 'src/encoder_list.c'; else $(CYGPATH_W) '$(srcdir)/src/encoder_list.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-encoder_list.Tpo src/$(DEPDIR)/test_run_encoder-encoder_list.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/encoder_list.c' object='src/test_run_encoder-encoder_list.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-encoder_list.obj `if test -f 'src/encoder_list.c'; then $(CYGPATH_W) 'src/encoder_list.c'; else $(CYGPATH_W) '$(srcdir)/src/encoder_list.c'; fi`
+
+src/encoder/test_run_encoder-null_encoder.o: src/encoder/null_encoder.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/encoder/test_run_encoder-null_encoder.o -MD -MP -MF src/encoder/$(DEPDIR)/test_run_encoder-null_encoder.Tpo -c -o src/encoder/test_run_encoder-null_encoder.o `test -f 'src/encoder/null_encoder.c' || echo '$(srcdir)/'`src/encoder/null_encoder.c
+@am__fastdepCC_TRUE@	$(am__mv) src/encoder/$(DEPDIR)/test_run_encoder-null_encoder.Tpo src/encoder/$(DEPDIR)/test_run_encoder-null_encoder.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/encoder/null_encoder.c' object='src/encoder/test_run_encoder-null_encoder.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/encoder/test_run_encoder-null_encoder.o `test -f 'src/encoder/null_encoder.c' || echo '$(srcdir)/'`src/encoder/null_encoder.c
+
+src/encoder/test_run_encoder-null_encoder.obj: src/encoder/null_encoder.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/encoder/test_run_encoder-null_encoder.obj -MD -MP -MF src/encoder/$(DEPDIR)/test_run_encoder-null_encoder.Tpo -c -o src/encoder/test_run_encoder-null_encoder.obj `if test -f 'src/encoder/null_encoder.c'; then $(CYGPATH_W) 'src/encoder/null_encoder.c'; else $(CYGPATH_W) '$(srcdir)/src/encoder/null_encoder.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/encoder/$(DEPDIR)/test_run_encoder-null_encoder.Tpo src/encoder/$(DEPDIR)/test_run_encoder-null_encoder.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/encoder/null_encoder.c' object='src/encoder/test_run_encoder-null_encoder.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/encoder/test_run_encoder-null_encoder.obj `if test -f 'src/encoder/null_encoder.c'; then $(CYGPATH_W) 'src/encoder/null_encoder.c'; else $(CYGPATH_W) '$(srcdir)/src/encoder/null_encoder.c'; fi`
+
+src/encoder/test_run_encoder-wave_encoder.o: src/encoder/wave_encoder.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/encoder/test_run_encoder-wave_encoder.o -MD -MP -MF src/encoder/$(DEPDIR)/test_run_encoder-wave_encoder.Tpo -c -o src/encoder/test_run_encoder-wave_encoder.o `test -f 'src/encoder/wave_encoder.c' || echo '$(srcdir)/'`src/encoder/wave_encoder.c
+@am__fastdepCC_TRUE@	$(am__mv) src/encoder/$(DEPDIR)/test_run_encoder-wave_encoder.Tpo src/encoder/$(DEPDIR)/test_run_encoder-wave_encoder.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/encoder/wave_encoder.c' object='src/encoder/test_run_encoder-wave_encoder.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/encoder/test_run_encoder-wave_encoder.o `test -f 'src/encoder/wave_encoder.c' || echo '$(srcdir)/'`src/encoder/wave_encoder.c
+
+src/encoder/test_run_encoder-wave_encoder.obj: src/encoder/wave_encoder.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/encoder/test_run_encoder-wave_encoder.obj -MD -MP -MF src/encoder/$(DEPDIR)/test_run_encoder-wave_encoder.Tpo -c -o src/encoder/test_run_encoder-wave_encoder.obj `if test -f 'src/encoder/wave_encoder.c'; then $(CYGPATH_W) 'src/encoder/wave_encoder.c'; else $(CYGPATH_W) '$(srcdir)/src/encoder/wave_encoder.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/encoder/$(DEPDIR)/test_run_encoder-wave_encoder.Tpo src/encoder/$(DEPDIR)/test_run_encoder-wave_encoder.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/encoder/wave_encoder.c' object='src/encoder/test_run_encoder-wave_encoder.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/encoder/test_run_encoder-wave_encoder.obj `if test -f 'src/encoder/wave_encoder.c'; then $(CYGPATH_W) 'src/encoder/wave_encoder.c'; else $(CYGPATH_W) '$(srcdir)/src/encoder/wave_encoder.c'; fi`
+
+src/encoder/test_run_encoder-vorbis_encoder.o: src/encoder/vorbis_encoder.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/encoder/test_run_encoder-vorbis_encoder.o -MD -MP -MF src/encoder/$(DEPDIR)/test_run_encoder-vorbis_encoder.Tpo -c -o src/encoder/test_run_encoder-vorbis_encoder.o `test -f 'src/encoder/vorbis_encoder.c' || echo '$(srcdir)/'`src/encoder/vorbis_encoder.c
+@am__fastdepCC_TRUE@	$(am__mv) src/encoder/$(DEPDIR)/test_run_encoder-vorbis_encoder.Tpo src/encoder/$(DEPDIR)/test_run_encoder-vorbis_encoder.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/encoder/vorbis_encoder.c' object='src/encoder/test_run_encoder-vorbis_encoder.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/encoder/test_run_encoder-vorbis_encoder.o `test -f 'src/encoder/vorbis_encoder.c' || echo '$(srcdir)/'`src/encoder/vorbis_encoder.c
+
+src/encoder/test_run_encoder-vorbis_encoder.obj: src/encoder/vorbis_encoder.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/encoder/test_run_encoder-vorbis_encoder.obj -MD -MP -MF src/encoder/$(DEPDIR)/test_run_encoder-vorbis_encoder.Tpo -c -o src/encoder/test_run_encoder-vorbis_encoder.obj `if test -f 'src/encoder/vorbis_encoder.c'; then $(CYGPATH_W) 'src/encoder/vorbis_encoder.c'; else $(CYGPATH_W) '$(srcdir)/src/encoder/vorbis_encoder.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/encoder/$(DEPDIR)/test_run_encoder-vorbis_encoder.Tpo src/encoder/$(DEPDIR)/test_run_encoder-vorbis_encoder.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/encoder/vorbis_encoder.c' object='src/encoder/test_run_encoder-vorbis_encoder.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/encoder/test_run_encoder-vorbis_encoder.obj `if test -f 'src/encoder/vorbis_encoder.c'; then $(CYGPATH_W) 'src/encoder/vorbis_encoder.c'; else $(CYGPATH_W) '$(srcdir)/src/encoder/vorbis_encoder.c'; fi`
+
+src/encoder/test_run_encoder-lame_encoder.o: src/encoder/lame_encoder.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/encoder/test_run_encoder-lame_encoder.o -MD -MP -MF src/encoder/$(DEPDIR)/test_run_encoder-lame_encoder.Tpo -c -o src/encoder/test_run_encoder-lame_encoder.o `test -f 'src/encoder/lame_encoder.c' || echo '$(srcdir)/'`src/encoder/lame_encoder.c
+@am__fastdepCC_TRUE@	$(am__mv) src/encoder/$(DEPDIR)/test_run_encoder-lame_encoder.Tpo src/encoder/$(DEPDIR)/test_run_encoder-lame_encoder.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/encoder/lame_encoder.c' object='src/encoder/test_run_encoder-lame_encoder.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/encoder/test_run_encoder-lame_encoder.o `test -f 'src/encoder/lame_encoder.c' || echo '$(srcdir)/'`src/encoder/lame_encoder.c
+
+src/encoder/test_run_encoder-lame_encoder.obj: src/encoder/lame_encoder.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/encoder/test_run_encoder-lame_encoder.obj -MD -MP -MF src/encoder/$(DEPDIR)/test_run_encoder-lame_encoder.Tpo -c -o src/encoder/test_run_encoder-lame_encoder.obj `if test -f 'src/encoder/lame_encoder.c'; then $(CYGPATH_W) 'src/encoder/lame_encoder.c'; else $(CYGPATH_W) '$(srcdir)/src/encoder/lame_encoder.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/encoder/$(DEPDIR)/test_run_encoder-lame_encoder.Tpo src/encoder/$(DEPDIR)/test_run_encoder-lame_encoder.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/encoder/lame_encoder.c' object='src/encoder/test_run_encoder-lame_encoder.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/encoder/test_run_encoder-lame_encoder.obj `if test -f 'src/encoder/lame_encoder.c'; then $(CYGPATH_W) 'src/encoder/lame_encoder.c'; else $(CYGPATH_W) '$(srcdir)/src/encoder/lame_encoder.c'; fi`
+
+src/encoder/test_run_encoder-twolame_encoder.o: src/encoder/twolame_encoder.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/encoder/test_run_encoder-twolame_encoder.o -MD -MP -MF src/encoder/$(DEPDIR)/test_run_encoder-twolame_encoder.Tpo -c -o src/encoder/test_run_encoder-twolame_encoder.o `test -f 'src/encoder/twolame_encoder.c' || echo '$(srcdir)/'`src/encoder/twolame_encoder.c
+@am__fastdepCC_TRUE@	$(am__mv) src/encoder/$(DEPDIR)/test_run_encoder-twolame_encoder.Tpo src/encoder/$(DEPDIR)/test_run_encoder-twolame_encoder.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/encoder/twolame_encoder.c' object='src/encoder/test_run_encoder-twolame_encoder.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/encoder/test_run_encoder-twolame_encoder.o `test -f 'src/encoder/twolame_encoder.c' || echo '$(srcdir)/'`src/encoder/twolame_encoder.c
+
+src/encoder/test_run_encoder-twolame_encoder.obj: src/encoder/twolame_encoder.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/encoder/test_run_encoder-twolame_encoder.obj -MD -MP -MF src/encoder/$(DEPDIR)/test_run_encoder-twolame_encoder.Tpo -c -o src/encoder/test_run_encoder-twolame_encoder.obj `if test -f 'src/encoder/twolame_encoder.c'; then $(CYGPATH_W) 'src/encoder/twolame_encoder.c'; else $(CYGPATH_W) '$(srcdir)/src/encoder/twolame_encoder.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/encoder/$(DEPDIR)/test_run_encoder-twolame_encoder.Tpo src/encoder/$(DEPDIR)/test_run_encoder-twolame_encoder.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/encoder/twolame_encoder.c' object='src/encoder/test_run_encoder-twolame_encoder.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/encoder/test_run_encoder-twolame_encoder.obj `if test -f 'src/encoder/twolame_encoder.c'; then $(CYGPATH_W) 'src/encoder/twolame_encoder.c'; else $(CYGPATH_W) '$(srcdir)/src/encoder/twolame_encoder.c'; fi`
+
+src/encoder/test_run_encoder-flac_encoder.o: src/encoder/flac_encoder.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/encoder/test_run_encoder-flac_encoder.o -MD -MP -MF src/encoder/$(DEPDIR)/test_run_encoder-flac_encoder.Tpo -c -o src/encoder/test_run_encoder-flac_encoder.o `test -f 'src/encoder/flac_encoder.c' || echo '$(srcdir)/'`src/encoder/flac_encoder.c
+@am__fastdepCC_TRUE@	$(am__mv) src/encoder/$(DEPDIR)/test_run_encoder-flac_encoder.Tpo src/encoder/$(DEPDIR)/test_run_encoder-flac_encoder.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/encoder/flac_encoder.c' object='src/encoder/test_run_encoder-flac_encoder.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/encoder/test_run_encoder-flac_encoder.o `test -f 'src/encoder/flac_encoder.c' || echo '$(srcdir)/'`src/encoder/flac_encoder.c
+
+src/encoder/test_run_encoder-flac_encoder.obj: src/encoder/flac_encoder.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/encoder/test_run_encoder-flac_encoder.obj -MD -MP -MF src/encoder/$(DEPDIR)/test_run_encoder-flac_encoder.Tpo -c -o src/encoder/test_run_encoder-flac_encoder.obj `if test -f 'src/encoder/flac_encoder.c'; then $(CYGPATH_W) 'src/encoder/flac_encoder.c'; else $(CYGPATH_W) '$(srcdir)/src/encoder/flac_encoder.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/encoder/$(DEPDIR)/test_run_encoder-flac_encoder.Tpo src/encoder/$(DEPDIR)/test_run_encoder-flac_encoder.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/encoder/flac_encoder.c' object='src/encoder/test_run_encoder-flac_encoder.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/encoder/test_run_encoder-flac_encoder.obj `if test -f 'src/encoder/flac_encoder.c'; then $(CYGPATH_W) 'src/encoder/flac_encoder.c'; else $(CYGPATH_W) '$(srcdir)/src/encoder/flac_encoder.c'; fi`
 
 test/test_run_filter-run_filter.o: test/run_filter.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_filter_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT test/test_run_filter-run_filter.o -MD -MP -MF test/$(DEPDIR)/test_run_filter-run_filter.Tpo -c -o test/test_run_filter-run_filter.o `test -f 'test/run_filter.c' || echo '$(srcdir)/'`test/run_filter.c
