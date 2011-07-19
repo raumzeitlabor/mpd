@@ -1,9 +1,12 @@
-mpd (0.16.2-1) UNRELEASED; urgency=low
+mpd (0.16.2-1) unstable; urgency=low
 
   * --create-db is deprecated - removed from initscript
   * New upstream version
+  * [f75af78] Imported Upstream version 0.16.2
+  * [e6b63e3] Bump standards version (No changes)
+  * [a4cf064] Add $named to Should-Require in initscript (Closes: #625973)
 
- -- Alexander Wirt <formorer@debian.org>  Sat, 14 May 2011 08:36:41 +0200
+ -- Alexander Wirt <formorer@debian.org>  Sat, 14 May 2011 20:28:04 +0200
 
 mpd (0.16.1-2) unstable; urgency=low
 
