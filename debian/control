@@ -6,10 +6,10 @@ Uploaders: Alexander Wirt <formorer@debian.org>
 Build-Depends: cdbs,
                debhelper (>= 6),
                libao-dev (>= 0.8.3),
-               libasound2-dev  [!kfreebsd-amd64 !kfreebsd-i386 !hurd-i386],
+               libasound2-dev  [linux-any],
                libaudiofile-dev,
-               libavahi-client-dev,
-	       libavahi-glib-dev,
+               libavahi-client-dev
+    	       libavahi-glib-dev,
                libavcodec-dev,
                libavformat-dev,
                libcurl4-gnutls-dev | libcurl-dev,
