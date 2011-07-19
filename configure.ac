@@ -1,5 +1,5 @@
 AC_PREREQ(2.60)
-AC_INIT(mpd, 0.16.2, musicpd-dev-team@lists.sourceforge.net)
+AC_INIT(mpd, 0.16.3, musicpd-dev-team@lists.sourceforge.net)
 AC_CONFIG_SRCDIR([src/main.c])
 AM_INIT_AUTOMAKE([foreign 1.10 dist-bzip2 subdir-objects])
 AM_CONFIG_HEADER(config.h)
@@ -1081,7 +1081,7 @@ if
 fi
 
 AM_CONDITIONAL(HAVE_OGG_COMMON,
-	  test x$enable_vorbis = xyes || test x$enable_oggflac = xyes || test x$enable_flac = xyes)
+	test x$enable_vorbis = xyes || test x$enable_tremor = xyes || test x$enable_oggflac = xyes || test x$enable_flac = xyes)
 
 AM_CONDITIONAL(HAVE_FLAC_COMMON,
 	  test x$enable_flac = xyes || test x$enable_oggflac = xyes)
