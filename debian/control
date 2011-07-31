@@ -3,8 +3,7 @@ Section: sound
 Priority: optional
 Maintainer: mpd maintainers <pkg-mpd-maintainers@lists.alioth.debian.org>
 Uploaders: Alexander Wirt <formorer@debian.org>
-Build-Depends: cdbs,
-               debhelper (>= 6),
+Build-Depends: debhelper (>= 8),
                libao-dev (>= 0.8.3),
                libasound2-dev  [linux-any],
                libaudiofile-dev,
@@ -31,7 +30,6 @@ Build-Depends: cdbs,
                libvorbis-dev [!arm !armel !armeb],
                libvorbisidec-dev [arm armel armeb],
                libwavpack-dev,
-               quilt,
                xmlto,
                zlib1g-dev
 Standards-Version: 3.9.2
