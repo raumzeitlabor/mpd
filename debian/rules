@@ -11,20 +11,27 @@ ifeq ($(ARCH), armeb)
 WITH_TREMOR=--with-tremor
 endif
 
-DEB_BUILDDIR := debian/build
-DEB_CONFIGURE_USER_FLAGS += $(WITH_TREMOR) --enable-sqlite --enable-un --enable-ao --enable-lastfm --enable-pipe-output --disable-lame --disable-cue --enable-mikmod
 LDFLAGS += -Wl,--as-needed
 
-include /usr/share/cdbs/1/rules/debhelper.mk
-include /usr/share/cdbs/1/class/autotools.mk
-include /usr/share/cdbs/1/rules/patchsys-quilt.mk
-DEB_FIXPERMS_EXCLUDE:=var/*
-DEB_DH_INSTALLINIT_ARGS:=-n
+%:
+	dh $@
 
-DEB_DH_STRIP_ARGS := --dbg-package=mpd-dbg
-# oh bleah. see #380614
-DEB_DESTDIR = $(CURDIR)/debian/mpd
+override_dh_auto_configure:
+	./configure $(WITH_TREMOR) --enable-sqlite \
+		--enable-un \
+		--enable-ao \
+		--enable-lastfm \
+		--enable-pipe-output \
+		--disable-lame \
+		--disable-cue \
+		--enable-mikmod \
+		--prefix=/usr \
+		--sysconfdir=/etc/mpd
 
-binary-post-install/mpd::
+override_dh_auto_install:
+	dh_auto_install
 	rm -f $(CURDIR)/debian/mpd/usr/share/doc/mpd/mpdconf.example
 	rm -f $(CURDIR)/debian/mpd/usr/share/doc/mpd/COPYING
+
+override_dh_strip:
+	dh_strip  --dbg-package=mpd-dbg
