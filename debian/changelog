@@ -1,3 +1,14 @@
+mpd (0.16.3-1) unstable; urgency=low
+
+  * [730dbc1] use wildcard to list of non-Linux architectures (Closes: #634724)
+  * [c887ddc] Imported Upstream version 0.16.3
+  * [37a0cfb] Remove quilt
+  * [e70bfa8] Bump debhelper compat to 8
+  * [d69655e] Move from cdbs to dh
+  * [5229745] Get rid of unused deps
+
+ -- Alexander Wirt <formorer@debian.org>  Wed, 03 Aug 2011 15:54:05 +0200
+
 mpd (0.16.2-1) unstable; urgency=low
 
   * --create-db is deprecated - removed from initscript
