@@ -1,3 +1,27 @@
+ver 0.16.4 (2011/09/01)
+* don't abort configure when avahi is not found
+* auto-detect libmad without pkg-config
+* fix memory leaks
+* don't resume playback when seeking to another song while paused
+* apply follow_inside_symlinks to absolute symlinks
+* fix playback discontinuation after seeking
+* input:
+  - curl: limit the receive buffer size
+  - curl: implement a hard-coded timeout of 10 seconds
+* decoder:
+  - ffmpeg: workaround for semantic API change in recent ffmpeg versions
+  - flac: validate the sample rate when scanning the tag
+  - wavpack: obey all decoder commands, stop at CUE track border
+* encoder:
+  - vorbis: don't send end-of-stream on flush
+* output:
+  - alsa: fix SIGFPE when alsa announces a period size of 0
+  - httpd: don't warn on client disconnect
+  - osx: don't drain the buffer when closing
+  - pulse: fix deadlock when resuming the stream
+  - pulse: fix deadlock when the stream was suspended
+
+
 ver 0.16.3 (2011/06/04)
 * fix assertion failure in audio format mask parser
 * fix NULL pointer dereference in playlist parser

@@ -95,12 +95,6 @@ static void osx_output_close(void *data)
 {
 	struct osx_output *od = data;
 
-	g_mutex_lock(od->mutex);
-	while (od->len) {
-		g_cond_wait(od->condition, od->mutex);
-	}
-	g_mutex_unlock(od->mutex);
-
 	AudioOutputUnitStop(od->au);
 	AudioUnitUninitialize(od->au);
 	CloseComponent(od->au);
@@ -143,8 +137,8 @@ osx_render(void *vdata,
 	if (od->pos >= od->buffer_size)
 		od->pos = 0;
 
-	g_mutex_unlock(od->mutex);
 	g_cond_signal(od->condition);
+	g_mutex_unlock(od->mutex);
 
 	buffer->mDataByteSize = buffer_size;
 
