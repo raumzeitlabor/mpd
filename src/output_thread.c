@@ -640,15 +640,14 @@ static gpointer audio_output_task(gpointer arg)
 
 		case AO_COMMAND_CANCEL:
 			ao->chunk = NULL;
-			if (ao->open)
-				ao_plugin_cancel(ao->plugin, ao->data);
-			ao_command_finished(ao);
 
-			/* the player thread will now clear our music
-			   pipe - wait for a notify, to give it some
-			   time */
-			if (ao->command == AO_COMMAND_NONE)
-				g_cond_wait(ao->cond, ao->mutex);
+			if (ao->open) {
+				g_mutex_unlock(ao->mutex);
+				ao_plugin_cancel(ao->plugin, ao->data);
+				g_mutex_lock(ao->mutex);
+			}
+
+			ao_command_finished(ao);
 			continue;
 
 		case AO_COMMAND_KILL:
@@ -658,7 +657,7 @@ static gpointer audio_output_task(gpointer arg)
 			return NULL;
 		}
 
-		if (ao->open && ao_play(ao))
+		if (ao->open && ao->allow_play && ao_play(ao))
 			/* don't wait for an event if there are more
 			   chunks in the pipe */
 			continue;

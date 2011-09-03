@@ -652,11 +652,11 @@ am__DEPENDENCIES_8 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 src_mpd_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3) $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_7) \
-	$(am__DEPENDENCIES_8) $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_6) \
+	$(am__DEPENDENCIES_7) $(am__DEPENDENCIES_8) \
+	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_1)
 am__test_dump_playlist_SOURCES_DIST = test/dump_playlist.c src/conf.c \
 	src/tokenizer.c src/utils.c src/uri.c src/song.c src/tag.c \
 	src/tag_pool.c src/tag_save.c src/text_input_stream.c \
@@ -1580,6 +1580,7 @@ AM_CPPFLAGS = -I$(srcdir)/src $(GLIB_CFLAGS) \
 noinst_LIBRARIES = $(am__append_22)
 src_mpd_CFLAGS = $(AM_CFLAGS) $(MPD_CFLAGS)
 src_mpd_CPPFLAGS = $(AM_CPPFLAGS) \
+	$(AVAHI_CFLAGS) \
 	$(LIBWRAP_CFLAGS) \
 	$(SQLITE_CFLAGS) \
 	$(ARCHIVE_CFLAGS) \
@@ -1591,6 +1592,7 @@ src_mpd_CPPFLAGS = $(AM_CPPFLAGS) \
 	$(OUTPUT_CFLAGS)
 
 src_mpd_LDADD = $(MPD_LIBS) \
+	$(AVAHI_LIBS) \
 	$(LIBWRAP_LDFLAGS) \
 	$(SQLITE_LIBS) \
 	$(ARCHIVE_LIBS) \

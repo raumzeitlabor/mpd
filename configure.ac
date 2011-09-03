@@ -1,5 +1,5 @@
 AC_PREREQ(2.60)
-AC_INIT(mpd, 0.16.3, musicpd-dev-team@lists.sourceforge.net)
+AC_INIT(mpd, 0.16.4, musicpd-dev-team@lists.sourceforge.net)
 AC_CONFIG_SRCDIR([src/main.c])
 AM_INIT_AUTOMAKE([foreign 1.10 dist-bzip2 subdir-objects])
 AM_CONFIG_HEADER(config.h)
@@ -171,9 +171,9 @@ AC_ARG_ENABLE(fifo,
 	enable_fifo=yes)
 
 AC_ARG_ENABLE(flac,
-	AS_HELP_STRING([--disable-flac],
-		[disable flac support (default: enable)]),,
-	enable_flac=yes)
+	AS_HELP_STRING([--enable-flac],
+		[enable FLAC decoder]),,
+	enable_flac=auto)
 
 AC_ARG_ENABLE(fluidsynth,
 	AS_HELP_STRING([--enable-fluidsynth],
@@ -196,9 +196,9 @@ AC_ARG_ENABLE(httpd-output,
 	[enable_httpd_output=auto])
 
 AC_ARG_ENABLE(id3,
-	AS_HELP_STRING([--disable-id3],
-		[disable id3 support (default: enable)]),,
-	enable_id3=yes)
+	AS_HELP_STRING([--enable-id3],
+		[disable id3 support]),,
+	enable_id3=auto)
 
 AC_ARG_ENABLE(inotify,
 	AS_HELP_STRING([--disable-inotify],
@@ -353,9 +353,9 @@ AC_ARG_ENABLE(un,
 	[enable_un=yes])
 
 AC_ARG_ENABLE(vorbis,
-	AS_HELP_STRING([--disable-vorbis],
-		[disable Ogg Vorbis support (default: enable)]),,
-	enable_vorbis=yes)
+	AS_HELP_STRING([--enable-vorbis],
+		[enable Ogg Vorbis decoder]),,
+	enable_vorbis=auto)
 
 AC_ARG_ENABLE(vorbis-encoder,
 	AS_HELP_STRING([--enable-vorbis-encoder],
@@ -510,13 +510,8 @@ fi
 AM_CONDITIONAL(HAVE_CUE, test x$enable_cue = xyes)
 
 dnl -------------------------------- libid3tag --------------------------------
-if test x$enable_id3 = xyes; then
-	PKG_CHECK_MODULES([ID3TAG], [id3tag],,
-		AC_CHECK_LIB(id3tag, id3_file_open,
-			[ID3TAG_LIBS="-lid3tag -lz" ID3TAG_CFLAGS=""],
-			enable_id3=no))
-fi
-
+MPD_AUTO_PKG_LIB(id3, ID3TAG, id3tag, id3tag, id3_file_open, [-lid3tag -lz], [],
+	[id3tag], [libid3tag not found])
 if test x$enable_id3 = xyes; then
 	AC_DEFINE(HAVE_ID3TAG, 1, [Define to use id3tag])
 fi
@@ -530,36 +525,39 @@ dnl ---------------------------------------------------------------------------
 dnl --------------------------------- zeroconf --------------------------------
 
 case $with_zeroconf in
-no|avahi|bonjour)
+no|bonjour)
+	enable_avahi=no
 	;;
+
+avahi)
+	enable_avahi=yes
+	;;
+
 *)
 	with_zeroconf=auto
+	enable_avahi=auto
 	;;
 esac
 
+MPD_AUTO_PKG(avahi, AVAHI, [avahi-client avahi-glib],
+	[avahi client library], [avahi client+glib not found])
+if test x$enable_avahi = xyes; then
+	AC_DEFINE([HAVE_AVAHI], 1, [Define to enable Avahi Zeroconf support])
+	with_zeroconf=avahi
+fi
+
+AM_CONDITIONAL(HAVE_AVAHI, test x$enable_avahi = xyes)
+
+enable_bounjour=no
 if test x$with_zeroconf != xno; then
-	if test x$with_zeroconf = xavahi || test x$with_zeroconf = xauto; then
-		PKG_CHECK_MODULES([AVAHI], [avahi-client avahi-glib],
-			 [found_avahi=1;AC_DEFINE([HAVE_AVAHI], 1, [Define to enable Avahi Zeroconf support])]
-			 MPD_LIBS="$MPD_LIBS $AVAHI_LIBS" MPD_CFLAGS="$MPD_CFLAGS $AVAHI_CFLAGS",
-			 [found_avahi=0])
-	fi
-
-	if test x$found_avahi = x1; then
-		with_zeroconf=avahi
-	elif test x$with_zeroconf = xavahi; then
-		AC_MSG_ERROR([Avahi support requested but not found])
-	fi
-
 	if test x$with_zeroconf = xbonjour || test x$with_zeroconf = xauto; then
 		AC_CHECK_HEADER(dns_sd.h,
-			[found_bonjour=1;AC_DEFINE([HAVE_BONJOUR], 1, [Define to enable Bonjour Zeroconf support])],
-			[found_bonjour=0])
+			[enable_bonjour=yes;AC_DEFINE([HAVE_BONJOUR], 1, [Define to enable Bonjour Zeroconf support])])
 		AC_CHECK_LIB(dns_sd, DNSServiceRegister,
 			MPD_LIBS="$MPD_LIBS -ldns_sd")
 	fi
 
-	if test x$found_bonjour = x1; then
+	if test x$enable_bonjour = xyes; then
 		with_zeroconf=bonjour
 	elif test x$with_zeroconf = xbonjour; then
 		AC_MSG_ERROR([Bonjour support requested but not found])
@@ -574,7 +572,6 @@ if test x$with_zeroconf != xno; then
 fi
 
 AM_CONDITIONAL(HAVE_ZEROCONF, test x$with_zeroconf != xno)
-AM_CONDITIONAL(HAVE_AVAHI, test x$with_zeroconf = xavahi)
 AM_CONDITIONAL(HAVE_BONJOUR, test x$with_zeroconf = xbonjour)
 
 dnl ---------------------------------------------------------------------------
@@ -633,11 +630,6 @@ if test x$enable_lastfm = xyes; then
 	AC_DEFINE(ENABLE_LASTFM, 1, [Define when last.fm radio is enabled])
 fi
 AM_CONDITIONAL(ENABLE_LASTFM, test x$enable_lastfm = xyes)
-
-dnl ---------------------------------- libogg ---------------------------------
-if test x$with_tremor = xno || test -z $with_tremor; then
-	PKG_CHECK_MODULES(OGG, [ogg], enable_ogg=yes, enable_ogg=no)
-fi
 
 dnl ---------------------------------- libmms ---------------------------------
 MPD_AUTO_PKG(mms, MMS, [libmms >= 0.4],
@@ -753,10 +745,12 @@ fi
 AM_CONDITIONAL(HAVE_FFMPEG, test x$enable_ffmpeg = xyes)
 
 dnl ----------------------------------- FLAC ----------------------------------
+
+MPD_AUTO_PKG(flac, FLAC, [flac >= 1.1],
+	[FLAC decoder], [libFLAC not found])
+
 if test x$enable_flac = xyes; then
-	PKG_CHECK_MODULES(FLAC, [flac >= 1.1],
-		AC_DEFINE(HAVE_FLAC, 1, [Define for FLAC support]),
-		enable_flac=no)
+	AC_DEFINE(HAVE_FLAC, 1, [Define for FLAC support])
 
 	oldcflags="$CFLAGS"
 	oldlibs="$LIBS"
@@ -771,12 +765,10 @@ if test x$enable_flac = xyes; then
 	LIBS="$oldlibs"
 
 	if test x$enable_oggflac = xflac; then
-		if test x$enable_ogg = xyes; then
-			FLAC_LIBS="${FLAC_LIBS} -logg"
-		else
-			enable_oggflac=yes
-			AC_MSG_WARN("FLAC has the ogg API built in, but couldn't find ogg. Disabling oggflac.")
-		fi
+		PKG_CHECK_MODULES(OGG, [ogg],
+			[FLAC_LIBS="${FLAC_LIBS} ${OGG_LIBS}" FLAC_CFLAGS="${FLAC_CFLAGS} ${OGG_CFLAGS}"],
+			[enable_oggflac=yes;
+			AC_MSG_WARN("FLAC has the ogg API built in, but couldn't find ogg. Disabling oggflac.")])
 	fi
 fi
 
@@ -802,7 +794,8 @@ if test x$enable_gme = xyes; then
 fi
 
 dnl ---------------------------------- libmad ---------------------------------
-MPD_AUTO_PKG(mad, MAD, [mad],
+MPD_AUTO_PKG_LIB(mad, MAD, [mad],
+	mad, mad_stream_init, [-lmad], [],
 	[libmad MP3 decoder plugin], [libmad not found])
 if test x$enable_mad = xyes; then
 	AC_DEFINE(HAVE_MAD, 1, [Define to use libmad])
@@ -943,7 +936,7 @@ fi
 if test x$enable_tremor = xyes; then
 	AC_DEFINE(HAVE_TREMOR,1,
 		[Define to use tremor (libvorbisidec) for ogg support])
-	AC_DEFINE(ENABLE_VORBIS_DECODER, 1, [Define for Ogg Vorbis support]),
+	AC_DEFINE(ENABLE_VORBIS_DECODER, 1, [Define for Ogg Vorbis support])
 else
 	TREMOR_CFLAGS=
 	TREMOR_LIBS=
@@ -972,18 +965,18 @@ fi
 AM_CONDITIONAL(HAVE_OGGFLAC, test x$enable_oggflac = xyes)
 
 dnl -------------------------------- Ogg Vorbis -------------------------------
-if test x$enable_vorbis = xyes; then
-	if test x$enable_tremor = xyes; then
+
+if test x$enable_tremor = xyes; then
+	if test x$enable_vorbis = xyes; then
 		AC_MSG_WARN(["OggTremor detected, could not enable Vorbis."])
-		enable_vorbis=no
-	elif test x$enable_ogg = xyes; then
-		PKG_CHECK_MODULES(VORBIS, [vorbis vorbisfile],
-			AC_DEFINE(ENABLE_VORBIS_DECODER, 1, [Define for Ogg Vorbis support]),
-			enable_vorbis=no)
-	else
-		AC_MSG_WARN(["Ogg not detected, could not enable Vorbis."])
-		enable_vorbis=no
 	fi
+	enable_vorbis=no
+fi
+
+MPD_AUTO_PKG(vorbis, VORBIS, [vorbis vorbisfile ogg],
+	[Ogg Vorbis decoder], [libvorbis not found])
+if test x$enable_vorbis = xyes; then
+	AC_DEFINE(ENABLE_VORBIS_DECODER, 1, [Define for Ogg Vorbis support])
 fi
 
 AM_CONDITIONAL(ENABLE_VORBIS_DECODER, test x$enable_vorbis = xyes || test x$enable_tremor = xyes)
