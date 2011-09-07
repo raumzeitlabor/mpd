@@ -1,3 +1,10 @@
+mpd (0.16.4-1) unstable; urgency=low
+
+  * [d91cb09] Imported Upstream version 0.16.4
+    - Fix ffmpeg problems (Closes: #636628)
+
+ -- Alexander Wirt <formorer@debian.org>  Wed, 07 Sep 2011 08:41:37 +0200
+
 mpd (0.16.3-1) unstable; urgency=low
 
   * [730dbc1] use wildcard to list of non-Linux architectures (Closes: #634724)
