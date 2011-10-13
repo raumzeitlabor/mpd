@@ -78,13 +78,62 @@ decoder_initialized(struct decoder *decoder,
 					       &af_string));
 }
 
-enum decoder_command decoder_get_command(G_GNUC_UNUSED struct decoder * decoder)
+/**
+ * Checks if we need an "initial seek".  If so, then the initial seek
+ * is prepared, and the function returns true.
+ */
+G_GNUC_PURE
+static bool
+decoder_prepare_initial_seek(struct decoder *decoder)
 {
 	const struct decoder_control *dc = decoder->dc;
-
 	assert(dc->pipe != NULL);
 
+	if (decoder->initial_seek_running)
+		/* initial seek has already begun - override any other
+		   command */
+		return true;
+
+	if (decoder->initial_seek_pending) {
+		if (dc->command == DECODE_COMMAND_NONE) {
+			/* begin initial seek */
+
+			decoder->initial_seek_pending = false;
+			decoder->initial_seek_running = true;
+			return true;
+		}
+
+		/* skip initial seek when there's another command
+		   (e.g. STOP) */
+
+		decoder->initial_seek_pending = false;
+	}
+
+	return false;
+}
+
+/**
+ * Returns the current decoder command.  May return a "virtual"
+ * synthesized command, e.g. to seek to the beginning of the CUE
+ * track.
+ */
+G_GNUC_PURE
+static enum decoder_command
+decoder_get_virtual_command(struct decoder *decoder)
+{
+	const struct decoder_control *dc = decoder->dc;
+	assert(dc->pipe != NULL);
+
+	if (decoder_prepare_initial_seek(decoder))
+		return DECODE_COMMAND_SEEK;
+
 	return dc->command;
+}
+
+enum decoder_command
+decoder_get_command(struct decoder *decoder)
+{
+	return decoder_get_virtual_command(decoder);
 }
 
 void
@@ -94,10 +143,23 @@ decoder_command_finished(struct decoder *decoder)
 
 	decoder_lock(dc);
 
-	assert(dc->command != DECODE_COMMAND_NONE);
+	assert(dc->command != DECODE_COMMAND_NONE ||
+	       decoder->initial_seek_running);
 	assert(dc->command != DECODE_COMMAND_SEEK ||
+	       decoder->initial_seek_running ||
 	       dc->seek_error || decoder->seeking);
 	assert(dc->pipe != NULL);
+
+	if (decoder->initial_seek_running) {
+		assert(!decoder->seeking);
+		assert(decoder->chunk == NULL);
+		assert(music_pipe_empty(dc->pipe));
+
+		decoder->initial_seek_running = false;
+		decoder->timestamp = dc->start_ms / 1000.;
+		decoder_unlock(dc);
+		return;
+	}
 
 	if (decoder->seeking) {
 		decoder->seeking = false;
@@ -124,8 +186,12 @@ double decoder_seek_where(G_GNUC_UNUSED struct decoder * decoder)
 {
 	const struct decoder_control *dc = decoder->dc;
 
-	assert(dc->command == DECODE_COMMAND_SEEK);
 	assert(dc->pipe != NULL);
+
+	if (decoder->initial_seek_running)
+		return dc->start_ms / 1000.;
+
+	assert(dc->command == DECODE_COMMAND_SEEK);
 
 	decoder->seeking = true;
 
@@ -136,8 +202,16 @@ void decoder_seek_error(struct decoder * decoder)
 {
 	struct decoder_control *dc = decoder->dc;
 
-	assert(dc->command == DECODE_COMMAND_SEEK);
 	assert(dc->pipe != NULL);
+
+	if (decoder->initial_seek_running) {
+		/* d'oh, we can't seek to the sub-song start position,
+		   what now? - no idea, ignoring the problem for now. */
+		decoder->initial_seek_running = false;
+		return;
+	}
+
+	assert(dc->command == DECODE_COMMAND_SEEK);
 
 	dc->seek_error = true;
 	decoder->seeking = false;
@@ -270,7 +344,7 @@ decoder_data(struct decoder *decoder,
 	assert(length % audio_format_frame_size(&dc->in_audio_format) == 0);
 
 	decoder_lock(dc);
-	cmd = dc->command;
+	cmd = decoder_get_virtual_command(decoder);
 	decoder_unlock(dc);
 
 	if (cmd == DECODE_COMMAND_STOP || cmd == DECODE_COMMAND_SEEK ||
@@ -357,8 +431,8 @@ decoder_data(struct decoder *decoder,
 		decoder->timestamp += (double)nbytes /
 			audio_format_time_to_size(&dc->out_audio_format);
 
-		if (dc->song->end_ms > 0 &&
-		    decoder->timestamp >= dc->song->end_ms / 1000.0)
+		if (dc->end_ms > 0 &&
+		    decoder->timestamp >= dc->end_ms / 1000.0)
 			/* the end of this range has been reached:
 			   stop decoding */
 			return DECODE_COMMAND_STOP;
@@ -387,6 +461,14 @@ decoder_tag(G_GNUC_UNUSED struct decoder *decoder, struct input_stream *is,
 	/* check for a new stream tag */
 
 	update_stream_tag(decoder, is);
+
+	/* check if we're seeking */
+
+	if (decoder_prepare_initial_seek(decoder))
+		/* during initial seek, no music chunk must be created
+		   until seeking is finished; skip the rest of the
+		   function here */
+		return DECODE_COMMAND_SEEK;
 
 	/* send tag to music pipe */
 

@@ -1,5 +1,5 @@
 AC_PREREQ(2.60)
-AC_INIT(mpd, 0.16.4, musicpd-dev-team@lists.sourceforge.net)
+AC_INIT(mpd, 0.16.5, musicpd-dev-team@lists.sourceforge.net)
 AC_CONFIG_SRCDIR([src/main.c])
 AM_INIT_AUTOMAKE([foreign 1.10 dist-bzip2 subdir-objects])
 AM_CONFIG_HEADER(config.h)
@@ -33,11 +33,28 @@ fi
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 PKG_PROG_PKG_CONFIG
+AC_ARG_WITH([systemdsystemunitdir],
+	    AS_HELP_STRING([--with-systemdsystemunitdir=DIR], [Directory for systemd service files]),
+	    [], [with_systemdsystemunitdir=no])
+if test "x$with_systemdsystemunitdir" = xyes; then
+	AC_MSG_CHECKING(for systemd)
+	with_systemdsystemunitdir=$($PKG_CONFIG --variable=systemdsystemunitdir systemd)
+	if test -z "$with_systemdsystemunitdir"; then
+		AC_MSG_ERROR([Failed to detect systemd])
+	fi
+	AC_MSG_RESULT([$with_systemdsystemunitdir])
+fi
+if test "x$with_systemdsystemunitdir" != xno; then
+	AC_SUBST([systemdsystemunitdir], [$with_systemdsystemunitdir])
+fi
+AM_CONDITIONAL(HAVE_SYSTEMD, [test -n "$with_systemdsystemunitdir" -a "x$with_systemdsystemunitdir" != xno ])
 
 dnl ---------------------------------------------------------------------------
 dnl Declare Variables
 dnl ---------------------------------------------------------------------------
+AC_SUBST(AM_CPPFLAGS,"")
 AC_SUBST(AM_CFLAGS,"")
+AC_SUBST(AM_CXXFLAGS,"")
 
 AC_SUBST(MPD_LIBS)
 AC_SUBST(MPD_CFLAGS)
@@ -197,7 +214,7 @@ AC_ARG_ENABLE(httpd-output,
 
 AC_ARG_ENABLE(id3,
 	AS_HELP_STRING([--enable-id3],
-		[disable id3 support]),,
+		[enable id3 support]),,
 	enable_id3=auto)
 
 AC_ARG_ENABLE(inotify,
@@ -321,6 +338,11 @@ AC_ARG_ENABLE(sndfile,
 	AS_HELP_STRING([--enable-sndfile],
 		[enable sndfile support]),,
 	enable_sndfile=auto)
+
+AC_ARG_ENABLE(solaris_output,
+	AS_HELP_STRING([--enable-solaris-output],
+		[enables the Solaris /dev/audio output]),,
+	[enable_solaris_output=auto])
 
 AC_ARG_ENABLE(sqlite,
 	AS_HELP_STRING([--enable-sqlite],
@@ -1368,16 +1390,22 @@ fi
 AM_CONDITIONAL(HAVE_SHOUT, test x$enable_shout = xyes)
 
 dnl --------------------------------- Solaris ---------------------------------
-case "$host_os" in
+
+if test x$enable_solaris_output = xauto; then
+	case "$host_os" in
 	solaris*)
-		AC_DEFINE(ENABLE_SOLARIS_OUTPUT, 1, [Define to enable Solaris /dev/audio support])
 		enable_solaris_output=yes
 		;;
 
 	*)
 		enable_solaris_output=no
 		;;
-esac
+	esac
+fi
+
+if test x$enable_solaris_output = xyes; then
+	AC_DEFINE(ENABLE_SOLARIS_OUTPUT, 1, [Define to enable Solaris /dev/audio support])
+fi
 
 AM_CONDITIONAL(ENABLE_SOLARIS_OUTPUT, test x$enable_solaris_output = xyes)
 
@@ -1449,10 +1477,9 @@ dnl CFLAGS
 dnl ---------------------------------------------------------------------------
 
 dnl ---------------------------------- debug ----------------------------------
-#if test "x$enable_debug" = xno; then
-	# don't set NDEBUG for now, until MPD is stable
-	#AM_CFLAGS="$AM_CFLAGS -DNDEBUG"
-#fi
+if test "x$enable_debug" = xno; then
+	AM_CPPFLAGS="$AM_CPPFLAGS -DNDEBUG"
+fi
 
 dnl ----------------------------------- GCC -----------------------------------
 if test x$GCC = xyes
@@ -1478,6 +1505,7 @@ fi
 dnl ---------------------------- warnings as errors ---------------------------
 if test "x$enable_werror" = xyes; then
 	AM_CFLAGS="$AM_CFLAGS -Werror -pedantic-errors"
+	AM_CXXFLAGS="$AM_CXXFLAGS -Werror"
 fi
 
 dnl ---------------------------------------------------------------------------
@@ -1551,7 +1579,7 @@ results(pulse, [PulseAudio])
 results(mvp, [Media MVP])
 results(shout, [SHOUTcast])
 printf '\n\t'
-results(solaris, [Solaris])
+results(solaris_output, [Solaris])
 results(winmm_output, [WinMM])
 
 if
@@ -1579,5 +1607,6 @@ dnl ---------------------------------------------------------------------------
 dnl Generate files
 dnl ---------------------------------------------------------------------------
 AC_OUTPUT(Makefile)
+AC_OUTPUT(mpd.service)
 
 echo 'MPD is ready for compilation, type "make" to begin.'

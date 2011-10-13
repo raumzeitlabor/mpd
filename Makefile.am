@@ -1,7 +1,7 @@
 ACLOCAL_AMFLAGS = -I m4
 AUTOMAKE_OPTIONS = foreign 1.10 dist-bzip2 subdir-objects
 
-AM_CPPFLAGS = -I$(srcdir)/src $(GLIB_CFLAGS)
+AM_CPPFLAGS += -I$(srcdir)/src $(GLIB_CFLAGS)
 
 AM_CPPFLAGS += -DSYSTEM_CONFIG_FILE_LOCATION='"$(sysconfdir)/mpd.conf"'
 
@@ -243,6 +243,7 @@ src_mpd_SOURCES = \
 	$(OUTPUT_API_SRC) $(OUTPUT_SRC) \
 	$(MIXER_API_SRC) $(MIXER_SRC) \
 	$(FILTER_SRC) \
+	src/glib_socket.h \
 	src/notify.c \
 	src/audio.c \
 	src/audio_check.c \
@@ -800,6 +801,15 @@ FILTER_SRC = \
 	src/filter/replay_gain_filter_plugin.c \
 	src/filter/volume_filter_plugin.c
 
+
+#
+# systemd unit
+#
+
+if HAVE_SYSTEMD
+systemdsystemunit_DATA = \
+	mpd.service
+endif
 
 #
 # Sparse code analysis

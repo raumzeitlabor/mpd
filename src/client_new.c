@@ -19,9 +19,11 @@
 
 #include "config.h"
 #include "client_internal.h"
+#include "fd_util.h"
 #include "fifo_buffer.h"
 #include "socket_util.h"
 #include "permission.h"
+#include "glib_socket.h"
 
 #include <assert.h>
 #include <sys/types.h>
@@ -66,7 +68,7 @@ void client_new(int fd, const struct sockaddr *sa, size_t sa_length, int uid)
 			      progname, hostaddr);
 
 			g_free(hostaddr);
-			close(fd);
+			close_socket(fd);
 			return;
 		}
 
@@ -76,17 +78,13 @@ void client_new(int fd, const struct sockaddr *sa, size_t sa_length, int uid)
 
 	if (client_list_is_full()) {
 		g_warning("Max Connections Reached!");
-		close(fd);
+		close_socket(fd);
 		return;
 	}
 
 	client = g_new0(struct client, 1);
 
-#ifndef G_OS_WIN32
-	client->channel = g_io_channel_unix_new(fd);
-#else
-	client->channel = g_io_channel_win32_new_socket(fd);
-#endif
+	client->channel = g_io_channel_new_socket(fd);
 	/* GLib is responsible for closing the file descriptor */
 	g_io_channel_set_close_on_unref(client->channel, true);
 	/* NULL encoding means the stream is binary safe; the MPD
