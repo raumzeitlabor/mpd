@@ -159,8 +159,9 @@ bin_PROGRAMS = src/mpd$(EXEEXT)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(srcdir)/config.h.in \
-	$(top_srcdir)/configure AUTHORS COPYING INSTALL NEWS \
-	config.guess config.sub depcomp install-sh missing
+	$(srcdir)/mpd.service.in $(top_srcdir)/configure AUTHORS \
+	COPYING INSTALL NEWS config.guess config.sub depcomp \
+	install-sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/faad.m4 \
 	$(top_srcdir)/m4/libwrap.m4 $(top_srcdir)/m4/mpd_auto.m4 \
@@ -173,7 +174,7 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = config.h
-CONFIG_CLEAN_FILES =
+CONFIG_CLEAN_FILES = mpd.service
 CONFIG_CLEAN_VPATH_FILES =
 LIBRARIES = $(noinst_LIBRARIES)
 AR = ar
@@ -189,7 +190,7 @@ libmodplug_decoder_plugin_a_OBJECTS =  \
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)" \
 	"$(DESTDIR)$(man5dir)" "$(DESTDIR)$(developerdir)" \
 	"$(DESTDIR)$(docdir)" "$(DESTDIR)$(protocoldir)" \
-	"$(DESTDIR)$(userdir)"
+	"$(DESTDIR)$(systemdsystemunitdir)" "$(DESTDIR)$(userdir)"
 @ENABLE_TEST_TRUE@@HAVE_ALSA_TRUE@am__EXEEXT_1 =  \
 @ENABLE_TEST_TRUE@@HAVE_ALSA_TRUE@	test/read_mixer$(EXEEXT)
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@am__EXEEXT_2 = test/run_encoder$(EXEEXT)
@@ -339,10 +340,10 @@ am__src_mpd_SOURCES_DIST = src/check.h src/notify.h src/ack.h \
 	src/filter/route_filter_plugin.c \
 	src/filter/normalize_filter_plugin.c \
 	src/filter/replay_gain_filter_plugin.c \
-	src/filter/volume_filter_plugin.c src/notify.c src/audio.c \
-	src/audio_check.c src/audio_format.c src/audio_parser.c \
-	src/command.c src/idle.c src/cmdline.c src/conf.c \
-	src/crossfade.c src/dbUtils.c src/decoder_thread.c \
+	src/filter/volume_filter_plugin.c src/glib_socket.h \
+	src/notify.c src/audio.c src/audio_check.c src/audio_format.c \
+	src/audio_parser.c src/command.c src/idle.c src/cmdline.c \
+	src/conf.c src/crossfade.c src/dbUtils.c src/decoder_thread.c \
 	src/decoder_control.c src/decoder_api.c src/decoder_internal.c \
 	src/decoder_print.c src/directory.c src/directory_save.c \
 	src/directory_print.c src/database.c src/dirvec.c \
@@ -1372,7 +1373,8 @@ man1dir = $(mandir)/man1
 man5dir = $(mandir)/man5
 NROFF = nroff
 MANS = $(man_MANS)
-DATA = $(developer_DATA) $(doc_DATA) $(protocol_DATA) $(user_DATA)
+DATA = $(developer_DATA) $(doc_DATA) $(protocol_DATA) \
+	$(systemdsystemunit_DATA) $(user_DATA)
 ETAGS = etags
 CTAGS = ctags
 am__tty_colors = \
@@ -1393,6 +1395,9 @@ ALSA_CFLAGS = @ALSA_CFLAGS@
 ALSA_LIBS = @ALSA_LIBS@
 AMTAR = @AMTAR@
 AM_CFLAGS = @AM_CFLAGS@
+AM_CPPFLAGS = @AM_CPPFLAGS@ -I$(srcdir)/src $(GLIB_CFLAGS) \
+	-DSYSTEM_CONFIG_FILE_LOCATION='"$(sysconfdir)/mpd.conf"'
+AM_CXXFLAGS = @AM_CXXFLAGS@
 AO_CFLAGS = @AO_CFLAGS@
 AO_LIBS = @AO_LIBS@
 AUDIOFILE_CFLAGS = @AUDIOFILE_CFLAGS@
@@ -1569,14 +1574,13 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
 sysconfdir = @sysconfdir@
+systemdsystemunitdir = @systemdsystemunitdir@
 target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = -I m4
 AUTOMAKE_OPTIONS = foreign 1.10 dist-bzip2 subdir-objects
-AM_CPPFLAGS = -I$(srcdir)/src $(GLIB_CFLAGS) \
-	-DSYSTEM_CONFIG_FILE_LOCATION='"$(sysconfdir)/mpd.conf"'
 noinst_LIBRARIES = $(am__append_22)
 src_mpd_CFLAGS = $(AM_CFLAGS) $(MPD_CFLAGS)
 src_mpd_CPPFLAGS = $(AM_CPPFLAGS) \
@@ -1805,13 +1809,14 @@ mpd_headers = \
 src_mpd_SOURCES = $(mpd_headers) $(ARCHIVE_SRC) $(INPUT_SRC) \
 	$(PLAYLIST_SRC) $(TAG_SRC) $(DECODER_SRC) $(ENCODER_SRC) \
 	$(OUTPUT_API_SRC) $(OUTPUT_SRC) $(MIXER_API_SRC) $(MIXER_SRC) \
-	$(FILTER_SRC) src/notify.c src/audio.c src/audio_check.c \
-	src/audio_format.c src/audio_parser.c src/command.c src/idle.c \
-	src/cmdline.c src/conf.c src/crossfade.c src/dbUtils.c \
-	src/decoder_thread.c src/decoder_control.c src/decoder_api.c \
-	src/decoder_internal.c src/decoder_print.c src/directory.c \
-	src/directory_save.c src/directory_print.c src/database.c \
-	src/dirvec.c src/exclude.c src/fd_util.c src/fifo_buffer.c \
+	$(FILTER_SRC) src/glib_socket.h src/notify.c src/audio.c \
+	src/audio_check.c src/audio_format.c src/audio_parser.c \
+	src/command.c src/idle.c src/cmdline.c src/conf.c \
+	src/crossfade.c src/dbUtils.c src/decoder_thread.c \
+	src/decoder_control.c src/decoder_api.c src/decoder_internal.c \
+	src/decoder_print.c src/directory.c src/directory_save.c \
+	src/directory_print.c src/database.c src/dirvec.c \
+	src/exclude.c src/fd_util.c src/fifo_buffer.c \
 	src/filter_config.c src/filter_plugin.c src/filter_registry.c \
 	src/update.c src/update_queue.c src/update_walk.c \
 	src/update_remove.c src/client.c src/client_event.c \
@@ -2003,6 +2008,13 @@ FILTER_SRC = \
 	src/filter/normalize_filter_plugin.c \
 	src/filter/replay_gain_filter_plugin.c \
 	src/filter/volume_filter_plugin.c
+
+
+#
+# systemd unit
+#
+@HAVE_SYSTEMD_TRUE@systemdsystemunit_DATA = \
+@HAVE_SYSTEMD_TRUE@	mpd.service
 
 
 #
@@ -2330,6 +2342,8 @@ $(srcdir)/config.h.in:  $(am__configure_deps)
 
 distclean-hdr:
 	-rm -f config.h stamp-h1
+mpd.service: $(top_builddir)/config.status $(srcdir)/mpd.service.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
 
 clean-noinstLIBRARIES:
 	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
@@ -12938,6 +12952,26 @@ uninstall-protocolDATA:
 	test -n "$$files" || exit 0; \
 	echo " ( cd '$(DESTDIR)$(protocoldir)' && rm -f" $$files ")"; \
 	cd "$(DESTDIR)$(protocoldir)" && rm -f $$files
+install-systemdsystemunitDATA: $(systemdsystemunit_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(systemdsystemunitdir)" || $(MKDIR_P) "$(DESTDIR)$(systemdsystemunitdir)"
+	@list='$(systemdsystemunit_DATA)'; test -n "$(systemdsystemunitdir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(systemdsystemunitdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(systemdsystemunitdir)" || exit $$?; \
+	done
+
+uninstall-systemdsystemunitDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(systemdsystemunit_DATA)'; test -n "$(systemdsystemunitdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	test -n "$$files" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(systemdsystemunitdir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(systemdsystemunitdir)" && rm -f $$files
 install-userDATA: $(user_DATA)
 	@$(NORMAL_INSTALL)
 	test -z "$(userdir)" || $(MKDIR_P) "$(DESTDIR)$(userdir)"
@@ -13270,7 +13304,7 @@ check: check-am
 all-am: Makefile $(LIBRARIES) $(PROGRAMS) $(MANS) $(DATA) config.h \
 		all-local
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(man5dir)" "$(DESTDIR)$(developerdir)" "$(DESTDIR)$(docdir)" "$(DESTDIR)$(protocoldir)" "$(DESTDIR)$(userdir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(man5dir)" "$(DESTDIR)$(developerdir)" "$(DESTDIR)$(docdir)" "$(DESTDIR)$(protocoldir)" "$(DESTDIR)$(systemdsystemunitdir)" "$(DESTDIR)$(userdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -13351,7 +13385,7 @@ info-am:
 
 install-data-am: install-data-local install-developerDATA \
 	install-docDATA install-man install-protocolDATA \
-	install-userDATA
+	install-systemdsystemunitDATA install-userDATA
 
 install-dvi: install-dvi-am
 
@@ -13400,7 +13434,8 @@ ps-am:
 
 uninstall-am: uninstall-binPROGRAMS uninstall-developerDATA \
 	uninstall-docDATA uninstall-local uninstall-man \
-	uninstall-protocolDATA uninstall-userDATA
+	uninstall-protocolDATA uninstall-systemdsystemunitDATA \
+	uninstall-userDATA
 
 uninstall-man: uninstall-man1 uninstall-man5
 
@@ -13419,13 +13454,15 @@ uninstall-man: uninstall-man1 uninstall-man5
 	install-exec-am install-html install-html-am install-info \
 	install-info-am install-man install-man1 install-man5 \
 	install-pdf install-pdf-am install-protocolDATA install-ps \
-	install-ps-am install-strip install-userDATA installcheck \
-	installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic pdf pdf-am ps ps-am tags uninstall \
-	uninstall-am uninstall-binPROGRAMS uninstall-developerDATA \
-	uninstall-docDATA uninstall-local uninstall-man uninstall-man1 \
-	uninstall-man5 uninstall-protocolDATA uninstall-userDATA
+	install-ps-am install-strip install-systemdsystemunitDATA \
+	install-userDATA installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
+	tags uninstall uninstall-am uninstall-binPROGRAMS \
+	uninstall-developerDATA uninstall-docDATA uninstall-local \
+	uninstall-man uninstall-man1 uninstall-man5 \
+	uninstall-protocolDATA uninstall-systemdsystemunitDATA \
+	uninstall-userDATA
 
 sparse-check:
 	$(SPARSE) -I. $(src_mpd_CFLAGS) $(src_mpd_CPPFLAGS) $(SPARSE_FLAGS) $(SPARSE_CPPFLAGS) $(filter-out %.cxx,$(src_mpd_SOURCES))
