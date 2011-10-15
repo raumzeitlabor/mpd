@@ -1,3 +1,9 @@
+mpd (0.16.5-1) unstable; urgency=low
+
+  * [9bce739] Imported Upstream version 0.16.5
+
+ -- Alexander Wirt <formorer@debian.org>  Sat, 15 Oct 2011 10:19:37 +0200
+
 mpd (0.16.4-1) unstable; urgency=low
 
   * [d91cb09] Imported Upstream version 0.16.4
