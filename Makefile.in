@@ -215,38 +215,37 @@ am__src_mpd_SOURCES_DIST = src/check.h src/notify.h src/ack.h \
 	src/directory.h src/directory_save.h src/directory_print.h \
 	src/database.h src/encoder_plugin.h src/encoder_list.h \
 	src/encoder_api.h src/exclude.h src/fd_util.h \
-	src/fifo_buffer.h src/glib_compat.h src/update.h \
-	src/update_internal.h src/inotify_source.h src/inotify_queue.h \
-	src/inotify_update.h src/dirvec.h src/gcc.h src/decoder_list.h \
-	src/decoder_print.h src/decoder/flac_compat.h \
-	src/decoder/flac_metadata.h src/decoder/flac_pcm.h \
-	src/decoder/_flac_common.h src/decoder/_ogg_common.h \
-	src/input_init.h src/input_plugin.h src/input_registry.h \
-	src/input_stream.h src/input/file_input_plugin.h \
-	src/input/ffmpeg_input_plugin.h src/input/curl_input_plugin.h \
-	src/input/rewind_input_plugin.h src/input/mms_input_plugin.h \
-	src/text_file.h src/text_input_stream.h src/icy_server.h \
-	src/icy_metadata.h src/client.h src/client_internal.h \
-	src/server_socket.h src/listen.h src/log.h src/ls.h src/main.h \
-	src/mixer_all.h src/mixer_api.h src/mixer_control.h \
-	src/mixer_list.h src/event_pipe.h src/mixer_plugin.h \
-	src/mixer_type.h src/mixer/software_mixer_plugin.h \
+	src/glib_compat.h src/update.h src/update_internal.h \
+	src/inotify_source.h src/inotify_queue.h src/inotify_update.h \
+	src/dirvec.h src/gcc.h src/decoder_list.h src/decoder_print.h \
+	src/decoder/flac_compat.h src/decoder/flac_metadata.h \
+	src/decoder/flac_pcm.h src/decoder/_flac_common.h \
+	src/decoder/_ogg_common.h src/input_init.h src/input_plugin.h \
+	src/input_registry.h src/input_stream.h \
+	src/input/file_input_plugin.h src/input/ffmpeg_input_plugin.h \
+	src/input/curl_input_plugin.h src/input/rewind_input_plugin.h \
+	src/input/mms_input_plugin.h src/text_file.h \
+	src/text_input_stream.h src/icy_server.h src/icy_metadata.h \
+	src/client.h src/client_internal.h src/server_socket.h \
+	src/listen.h src/log.h src/ls.h src/main.h src/mixer_all.h \
+	src/mixer_api.h src/mixer_control.h src/mixer_list.h \
+	src/event_pipe.h src/mixer_plugin.h src/mixer_type.h \
+	src/mixer/software_mixer_plugin.h \
 	src/mixer/pulse_mixer_plugin.h src/daemon.h \
 	src/AudioCompress/config.h src/AudioCompress/compress.h \
 	src/buffer.h src/pipe.h src/chunk.h src/path.h src/mapper.h \
 	src/open.h src/output/httpd_client.h \
 	src/output/httpd_internal.h src/output/pulse_output_plugin.h \
-	src/output/winmm_output_plugin.h src/page.h src/pcm_buffer.h \
-	src/pcm_utils.h src/pcm_convert.h src/pcm_volume.h \
-	src/pcm_mix.h src/pcm_byteswap.h src/pcm_channels.h \
-	src/pcm_format.h src/pcm_resample.h \
-	src/pcm_resample_internal.h src/pcm_dither.h src/pcm_pack.h \
-	src/pcm_prng.h src/permission.h src/player_thread.h \
-	src/player_control.h src/playlist.h src/playlist_internal.h \
-	src/playlist_print.h src/playlist_save.h src/playlist_state.h \
-	src/playlist_plugin.h src/playlist_list.h \
-	src/playlist_mapper.h src/playlist_any.h src/playlist_song.h \
-	src/playlist_queue.h src/playlist_vector.h \
+	src/output/winmm_output_plugin.h src/page.h src/pcm_utils.h \
+	src/pcm_convert.h src/pcm_volume.h src/pcm_mix.h \
+	src/pcm_byteswap.h src/pcm_channels.h src/pcm_format.h \
+	src/pcm_resample.h src/pcm_resample_internal.h \
+	src/pcm_dither.h src/pcm_pack.h src/pcm_prng.h \
+	src/permission.h src/player_thread.h src/player_control.h \
+	src/playlist.h src/playlist_internal.h src/playlist_print.h \
+	src/playlist_save.h src/playlist_state.h src/playlist_plugin.h \
+	src/playlist_list.h src/playlist_mapper.h src/playlist_any.h \
+	src/playlist_song.h src/playlist_queue.h src/playlist_vector.h \
 	src/playlist_database.h src/playlist/extm3u_playlist_plugin.h \
 	src/playlist/m3u_playlist_plugin.h \
 	src/playlist/pls_playlist_plugin.h \
@@ -348,6 +347,7 @@ am__src_mpd_SOURCES_DIST = src/check.h src/notify.h src/ack.h \
 	src/decoder_print.c src/directory.c src/directory_save.c \
 	src/directory_print.c src/database.c src/dirvec.c \
 	src/exclude.c src/fd_util.c src/fifo_buffer.c \
+	src/fifo_buffer.h src/growing_fifo.c src/growing_fifo.h \
 	src/filter_config.c src/filter_plugin.c src/filter_registry.c \
 	src/update.c src/update_queue.c src/update_walk.c \
 	src/update_remove.c src/client.c src/client_event.c \
@@ -357,17 +357,18 @@ am__src_mpd_SOURCES_DIST = src/check.h src/notify.h src/ack.h \
 	src/listen.c src/log.c src/ls.c src/main.c src/main_win32.c \
 	src/event_pipe.c src/daemon.c src/AudioCompress/compress.c \
 	src/buffer.c src/pipe.c src/chunk.c src/path.c src/mapper.c \
-	src/page.c src/pcm_convert.c src/pcm_volume.c src/pcm_mix.c \
-	src/pcm_byteswap.c src/pcm_channels.c src/pcm_pack.c \
-	src/pcm_format.c src/pcm_resample.c \
-	src/pcm_resample_fallback.c src/pcm_dither.c src/permission.c \
-	src/player_thread.c src/player_control.c src/playlist.c \
-	src/playlist_global.c src/playlist_control.c \
-	src/playlist_edit.c src/playlist_print.c src/playlist_save.c \
-	src/playlist_mapper.c src/playlist_any.c src/playlist_song.c \
-	src/playlist_state.c src/playlist_queue.c \
-	src/playlist_vector.c src/playlist_database.c src/queue.c \
-	src/queue_print.c src/queue_save.c src/replay_gain_config.c \
+	src/page.c src/pcm_buffer.c src/pcm_buffer.h src/pcm_convert.c \
+	src/pcm_volume.c src/pcm_mix.c src/pcm_byteswap.c \
+	src/pcm_channels.c src/pcm_pack.c src/pcm_format.c \
+	src/pcm_resample.c src/pcm_resample_fallback.c \
+	src/pcm_dither.c src/permission.c src/player_thread.c \
+	src/player_control.c src/playlist.c src/playlist_global.c \
+	src/playlist_control.c src/playlist_edit.c \
+	src/playlist_print.c src/playlist_save.c src/playlist_mapper.c \
+	src/playlist_any.c src/playlist_song.c src/playlist_state.c \
+	src/playlist_queue.c src/playlist_vector.c \
+	src/playlist_database.c src/queue.c src/queue_print.c \
+	src/queue_save.c src/replay_gain_config.c \
 	src/replay_gain_info.c src/sig_handlers.c src/song.c \
 	src/song_update.c src/song_print.c src/song_save.c \
 	src/songvec.c src/socket_util.c src/state_file.c src/stats.c \
@@ -556,6 +557,7 @@ am_src_mpd_OBJECTS = $(am__objects_1) $(am__objects_6) \
 	src/src_mpd-database.$(OBJEXT) src/src_mpd-dirvec.$(OBJEXT) \
 	src/src_mpd-exclude.$(OBJEXT) src/src_mpd-fd_util.$(OBJEXT) \
 	src/src_mpd-fifo_buffer.$(OBJEXT) \
+	src/src_mpd-growing_fifo.$(OBJEXT) \
 	src/src_mpd-filter_config.$(OBJEXT) \
 	src/src_mpd-filter_plugin.$(OBJEXT) \
 	src/src_mpd-filter_registry.$(OBJEXT) \
@@ -582,6 +584,7 @@ am_src_mpd_OBJECTS = $(am__objects_1) $(am__objects_6) \
 	src/src_mpd-buffer.$(OBJEXT) src/src_mpd-pipe.$(OBJEXT) \
 	src/src_mpd-chunk.$(OBJEXT) src/src_mpd-path.$(OBJEXT) \
 	src/src_mpd-mapper.$(OBJEXT) src/src_mpd-page.$(OBJEXT) \
+	src/src_mpd-pcm_buffer.$(OBJEXT) \
 	src/src_mpd-pcm_convert.$(OBJEXT) \
 	src/src_mpd-pcm_volume.$(OBJEXT) src/src_mpd-pcm_mix.$(OBJEXT) \
 	src/src_mpd-pcm_byteswap.$(OBJEXT) \
@@ -748,7 +751,7 @@ am__test_read_mixer_SOURCES_DIST = test/read_mixer.c src/conf.c \
 	src/tokenizer.c src/utils.c src/log.c src/mixer_control.c \
 	src/mixer_api.c src/filter_plugin.c \
 	src/filter/volume_filter_plugin.c src/fd_util.c \
-	src/mixer/software_mixer_plugin.c \
+	src/pcm_buffer.c src/mixer/software_mixer_plugin.c \
 	src/mixer/alsa_mixer_plugin.c src/mixer/oss_mixer_plugin.c \
 	src/mixer/pulse_mixer_plugin.c src/mixer/winmm_mixer_plugin.c
 @HAVE_ALSA_TRUE@am__objects_91 = src/mixer/test_read_mixer-alsa_mixer_plugin.$(OBJEXT)
@@ -770,6 +773,7 @@ am__objects_95 =  \
 @ENABLE_TEST_TRUE@	src/test_read_mixer-filter_plugin.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/filter/test_read_mixer-volume_filter_plugin.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_read_mixer-fd_util.$(OBJEXT) \
+@ENABLE_TEST_TRUE@	src/test_read_mixer-pcm_buffer.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	$(am__objects_95)
 test_read_mixer_OBJECTS = $(am_test_read_mixer_OBJECTS)
 @ENABLE_TEST_TRUE@test_read_mixer_DEPENDENCIES =  \
@@ -778,7 +782,8 @@ test_read_mixer_OBJECTS = $(am_test_read_mixer_OBJECTS)
 am__test_read_tags_SOURCES_DIST = test/read_tags.c src/conf.c \
 	src/tokenizer.c src/utils.c src/log.c src/tag.c src/tag_pool.c \
 	src/replay_gain_info.c src/uri.c src/fd_util.c \
-	src/audio_check.c src/timer.c src/archive/bz2_archive_plugin.c \
+	src/audio_check.c src/timer.c src/pcm_buffer.c \
+	src/archive/bz2_archive_plugin.c \
 	src/archive/zzip_archive_plugin.c \
 	src/archive/iso9660_archive_plugin.c src/archive_api.c \
 	src/archive_list.c src/archive_plugin.c \
@@ -882,6 +887,7 @@ am__objects_127 = src/test_read_tags-decoder_buffer.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_read_tags-fd_util.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_read_tags-audio_check.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_read_tags-timer.$(OBJEXT) \
+@ENABLE_TEST_TRUE@	src/test_read_tags-pcm_buffer.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	$(am__objects_100) $(am__objects_104) \
 @ENABLE_TEST_TRUE@	$(am__objects_106) $(am__objects_127)
 test_read_tags_OBJECTS = $(am_test_read_tags_OBJECTS)
@@ -891,10 +897,11 @@ test_read_tags_OBJECTS = $(am_test_read_tags_OBJECTS)
 @ENABLE_TEST_TRUE@	$(am__DEPENDENCIES_1)
 am__test_run_convert_SOURCES_DIST = test/run_convert.c \
 	src/fifo_buffer.c src/audio_format.c src/audio_check.c \
-	src/audio_parser.c src/pcm_channels.c src/pcm_format.c \
-	src/pcm_pack.c src/pcm_dither.c src/pcm_byteswap.c \
-	src/pcm_resample.c src/pcm_resample_fallback.c \
-	src/pcm_convert.c src/pcm_resample_libsamplerate.c
+	src/audio_parser.c src/pcm_buffer.c src/pcm_channels.c \
+	src/pcm_format.c src/pcm_pack.c src/pcm_dither.c \
+	src/pcm_byteswap.c src/pcm_resample.c \
+	src/pcm_resample_fallback.c src/pcm_convert.c \
+	src/pcm_resample_libsamplerate.c
 @ENABLE_TEST_TRUE@@HAVE_LIBSAMPLERATE_TRUE@am__objects_128 = src/test_run_convert-pcm_resample_libsamplerate.$(OBJEXT)
 @ENABLE_TEST_TRUE@am_test_run_convert_OBJECTS =  \
 @ENABLE_TEST_TRUE@	test/test_run_convert-run_convert.$(OBJEXT) \
@@ -902,6 +909,7 @@ am__test_run_convert_SOURCES_DIST = test/run_convert.c \
 @ENABLE_TEST_TRUE@	src/test_run_convert-audio_format.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_run_convert-audio_check.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_run_convert-audio_parser.$(OBJEXT) \
+@ENABLE_TEST_TRUE@	src/test_run_convert-pcm_buffer.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_run_convert-pcm_channels.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_run_convert-pcm_format.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_run_convert-pcm_pack.$(OBJEXT) \
@@ -918,7 +926,7 @@ am__test_run_decoder_SOURCES_DIST = test/run_decoder.c test/stdbin.h \
 	src/conf.c src/tokenizer.c src/utils.c src/log.c src/tag.c \
 	src/tag_pool.c src/replay_gain_info.c src/uri.c src/fd_util.c \
 	src/audio_check.c src/audio_format.c src/timer.c \
-	src/archive/bz2_archive_plugin.c \
+	src/pcm_buffer.c src/archive/bz2_archive_plugin.c \
 	src/archive/zzip_archive_plugin.c \
 	src/archive/iso9660_archive_plugin.c src/archive_api.c \
 	src/archive_list.c src/archive_plugin.c \
@@ -1022,6 +1030,7 @@ am__objects_160 = src/test_run_decoder-decoder_buffer.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_run_decoder-audio_check.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_run_decoder-audio_format.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_run_decoder-timer.$(OBJEXT) \
+@ENABLE_TEST_TRUE@	src/test_run_decoder-pcm_buffer.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	$(am__objects_133) $(am__objects_137) \
 @ENABLE_TEST_TRUE@	$(am__objects_139) $(am__objects_160)
 test_run_decoder_OBJECTS = $(am_test_run_decoder_OBJECTS)
@@ -1032,7 +1041,8 @@ test_run_decoder_OBJECTS = $(am_test_run_decoder_OBJECTS)
 am__test_run_encoder_SOURCES_DIST = test/run_encoder.c test/stdbin.h \
 	src/conf.c src/tokenizer.c src/utils.c src/tag.c \
 	src/tag_pool.c src/audio_check.c src/audio_format.c \
-	src/audio_parser.c src/encoder_list.c \
+	src/audio_parser.c src/pcm_buffer.c src/fifo_buffer.c \
+	src/growing_fifo.c src/encoder_list.c \
 	src/encoder/null_encoder.c src/encoder/wave_encoder.c \
 	src/encoder/vorbis_encoder.c src/encoder/lame_encoder.c \
 	src/encoder/twolame_encoder.c src/encoder/flac_encoder.c
@@ -1055,6 +1065,9 @@ am__objects_167 = $(am__objects_161) $(am__objects_162) \
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/test_run_encoder-audio_check.$(OBJEXT) \
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/test_run_encoder-audio_format.$(OBJEXT) \
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/test_run_encoder-audio_parser.$(OBJEXT) \
+@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/test_run_encoder-pcm_buffer.$(OBJEXT) \
+@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/test_run_encoder-fifo_buffer.$(OBJEXT) \
+@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/test_run_encoder-growing_fifo.$(OBJEXT) \
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	$(am__objects_167)
 test_run_encoder_OBJECTS = $(am_test_run_encoder_OBJECTS)
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@test_run_encoder_DEPENDENCIES =  \
@@ -1066,7 +1079,7 @@ am__test_run_filter_SOURCES_DIST = test/run_filter.c test/stdbin.h \
 	src/tokenizer.c src/utils.c src/pcm_volume.c src/pcm_convert.c \
 	src/pcm_byteswap.c src/pcm_format.c src/pcm_channels.c \
 	src/pcm_dither.c src/pcm_pack.c src/pcm_resample.c \
-	src/pcm_resample_fallback.c src/audio_check.c \
+	src/pcm_resample_fallback.c src/pcm_buffer.c src/audio_check.c \
 	src/audio_format.c src/audio_parser.c src/replay_gain_config.c \
 	src/replay_gain_info.c src/AudioCompress/compress.c \
 	src/filter/null_filter_plugin.c \
@@ -1104,6 +1117,7 @@ am__objects_168 =  \
 @ENABLE_TEST_TRUE@	src/test_run_filter-pcm_pack.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_run_filter-pcm_resample.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_run_filter-pcm_resample_fallback.$(OBJEXT) \
+@ENABLE_TEST_TRUE@	src/test_run_filter-pcm_buffer.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_run_filter-audio_check.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_run_filter-audio_format.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_run_filter-audio_parser.$(OBJEXT) \
@@ -1185,8 +1199,8 @@ am__test_run_output_SOURCES_DIST = test/run_output.c test/stdbin.h \
 	src/conf.c src/tokenizer.c src/utils.c src/log.c \
 	src/audio_check.c src/audio_format.c src/audio_parser.c \
 	src/timer.c src/tag.c src/tag_pool.c src/fifo_buffer.c \
-	src/page.c src/socket_util.c src/output_init.c \
-	src/output_list.c src/encoder_list.c \
+	src/growing_fifo.c src/page.c src/socket_util.c \
+	src/output_init.c src/output_list.c src/encoder_list.c \
 	src/encoder/null_encoder.c src/encoder/wave_encoder.c \
 	src/encoder/vorbis_encoder.c src/encoder/lame_encoder.c \
 	src/encoder/twolame_encoder.c src/encoder/flac_encoder.c \
@@ -1200,11 +1214,11 @@ am__test_run_output_SOURCES_DIST = test/run_output.c test/stdbin.h \
 	src/filter/replay_gain_filter_plugin.c \
 	src/filter/normalize_filter_plugin.c \
 	src/filter/volume_filter_plugin.c src/pcm_volume.c \
-	src/AudioCompress/compress.c src/replay_gain_info.c \
-	src/replay_gain_config.c src/fd_util.c src/server_socket.c \
-	src/output/null_plugin.c src/output/alsa_plugin.c \
-	src/output/ffado_output_plugin.c src/output/ao_plugin.c \
-	src/output/fifo_output_plugin.c \
+	src/pcm_buffer.c src/AudioCompress/compress.c \
+	src/replay_gain_info.c src/replay_gain_config.c src/fd_util.c \
+	src/server_socket.c src/output/null_plugin.c \
+	src/output/alsa_plugin.c src/output/ffado_output_plugin.c \
+	src/output/ao_plugin.c src/output/fifo_output_plugin.c \
 	src/output/pipe_output_plugin.c \
 	src/output/jack_output_plugin.c src/output/mvp_plugin.c \
 	src/output/oss_plugin.c src/output/openal_plugin.c \
@@ -1271,6 +1285,7 @@ am__objects_207 = src/output/test_run_output-null_plugin.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_run_output-tag.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_run_output-tag_pool.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_run_output-fifo_buffer.$(OBJEXT) \
+@ENABLE_TEST_TRUE@	src/test_run_output-growing_fifo.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_run_output-page.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_run_output-socket_util.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_run_output-output_init.$(OBJEXT) \
@@ -1289,6 +1304,7 @@ am__objects_207 = src/output/test_run_output-null_plugin.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/filter/test_run_output-normalize_filter_plugin.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/filter/test_run_output-volume_filter_plugin.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_run_output-pcm_volume.$(OBJEXT) \
+@ENABLE_TEST_TRUE@	src/test_run_output-pcm_buffer.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/AudioCompress/test_run_output-compress.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_run_output-replay_gain_info.$(OBJEXT) \
 @ENABLE_TEST_TRUE@	src/test_run_output-replay_gain_config.$(OBJEXT) \
@@ -1659,7 +1675,6 @@ mpd_headers = \
 	src/encoder_api.h \
 	src/exclude.h \
 	src/fd_util.h \
-	src/fifo_buffer.h \
 	src/glib_compat.h \
 	src/update.h \
 	src/update_internal.h \
@@ -1718,7 +1733,6 @@ mpd_headers = \
 	src/output/pulse_output_plugin.h \
 	src/output/winmm_output_plugin.h \
 	src/page.h \
-	src/pcm_buffer.h \
 	src/pcm_utils.h \
 	src/pcm_convert.h \
 	src/pcm_volume.h \
@@ -1817,6 +1831,7 @@ src_mpd_SOURCES = $(mpd_headers) $(ARCHIVE_SRC) $(INPUT_SRC) \
 	src/decoder_print.c src/directory.c src/directory_save.c \
 	src/directory_print.c src/database.c src/dirvec.c \
 	src/exclude.c src/fd_util.c src/fifo_buffer.c \
+	src/fifo_buffer.h src/growing_fifo.c src/growing_fifo.h \
 	src/filter_config.c src/filter_plugin.c src/filter_registry.c \
 	src/update.c src/update_queue.c src/update_walk.c \
 	src/update_remove.c src/client.c src/client_event.c \
@@ -1826,17 +1841,18 @@ src_mpd_SOURCES = $(mpd_headers) $(ARCHIVE_SRC) $(INPUT_SRC) \
 	src/listen.c src/log.c src/ls.c src/main.c src/main_win32.c \
 	src/event_pipe.c src/daemon.c src/AudioCompress/compress.c \
 	src/buffer.c src/pipe.c src/chunk.c src/path.c src/mapper.c \
-	src/page.c src/pcm_convert.c src/pcm_volume.c src/pcm_mix.c \
-	src/pcm_byteswap.c src/pcm_channels.c src/pcm_pack.c \
-	src/pcm_format.c src/pcm_resample.c \
-	src/pcm_resample_fallback.c src/pcm_dither.c src/permission.c \
-	src/player_thread.c src/player_control.c src/playlist.c \
-	src/playlist_global.c src/playlist_control.c \
-	src/playlist_edit.c src/playlist_print.c src/playlist_save.c \
-	src/playlist_mapper.c src/playlist_any.c src/playlist_song.c \
-	src/playlist_state.c src/playlist_queue.c \
-	src/playlist_vector.c src/playlist_database.c src/queue.c \
-	src/queue_print.c src/queue_save.c src/replay_gain_config.c \
+	src/page.c src/pcm_buffer.c src/pcm_buffer.h src/pcm_convert.c \
+	src/pcm_volume.c src/pcm_mix.c src/pcm_byteswap.c \
+	src/pcm_channels.c src/pcm_pack.c src/pcm_format.c \
+	src/pcm_resample.c src/pcm_resample_fallback.c \
+	src/pcm_dither.c src/permission.c src/player_thread.c \
+	src/player_control.c src/playlist.c src/playlist_global.c \
+	src/playlist_control.c src/playlist_edit.c \
+	src/playlist_print.c src/playlist_save.c src/playlist_mapper.c \
+	src/playlist_any.c src/playlist_song.c src/playlist_state.c \
+	src/playlist_queue.c src/playlist_vector.c \
+	src/playlist_database.c src/queue.c src/queue_print.c \
+	src/queue_save.c src/replay_gain_config.c \
 	src/replay_gain_info.c src/sig_handlers.c src/song.c \
 	src/song_update.c src/song_print.c src/song_save.c \
 	src/songvec.c src/socket_util.c src/state_file.c src/stats.c \
@@ -2104,6 +2120,7 @@ SPARSE_CPPFLAGS = $(DEFAULT_INCLUDES) -I$(shell $(CC) \
 @ENABLE_TEST_TRUE@	src/audio_check.c \
 @ENABLE_TEST_TRUE@	src/audio_format.c \
 @ENABLE_TEST_TRUE@	src/timer.c \
+@ENABLE_TEST_TRUE@	src/pcm_buffer.c \
 @ENABLE_TEST_TRUE@	$(ARCHIVE_SRC) \
 @ENABLE_TEST_TRUE@	$(INPUT_SRC) \
 @ENABLE_TEST_TRUE@	$(TAG_SRC) \
@@ -2128,6 +2145,7 @@ SPARSE_CPPFLAGS = $(DEFAULT_INCLUDES) -I$(shell $(CC) \
 @ENABLE_TEST_TRUE@	src/fd_util.c \
 @ENABLE_TEST_TRUE@	src/audio_check.c \
 @ENABLE_TEST_TRUE@	src/timer.c \
+@ENABLE_TEST_TRUE@	src/pcm_buffer.c \
 @ENABLE_TEST_TRUE@	$(ARCHIVE_SRC) \
 @ENABLE_TEST_TRUE@	$(INPUT_SRC) \
 @ENABLE_TEST_TRUE@	$(TAG_SRC) \
@@ -2146,7 +2164,7 @@ SPARSE_CPPFLAGS = $(DEFAULT_INCLUDES) -I$(shell $(CC) \
 @ENABLE_TEST_TRUE@	src/pcm_format.c src/pcm_channels.c \
 @ENABLE_TEST_TRUE@	src/pcm_dither.c src/pcm_pack.c \
 @ENABLE_TEST_TRUE@	src/pcm_resample.c \
-@ENABLE_TEST_TRUE@	src/pcm_resample_fallback.c \
+@ENABLE_TEST_TRUE@	src/pcm_resample_fallback.c src/pcm_buffer.c \
 @ENABLE_TEST_TRUE@	src/audio_check.c src/audio_format.c \
 @ENABLE_TEST_TRUE@	src/audio_parser.c src/replay_gain_config.c \
 @ENABLE_TEST_TRUE@	src/replay_gain_info.c \
@@ -2160,6 +2178,8 @@ SPARSE_CPPFLAGS = $(DEFAULT_INCLUDES) -I$(shell $(CC) \
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/audio_check.c \
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/audio_format.c \
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/audio_parser.c \
+@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/pcm_buffer.c \
+@ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	src/fifo_buffer.c src/growing_fifo.c \
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@	$(ENCODER_SRC)
 
 @ENABLE_ENCODER_TRUE@@ENABLE_TEST_TRUE@test_run_encoder_CPPFLAGS = $(AM_CPPFLAGS) \
@@ -2190,9 +2210,10 @@ SPARSE_CPPFLAGS = $(DEFAULT_INCLUDES) -I$(shell $(CC) \
 @ENABLE_TEST_TRUE@test_run_convert_SOURCES = test/run_convert.c \
 @ENABLE_TEST_TRUE@	src/fifo_buffer.c src/audio_format.c \
 @ENABLE_TEST_TRUE@	src/audio_check.c src/audio_parser.c \
-@ENABLE_TEST_TRUE@	src/pcm_channels.c src/pcm_format.c \
-@ENABLE_TEST_TRUE@	src/pcm_pack.c src/pcm_dither.c \
-@ENABLE_TEST_TRUE@	src/pcm_byteswap.c src/pcm_resample.c \
+@ENABLE_TEST_TRUE@	src/pcm_buffer.c src/pcm_channels.c \
+@ENABLE_TEST_TRUE@	src/pcm_format.c src/pcm_pack.c \
+@ENABLE_TEST_TRUE@	src/pcm_dither.c src/pcm_byteswap.c \
+@ENABLE_TEST_TRUE@	src/pcm_resample.c \
 @ENABLE_TEST_TRUE@	src/pcm_resample_fallback.c \
 @ENABLE_TEST_TRUE@	src/pcm_convert.c $(am__append_71)
 @ENABLE_TEST_TRUE@test_run_convert_CPPFLAGS = $(AM_CPPFLAGS) $(SAMPLERATE_CFLAGS)
@@ -2218,7 +2239,7 @@ SPARSE_CPPFLAGS = $(DEFAULT_INCLUDES) -I$(shell $(CC) \
 @ENABLE_TEST_TRUE@	src/audio_parser.c \
 @ENABLE_TEST_TRUE@	src/timer.c \
 @ENABLE_TEST_TRUE@	src/tag.c src/tag_pool.c \
-@ENABLE_TEST_TRUE@	src/fifo_buffer.c \
+@ENABLE_TEST_TRUE@	src/fifo_buffer.c src/growing_fifo.c \
 @ENABLE_TEST_TRUE@	src/page.c \
 @ENABLE_TEST_TRUE@	src/socket_util.c \
 @ENABLE_TEST_TRUE@	src/output_init.c src/output_list.c \
@@ -2235,6 +2256,7 @@ SPARSE_CPPFLAGS = $(DEFAULT_INCLUDES) -I$(shell $(CC) \
 @ENABLE_TEST_TRUE@	src/filter/normalize_filter_plugin.c \
 @ENABLE_TEST_TRUE@	src/filter/volume_filter_plugin.c \
 @ENABLE_TEST_TRUE@	src/pcm_volume.c \
+@ENABLE_TEST_TRUE@	src/pcm_buffer.c \
 @ENABLE_TEST_TRUE@	src/AudioCompress/compress.c \
 @ENABLE_TEST_TRUE@	src/replay_gain_info.c \
 @ENABLE_TEST_TRUE@	src/replay_gain_config.c \
@@ -2255,6 +2277,7 @@ SPARSE_CPPFLAGS = $(DEFAULT_INCLUDES) -I$(shell $(CC) \
 @ENABLE_TEST_TRUE@	src/filter_plugin.c \
 @ENABLE_TEST_TRUE@	src/filter/volume_filter_plugin.c \
 @ENABLE_TEST_TRUE@	src/fd_util.c \
+@ENABLE_TEST_TRUE@	src/pcm_buffer.c \
 @ENABLE_TEST_TRUE@	$(MIXER_SRC)
 
 @ENABLE_INOTIFY_TRUE@@ENABLE_TEST_TRUE@test_run_inotify_SOURCES = test/run_inotify.c \
@@ -2776,6 +2799,8 @@ src/src_mpd-fd_util.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/src_mpd-fifo_buffer.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/src_mpd-growing_fifo.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/src_mpd-filter_config.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/src_mpd-filter_plugin.$(OBJEXT): src/$(am__dirstamp) \
@@ -2846,6 +2871,8 @@ src/src_mpd-path.$(OBJEXT): src/$(am__dirstamp) \
 src/src_mpd-mapper.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/src_mpd-page.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/src_mpd-pcm_buffer.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/src_mpd-pcm_convert.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
@@ -3114,6 +3141,8 @@ src/filter/test_read_mixer-volume_filter_plugin.$(OBJEXT):  \
 	src/filter/$(DEPDIR)/$(am__dirstamp)
 src/test_read_mixer-fd_util.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/test_read_mixer-pcm_buffer.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/mixer/test_read_mixer-software_mixer_plugin.$(OBJEXT):  \
 	src/mixer/$(am__dirstamp) src/mixer/$(DEPDIR)/$(am__dirstamp)
 src/mixer/test_read_mixer-alsa_mixer_plugin.$(OBJEXT):  \
@@ -3150,6 +3179,8 @@ src/test_read_tags-fd_util.$(OBJEXT): src/$(am__dirstamp) \
 src/test_read_tags-audio_check.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/test_read_tags-timer.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/test_read_tags-pcm_buffer.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/archive/test_read_tags-bz2_archive_plugin.$(OBJEXT):  \
 	src/archive/$(am__dirstamp) \
@@ -3284,6 +3315,8 @@ src/test_run_convert-audio_check.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/test_run_convert-audio_parser.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/test_run_convert-pcm_buffer.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/test_run_convert-pcm_channels.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/test_run_convert-pcm_format.$(OBJEXT): src/$(am__dirstamp) \
@@ -3330,6 +3363,8 @@ src/test_run_decoder-audio_check.$(OBJEXT): src/$(am__dirstamp) \
 src/test_run_decoder-audio_format.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/test_run_decoder-timer.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/test_run_decoder-pcm_buffer.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/archive/test_run_decoder-bz2_archive_plugin.$(OBJEXT):  \
 	src/archive/$(am__dirstamp) \
@@ -3472,6 +3507,12 @@ src/test_run_encoder-audio_format.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/test_run_encoder-audio_parser.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/test_run_encoder-pcm_buffer.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/test_run_encoder-fifo_buffer.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/test_run_encoder-growing_fifo.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/test_run_encoder-encoder_list.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/encoder/test_run_encoder-null_encoder.$(OBJEXT):  \
@@ -3525,6 +3566,8 @@ src/test_run_filter-pcm_resample.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/test_run_filter-pcm_resample_fallback.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/test_run_filter-pcm_buffer.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/test_run_filter-audio_check.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/test_run_filter-audio_format.$(OBJEXT): src/$(am__dirstamp) \
@@ -3668,6 +3711,8 @@ src/test_run_output-tag_pool.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/test_run_output-fifo_buffer.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/test_run_output-growing_fifo.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/test_run_output-page.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/test_run_output-socket_util.$(OBJEXT): src/$(am__dirstamp) \
@@ -3735,6 +3780,8 @@ src/filter/test_run_output-volume_filter_plugin.$(OBJEXT):  \
 	src/filter/$(am__dirstamp) \
 	src/filter/$(DEPDIR)/$(am__dirstamp)
 src/test_run_output-pcm_volume.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/test_run_output-pcm_buffer.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/AudioCompress/test_run_output-compress.$(OBJEXT):  \
 	src/AudioCompress/$(am__dirstamp) \
@@ -4098,6 +4145,7 @@ mostlyclean-compile:
 	-rm -f src/src_mpd-filter_config.$(OBJEXT)
 	-rm -f src/src_mpd-filter_plugin.$(OBJEXT)
 	-rm -f src/src_mpd-filter_registry.$(OBJEXT)
+	-rm -f src/src_mpd-growing_fifo.$(OBJEXT)
 	-rm -f src/src_mpd-icy_metadata.$(OBJEXT)
 	-rm -f src/src_mpd-icy_server.$(OBJEXT)
 	-rm -f src/src_mpd-idle.$(OBJEXT)
@@ -4129,6 +4177,7 @@ mostlyclean-compile:
 	-rm -f src/src_mpd-output_thread.$(OBJEXT)
 	-rm -f src/src_mpd-page.$(OBJEXT)
 	-rm -f src/src_mpd-path.$(OBJEXT)
+	-rm -f src/src_mpd-pcm_buffer.$(OBJEXT)
 	-rm -f src/src_mpd-pcm_byteswap.$(OBJEXT)
 	-rm -f src/src_mpd-pcm_channels.$(OBJEXT)
 	-rm -f src/src_mpd-pcm_convert.$(OBJEXT)
@@ -4230,6 +4279,7 @@ mostlyclean-compile:
 	-rm -f src/test_read_mixer-log.$(OBJEXT)
 	-rm -f src/test_read_mixer-mixer_api.$(OBJEXT)
 	-rm -f src/test_read_mixer-mixer_control.$(OBJEXT)
+	-rm -f src/test_read_mixer-pcm_buffer.$(OBJEXT)
 	-rm -f src/test_read_mixer-tokenizer.$(OBJEXT)
 	-rm -f src/test_read_mixer-utils.$(OBJEXT)
 	-rm -f src/test_read_tags-aiff.$(OBJEXT)
@@ -4248,6 +4298,7 @@ mostlyclean-compile:
 	-rm -f src/test_read_tags-input_registry.$(OBJEXT)
 	-rm -f src/test_read_tags-input_stream.$(OBJEXT)
 	-rm -f src/test_read_tags-log.$(OBJEXT)
+	-rm -f src/test_read_tags-pcm_buffer.$(OBJEXT)
 	-rm -f src/test_read_tags-replay_gain_ape.$(OBJEXT)
 	-rm -f src/test_read_tags-replay_gain_info.$(OBJEXT)
 	-rm -f src/test_read_tags-riff.$(OBJEXT)
@@ -4264,6 +4315,7 @@ mostlyclean-compile:
 	-rm -f src/test_run_convert-audio_format.$(OBJEXT)
 	-rm -f src/test_run_convert-audio_parser.$(OBJEXT)
 	-rm -f src/test_run_convert-fifo_buffer.$(OBJEXT)
+	-rm -f src/test_run_convert-pcm_buffer.$(OBJEXT)
 	-rm -f src/test_run_convert-pcm_byteswap.$(OBJEXT)
 	-rm -f src/test_run_convert-pcm_channels.$(OBJEXT)
 	-rm -f src/test_run_convert-pcm_convert.$(OBJEXT)
@@ -4290,6 +4342,7 @@ mostlyclean-compile:
 	-rm -f src/test_run_decoder-input_registry.$(OBJEXT)
 	-rm -f src/test_run_decoder-input_stream.$(OBJEXT)
 	-rm -f src/test_run_decoder-log.$(OBJEXT)
+	-rm -f src/test_run_decoder-pcm_buffer.$(OBJEXT)
 	-rm -f src/test_run_decoder-replay_gain_ape.$(OBJEXT)
 	-rm -f src/test_run_decoder-replay_gain_info.$(OBJEXT)
 	-rm -f src/test_run_decoder-riff.$(OBJEXT)
@@ -4307,6 +4360,9 @@ mostlyclean-compile:
 	-rm -f src/test_run_encoder-audio_parser.$(OBJEXT)
 	-rm -f src/test_run_encoder-conf.$(OBJEXT)
 	-rm -f src/test_run_encoder-encoder_list.$(OBJEXT)
+	-rm -f src/test_run_encoder-fifo_buffer.$(OBJEXT)
+	-rm -f src/test_run_encoder-growing_fifo.$(OBJEXT)
+	-rm -f src/test_run_encoder-pcm_buffer.$(OBJEXT)
 	-rm -f src/test_run_encoder-tag.$(OBJEXT)
 	-rm -f src/test_run_encoder-tag_pool.$(OBJEXT)
 	-rm -f src/test_run_encoder-tokenizer.$(OBJEXT)
@@ -4317,6 +4373,7 @@ mostlyclean-compile:
 	-rm -f src/test_run_filter-conf.$(OBJEXT)
 	-rm -f src/test_run_filter-filter_plugin.$(OBJEXT)
 	-rm -f src/test_run_filter-filter_registry.$(OBJEXT)
+	-rm -f src/test_run_filter-pcm_buffer.$(OBJEXT)
 	-rm -f src/test_run_filter-pcm_byteswap.$(OBJEXT)
 	-rm -f src/test_run_filter-pcm_channels.$(OBJEXT)
 	-rm -f src/test_run_filter-pcm_convert.$(OBJEXT)
@@ -4354,6 +4411,7 @@ mostlyclean-compile:
 	-rm -f src/test_run_output-fifo_buffer.$(OBJEXT)
 	-rm -f src/test_run_output-filter_config.$(OBJEXT)
 	-rm -f src/test_run_output-filter_plugin.$(OBJEXT)
+	-rm -f src/test_run_output-growing_fifo.$(OBJEXT)
 	-rm -f src/test_run_output-icy_server.$(OBJEXT)
 	-rm -f src/test_run_output-log.$(OBJEXT)
 	-rm -f src/test_run_output-mixer_api.$(OBJEXT)
@@ -4362,6 +4420,7 @@ mostlyclean-compile:
 	-rm -f src/test_run_output-output_init.$(OBJEXT)
 	-rm -f src/test_run_output-output_list.$(OBJEXT)
 	-rm -f src/test_run_output-page.$(OBJEXT)
+	-rm -f src/test_run_output-pcm_buffer.$(OBJEXT)
 	-rm -f src/test_run_output-pcm_volume.$(OBJEXT)
 	-rm -f src/test_run_output-replay_gain_config.$(OBJEXT)
 	-rm -f src/test_run_output-replay_gain_info.$(OBJEXT)
@@ -4443,6 +4502,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/src_mpd-filter_config.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/src_mpd-filter_plugin.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/src_mpd-filter_registry.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/src_mpd-growing_fifo.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/src_mpd-icy_metadata.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/src_mpd-icy_server.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/src_mpd-idle.Po@am__quote@
@@ -4474,6 +4534,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/src_mpd-output_thread.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/src_mpd-page.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/src_mpd-path.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/src_mpd-pcm_buffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/src_mpd-pcm_byteswap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/src_mpd-pcm_channels.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/src_mpd-pcm_convert.Po@am__quote@
@@ -4575,6 +4636,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_read_mixer-log.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_read_mixer-mixer_api.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_read_mixer-mixer_control.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_read_mixer-pcm_buffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_read_mixer-tokenizer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_read_mixer-utils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_read_tags-aiff.Po@am__quote@
@@ -4593,6 +4655,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_read_tags-input_registry.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_read_tags-input_stream.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_read_tags-log.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_read_tags-pcm_buffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_read_tags-replay_gain_ape.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_read_tags-replay_gain_info.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_read_tags-riff.Po@am__quote@
@@ -4609,6 +4672,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_convert-audio_format.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_convert-audio_parser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_convert-fifo_buffer.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_convert-pcm_buffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_convert-pcm_byteswap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_convert-pcm_channels.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_convert-pcm_convert.Po@am__quote@
@@ -4635,6 +4699,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_decoder-input_registry.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_decoder-input_stream.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_decoder-log.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_decoder-pcm_buffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_decoder-replay_gain_ape.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_decoder-replay_gain_info.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_decoder-riff.Po@am__quote@
@@ -4652,6 +4717,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_encoder-audio_parser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_encoder-conf.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_encoder-encoder_list.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_encoder-fifo_buffer.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_encoder-growing_fifo.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_encoder-pcm_buffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_encoder-tag.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_encoder-tag_pool.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_encoder-tokenizer.Po@am__quote@
@@ -4662,6 +4730,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_filter-conf.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_filter-filter_plugin.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_filter-filter_registry.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_filter-pcm_buffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_filter-pcm_byteswap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_filter-pcm_channels.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_filter-pcm_convert.Po@am__quote@
@@ -4699,6 +4768,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_output-fifo_buffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_output-filter_config.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_output-filter_plugin.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_output-growing_fifo.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_output-icy_server.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_output-log.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_output-mixer_api.Po@am__quote@
@@ -4707,6 +4777,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_output-output_init.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_output-output_list.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_output-page.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_output-pcm_buffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_output-pcm_volume.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_output-replay_gain_config.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test_run_output-replay_gain_info.Po@am__quote@
@@ -6837,6 +6908,20 @@ src/src_mpd-fifo_buffer.obj: src/fifo_buffer.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_mpd_CPPFLAGS) $(CPPFLAGS) $(src_mpd_CFLAGS) $(CFLAGS) -c -o src/src_mpd-fifo_buffer.obj `if test -f 'src/fifo_buffer.c'; then $(CYGPATH_W) 'src/fifo_buffer.c'; else $(CYGPATH_W) '$(srcdir)/src/fifo_buffer.c'; fi`
 
+src/src_mpd-growing_fifo.o: src/growing_fifo.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_mpd_CPPFLAGS) $(CPPFLAGS) $(src_mpd_CFLAGS) $(CFLAGS) -MT src/src_mpd-growing_fifo.o -MD -MP -MF src/$(DEPDIR)/src_mpd-growing_fifo.Tpo -c -o src/src_mpd-growing_fifo.o `test -f 'src/growing_fifo.c' || echo '$(srcdir)/'`src/growing_fifo.c
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/src_mpd-growing_fifo.Tpo src/$(DEPDIR)/src_mpd-growing_fifo.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/growing_fifo.c' object='src/src_mpd-growing_fifo.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_mpd_CPPFLAGS) $(CPPFLAGS) $(src_mpd_CFLAGS) $(CFLAGS) -c -o src/src_mpd-growing_fifo.o `test -f 'src/growing_fifo.c' || echo '$(srcdir)/'`src/growing_fifo.c
+
+src/src_mpd-growing_fifo.obj: src/growing_fifo.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_mpd_CPPFLAGS) $(CPPFLAGS) $(src_mpd_CFLAGS) $(CFLAGS) -MT src/src_mpd-growing_fifo.obj -MD -MP -MF src/$(DEPDIR)/src_mpd-growing_fifo.Tpo -c -o src/src_mpd-growing_fifo.obj `if test -f 'src/growing_fifo.c'; then $(CYGPATH_W) 'src/growing_fifo.c'; else $(CYGPATH_W) '$(srcdir)/src/growing_fifo.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/src_mpd-growing_fifo.Tpo src/$(DEPDIR)/src_mpd-growing_fifo.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/growing_fifo.c' object='src/src_mpd-growing_fifo.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_mpd_CPPFLAGS) $(CPPFLAGS) $(src_mpd_CFLAGS) $(CFLAGS) -c -o src/src_mpd-growing_fifo.obj `if test -f 'src/growing_fifo.c'; then $(CYGPATH_W) 'src/growing_fifo.c'; else $(CYGPATH_W) '$(srcdir)/src/growing_fifo.c'; fi`
+
 src/src_mpd-filter_config.o: src/filter_config.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_mpd_CPPFLAGS) $(CPPFLAGS) $(src_mpd_CFLAGS) $(CFLAGS) -MT src/src_mpd-filter_config.o -MD -MP -MF src/$(DEPDIR)/src_mpd-filter_config.Tpo -c -o src/src_mpd-filter_config.o `test -f 'src/filter_config.c' || echo '$(srcdir)/'`src/filter_config.c
 @am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/src_mpd-filter_config.Tpo src/$(DEPDIR)/src_mpd-filter_config.Po
@@ -7284,6 +7369,20 @@ src/src_mpd-page.obj: src/page.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/page.c' object='src/src_mpd-page.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_mpd_CPPFLAGS) $(CPPFLAGS) $(src_mpd_CFLAGS) $(CFLAGS) -c -o src/src_mpd-page.obj `if test -f 'src/page.c'; then $(CYGPATH_W) 'src/page.c'; else $(CYGPATH_W) '$(srcdir)/src/page.c'; fi`
+
+src/src_mpd-pcm_buffer.o: src/pcm_buffer.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_mpd_CPPFLAGS) $(CPPFLAGS) $(src_mpd_CFLAGS) $(CFLAGS) -MT src/src_mpd-pcm_buffer.o -MD -MP -MF src/$(DEPDIR)/src_mpd-pcm_buffer.Tpo -c -o src/src_mpd-pcm_buffer.o `test -f 'src/pcm_buffer.c' || echo '$(srcdir)/'`src/pcm_buffer.c
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/src_mpd-pcm_buffer.Tpo src/$(DEPDIR)/src_mpd-pcm_buffer.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/pcm_buffer.c' object='src/src_mpd-pcm_buffer.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_mpd_CPPFLAGS) $(CPPFLAGS) $(src_mpd_CFLAGS) $(CFLAGS) -c -o src/src_mpd-pcm_buffer.o `test -f 'src/pcm_buffer.c' || echo '$(srcdir)/'`src/pcm_buffer.c
+
+src/src_mpd-pcm_buffer.obj: src/pcm_buffer.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_mpd_CPPFLAGS) $(CPPFLAGS) $(src_mpd_CFLAGS) $(CFLAGS) -MT src/src_mpd-pcm_buffer.obj -MD -MP -MF src/$(DEPDIR)/src_mpd-pcm_buffer.Tpo -c -o src/src_mpd-pcm_buffer.obj `if test -f 'src/pcm_buffer.c'; then $(CYGPATH_W) 'src/pcm_buffer.c'; else $(CYGPATH_W) '$(srcdir)/src/pcm_buffer.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/src_mpd-pcm_buffer.Tpo src/$(DEPDIR)/src_mpd-pcm_buffer.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/pcm_buffer.c' object='src/src_mpd-pcm_buffer.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_mpd_CPPFLAGS) $(CPPFLAGS) $(src_mpd_CFLAGS) $(CFLAGS) -c -o src/src_mpd-pcm_buffer.obj `if test -f 'src/pcm_buffer.c'; then $(CYGPATH_W) 'src/pcm_buffer.c'; else $(CYGPATH_W) '$(srcdir)/src/pcm_buffer.c'; fi`
 
 src/src_mpd-pcm_convert.o: src/pcm_convert.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_mpd_CPPFLAGS) $(CPPFLAGS) $(src_mpd_CFLAGS) $(CFLAGS) -MT src/src_mpd-pcm_convert.o -MD -MP -MF src/$(DEPDIR)/src_mpd-pcm_convert.Tpo -c -o src/src_mpd-pcm_convert.o `test -f 'src/pcm_convert.c' || echo '$(srcdir)/'`src/pcm_convert.c
@@ -8951,6 +9050,20 @@ src/test_read_mixer-fd_util.obj: src/fd_util.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_read_mixer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_read_mixer-fd_util.obj `if test -f 'src/fd_util.c'; then $(CYGPATH_W) 'src/fd_util.c'; else $(CYGPATH_W) '$(srcdir)/src/fd_util.c'; fi`
 
+src/test_read_mixer-pcm_buffer.o: src/pcm_buffer.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_read_mixer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_read_mixer-pcm_buffer.o -MD -MP -MF src/$(DEPDIR)/test_read_mixer-pcm_buffer.Tpo -c -o src/test_read_mixer-pcm_buffer.o `test -f 'src/pcm_buffer.c' || echo '$(srcdir)/'`src/pcm_buffer.c
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_read_mixer-pcm_buffer.Tpo src/$(DEPDIR)/test_read_mixer-pcm_buffer.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/pcm_buffer.c' object='src/test_read_mixer-pcm_buffer.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_read_mixer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_read_mixer-pcm_buffer.o `test -f 'src/pcm_buffer.c' || echo '$(srcdir)/'`src/pcm_buffer.c
+
+src/test_read_mixer-pcm_buffer.obj: src/pcm_buffer.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_read_mixer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_read_mixer-pcm_buffer.obj -MD -MP -MF src/$(DEPDIR)/test_read_mixer-pcm_buffer.Tpo -c -o src/test_read_mixer-pcm_buffer.obj `if test -f 'src/pcm_buffer.c'; then $(CYGPATH_W) 'src/pcm_buffer.c'; else $(CYGPATH_W) '$(srcdir)/src/pcm_buffer.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_read_mixer-pcm_buffer.Tpo src/$(DEPDIR)/test_read_mixer-pcm_buffer.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/pcm_buffer.c' object='src/test_read_mixer-pcm_buffer.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_read_mixer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_read_mixer-pcm_buffer.obj `if test -f 'src/pcm_buffer.c'; then $(CYGPATH_W) 'src/pcm_buffer.c'; else $(CYGPATH_W) '$(srcdir)/src/pcm_buffer.c'; fi`
+
 src/mixer/test_read_mixer-software_mixer_plugin.o: src/mixer/software_mixer_plugin.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_read_mixer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/mixer/test_read_mixer-software_mixer_plugin.o -MD -MP -MF src/mixer/$(DEPDIR)/test_read_mixer-software_mixer_plugin.Tpo -c -o src/mixer/test_read_mixer-software_mixer_plugin.o `test -f 'src/mixer/software_mixer_plugin.c' || echo '$(srcdir)/'`src/mixer/software_mixer_plugin.c
 @am__fastdepCC_TRUE@	$(am__mv) src/mixer/$(DEPDIR)/test_read_mixer-software_mixer_plugin.Tpo src/mixer/$(DEPDIR)/test_read_mixer-software_mixer_plugin.Po
@@ -9188,6 +9301,20 @@ src/test_read_tags-timer.obj: src/timer.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/timer.c' object='src/test_read_tags-timer.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_read_tags_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_read_tags-timer.obj `if test -f 'src/timer.c'; then $(CYGPATH_W) 'src/timer.c'; else $(CYGPATH_W) '$(srcdir)/src/timer.c'; fi`
+
+src/test_read_tags-pcm_buffer.o: src/pcm_buffer.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_read_tags_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_read_tags-pcm_buffer.o -MD -MP -MF src/$(DEPDIR)/test_read_tags-pcm_buffer.Tpo -c -o src/test_read_tags-pcm_buffer.o `test -f 'src/pcm_buffer.c' || echo '$(srcdir)/'`src/pcm_buffer.c
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_read_tags-pcm_buffer.Tpo src/$(DEPDIR)/test_read_tags-pcm_buffer.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/pcm_buffer.c' object='src/test_read_tags-pcm_buffer.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_read_tags_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_read_tags-pcm_buffer.o `test -f 'src/pcm_buffer.c' || echo '$(srcdir)/'`src/pcm_buffer.c
+
+src/test_read_tags-pcm_buffer.obj: src/pcm_buffer.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_read_tags_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_read_tags-pcm_buffer.obj -MD -MP -MF src/$(DEPDIR)/test_read_tags-pcm_buffer.Tpo -c -o src/test_read_tags-pcm_buffer.obj `if test -f 'src/pcm_buffer.c'; then $(CYGPATH_W) 'src/pcm_buffer.c'; else $(CYGPATH_W) '$(srcdir)/src/pcm_buffer.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_read_tags-pcm_buffer.Tpo src/$(DEPDIR)/test_read_tags-pcm_buffer.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/pcm_buffer.c' object='src/test_read_tags-pcm_buffer.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_read_tags_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_read_tags-pcm_buffer.obj `if test -f 'src/pcm_buffer.c'; then $(CYGPATH_W) 'src/pcm_buffer.c'; else $(CYGPATH_W) '$(srcdir)/src/pcm_buffer.c'; fi`
 
 src/archive/test_read_tags-bz2_archive_plugin.o: src/archive/bz2_archive_plugin.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_read_tags_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/archive/test_read_tags-bz2_archive_plugin.o -MD -MP -MF src/archive/$(DEPDIR)/test_read_tags-bz2_archive_plugin.Tpo -c -o src/archive/test_read_tags-bz2_archive_plugin.o `test -f 'src/archive/bz2_archive_plugin.c' || echo '$(srcdir)/'`src/archive/bz2_archive_plugin.c
@@ -9917,6 +10044,20 @@ src/test_run_convert-audio_parser.obj: src/audio_parser.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_convert_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_convert-audio_parser.obj `if test -f 'src/audio_parser.c'; then $(CYGPATH_W) 'src/audio_parser.c'; else $(CYGPATH_W) '$(srcdir)/src/audio_parser.c'; fi`
 
+src/test_run_convert-pcm_buffer.o: src/pcm_buffer.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_convert_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_convert-pcm_buffer.o -MD -MP -MF src/$(DEPDIR)/test_run_convert-pcm_buffer.Tpo -c -o src/test_run_convert-pcm_buffer.o `test -f 'src/pcm_buffer.c' || echo '$(srcdir)/'`src/pcm_buffer.c
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_convert-pcm_buffer.Tpo src/$(DEPDIR)/test_run_convert-pcm_buffer.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/pcm_buffer.c' object='src/test_run_convert-pcm_buffer.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_convert_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_convert-pcm_buffer.o `test -f 'src/pcm_buffer.c' || echo '$(srcdir)/'`src/pcm_buffer.c
+
+src/test_run_convert-pcm_buffer.obj: src/pcm_buffer.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_convert_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_convert-pcm_buffer.obj -MD -MP -MF src/$(DEPDIR)/test_run_convert-pcm_buffer.Tpo -c -o src/test_run_convert-pcm_buffer.obj `if test -f 'src/pcm_buffer.c'; then $(CYGPATH_W) 'src/pcm_buffer.c'; else $(CYGPATH_W) '$(srcdir)/src/pcm_buffer.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_convert-pcm_buffer.Tpo src/$(DEPDIR)/test_run_convert-pcm_buffer.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/pcm_buffer.c' object='src/test_run_convert-pcm_buffer.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_convert_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_convert-pcm_buffer.obj `if test -f 'src/pcm_buffer.c'; then $(CYGPATH_W) 'src/pcm_buffer.c'; else $(CYGPATH_W) '$(srcdir)/src/pcm_buffer.c'; fi`
+
 src/test_run_convert-pcm_channels.o: src/pcm_channels.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_convert_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_convert-pcm_channels.o -MD -MP -MF src/$(DEPDIR)/test_run_convert-pcm_channels.Tpo -c -o src/test_run_convert-pcm_channels.o `test -f 'src/pcm_channels.c' || echo '$(srcdir)/'`src/pcm_channels.c
 @am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_convert-pcm_channels.Tpo src/$(DEPDIR)/test_run_convert-pcm_channels.Po
@@ -10224,6 +10365,20 @@ src/test_run_decoder-timer.obj: src/timer.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/timer.c' object='src/test_run_decoder-timer.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_decoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_decoder-timer.obj `if test -f 'src/timer.c'; then $(CYGPATH_W) 'src/timer.c'; else $(CYGPATH_W) '$(srcdir)/src/timer.c'; fi`
+
+src/test_run_decoder-pcm_buffer.o: src/pcm_buffer.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_decoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_decoder-pcm_buffer.o -MD -MP -MF src/$(DEPDIR)/test_run_decoder-pcm_buffer.Tpo -c -o src/test_run_decoder-pcm_buffer.o `test -f 'src/pcm_buffer.c' || echo '$(srcdir)/'`src/pcm_buffer.c
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_decoder-pcm_buffer.Tpo src/$(DEPDIR)/test_run_decoder-pcm_buffer.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/pcm_buffer.c' object='src/test_run_decoder-pcm_buffer.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_decoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_decoder-pcm_buffer.o `test -f 'src/pcm_buffer.c' || echo '$(srcdir)/'`src/pcm_buffer.c
+
+src/test_run_decoder-pcm_buffer.obj: src/pcm_buffer.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_decoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_decoder-pcm_buffer.obj -MD -MP -MF src/$(DEPDIR)/test_run_decoder-pcm_buffer.Tpo -c -o src/test_run_decoder-pcm_buffer.obj `if test -f 'src/pcm_buffer.c'; then $(CYGPATH_W) 'src/pcm_buffer.c'; else $(CYGPATH_W) '$(srcdir)/src/pcm_buffer.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_decoder-pcm_buffer.Tpo src/$(DEPDIR)/test_run_decoder-pcm_buffer.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/pcm_buffer.c' object='src/test_run_decoder-pcm_buffer.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_decoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_decoder-pcm_buffer.obj `if test -f 'src/pcm_buffer.c'; then $(CYGPATH_W) 'src/pcm_buffer.c'; else $(CYGPATH_W) '$(srcdir)/src/pcm_buffer.c'; fi`
 
 src/archive/test_run_decoder-bz2_archive_plugin.o: src/archive/bz2_archive_plugin.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_decoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/archive/test_run_decoder-bz2_archive_plugin.o -MD -MP -MF src/archive/$(DEPDIR)/test_run_decoder-bz2_archive_plugin.Tpo -c -o src/archive/test_run_decoder-bz2_archive_plugin.o `test -f 'src/archive/bz2_archive_plugin.c' || echo '$(srcdir)/'`src/archive/bz2_archive_plugin.c
@@ -11009,6 +11164,48 @@ src/test_run_encoder-audio_parser.obj: src/audio_parser.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-audio_parser.obj `if test -f 'src/audio_parser.c'; then $(CYGPATH_W) 'src/audio_parser.c'; else $(CYGPATH_W) '$(srcdir)/src/audio_parser.c'; fi`
 
+src/test_run_encoder-pcm_buffer.o: src/pcm_buffer.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-pcm_buffer.o -MD -MP -MF src/$(DEPDIR)/test_run_encoder-pcm_buffer.Tpo -c -o src/test_run_encoder-pcm_buffer.o `test -f 'src/pcm_buffer.c' || echo '$(srcdir)/'`src/pcm_buffer.c
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-pcm_buffer.Tpo src/$(DEPDIR)/test_run_encoder-pcm_buffer.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/pcm_buffer.c' object='src/test_run_encoder-pcm_buffer.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-pcm_buffer.o `test -f 'src/pcm_buffer.c' || echo '$(srcdir)/'`src/pcm_buffer.c
+
+src/test_run_encoder-pcm_buffer.obj: src/pcm_buffer.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-pcm_buffer.obj -MD -MP -MF src/$(DEPDIR)/test_run_encoder-pcm_buffer.Tpo -c -o src/test_run_encoder-pcm_buffer.obj `if test -f 'src/pcm_buffer.c'; then $(CYGPATH_W) 'src/pcm_buffer.c'; else $(CYGPATH_W) '$(srcdir)/src/pcm_buffer.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-pcm_buffer.Tpo src/$(DEPDIR)/test_run_encoder-pcm_buffer.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/pcm_buffer.c' object='src/test_run_encoder-pcm_buffer.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-pcm_buffer.obj `if test -f 'src/pcm_buffer.c'; then $(CYGPATH_W) 'src/pcm_buffer.c'; else $(CYGPATH_W) '$(srcdir)/src/pcm_buffer.c'; fi`
+
+src/test_run_encoder-fifo_buffer.o: src/fifo_buffer.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-fifo_buffer.o -MD -MP -MF src/$(DEPDIR)/test_run_encoder-fifo_buffer.Tpo -c -o src/test_run_encoder-fifo_buffer.o `test -f 'src/fifo_buffer.c' || echo '$(srcdir)/'`src/fifo_buffer.c
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-fifo_buffer.Tpo src/$(DEPDIR)/test_run_encoder-fifo_buffer.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/fifo_buffer.c' object='src/test_run_encoder-fifo_buffer.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-fifo_buffer.o `test -f 'src/fifo_buffer.c' || echo '$(srcdir)/'`src/fifo_buffer.c
+
+src/test_run_encoder-fifo_buffer.obj: src/fifo_buffer.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-fifo_buffer.obj -MD -MP -MF src/$(DEPDIR)/test_run_encoder-fifo_buffer.Tpo -c -o src/test_run_encoder-fifo_buffer.obj `if test -f 'src/fifo_buffer.c'; then $(CYGPATH_W) 'src/fifo_buffer.c'; else $(CYGPATH_W) '$(srcdir)/src/fifo_buffer.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-fifo_buffer.Tpo src/$(DEPDIR)/test_run_encoder-fifo_buffer.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/fifo_buffer.c' object='src/test_run_encoder-fifo_buffer.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-fifo_buffer.obj `if test -f 'src/fifo_buffer.c'; then $(CYGPATH_W) 'src/fifo_buffer.c'; else $(CYGPATH_W) '$(srcdir)/src/fifo_buffer.c'; fi`
+
+src/test_run_encoder-growing_fifo.o: src/growing_fifo.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-growing_fifo.o -MD -MP -MF src/$(DEPDIR)/test_run_encoder-growing_fifo.Tpo -c -o src/test_run_encoder-growing_fifo.o `test -f 'src/growing_fifo.c' || echo '$(srcdir)/'`src/growing_fifo.c
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-growing_fifo.Tpo src/$(DEPDIR)/test_run_encoder-growing_fifo.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/growing_fifo.c' object='src/test_run_encoder-growing_fifo.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-growing_fifo.o `test -f 'src/growing_fifo.c' || echo '$(srcdir)/'`src/growing_fifo.c
+
+src/test_run_encoder-growing_fifo.obj: src/growing_fifo.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-growing_fifo.obj -MD -MP -MF src/$(DEPDIR)/test_run_encoder-growing_fifo.Tpo -c -o src/test_run_encoder-growing_fifo.obj `if test -f 'src/growing_fifo.c'; then $(CYGPATH_W) 'src/growing_fifo.c'; else $(CYGPATH_W) '$(srcdir)/src/growing_fifo.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-growing_fifo.Tpo src/$(DEPDIR)/test_run_encoder-growing_fifo.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/growing_fifo.c' object='src/test_run_encoder-growing_fifo.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_encoder-growing_fifo.obj `if test -f 'src/growing_fifo.c'; then $(CYGPATH_W) 'src/growing_fifo.c'; else $(CYGPATH_W) '$(srcdir)/src/growing_fifo.c'; fi`
+
 src/test_run_encoder-encoder_list.o: src/encoder_list.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_encoder-encoder_list.o -MD -MP -MF src/$(DEPDIR)/test_run_encoder-encoder_list.Tpo -c -o src/test_run_encoder-encoder_list.o `test -f 'src/encoder_list.c' || echo '$(srcdir)/'`src/encoder_list.c
 @am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_encoder-encoder_list.Tpo src/$(DEPDIR)/test_run_encoder-encoder_list.Po
@@ -11316,6 +11513,20 @@ src/test_run_filter-pcm_resample_fallback.obj: src/pcm_resample_fallback.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/pcm_resample_fallback.c' object='src/test_run_filter-pcm_resample_fallback.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_filter_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_filter-pcm_resample_fallback.obj `if test -f 'src/pcm_resample_fallback.c'; then $(CYGPATH_W) 'src/pcm_resample_fallback.c'; else $(CYGPATH_W) '$(srcdir)/src/pcm_resample_fallback.c'; fi`
+
+src/test_run_filter-pcm_buffer.o: src/pcm_buffer.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_filter_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_filter-pcm_buffer.o -MD -MP -MF src/$(DEPDIR)/test_run_filter-pcm_buffer.Tpo -c -o src/test_run_filter-pcm_buffer.o `test -f 'src/pcm_buffer.c' || echo '$(srcdir)/'`src/pcm_buffer.c
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_filter-pcm_buffer.Tpo src/$(DEPDIR)/test_run_filter-pcm_buffer.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/pcm_buffer.c' object='src/test_run_filter-pcm_buffer.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_filter_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_filter-pcm_buffer.o `test -f 'src/pcm_buffer.c' || echo '$(srcdir)/'`src/pcm_buffer.c
+
+src/test_run_filter-pcm_buffer.obj: src/pcm_buffer.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_filter_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_filter-pcm_buffer.obj -MD -MP -MF src/$(DEPDIR)/test_run_filter-pcm_buffer.Tpo -c -o src/test_run_filter-pcm_buffer.obj `if test -f 'src/pcm_buffer.c'; then $(CYGPATH_W) 'src/pcm_buffer.c'; else $(CYGPATH_W) '$(srcdir)/src/pcm_buffer.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_filter-pcm_buffer.Tpo src/$(DEPDIR)/test_run_filter-pcm_buffer.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/pcm_buffer.c' object='src/test_run_filter-pcm_buffer.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_filter_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/test_run_filter-pcm_buffer.obj `if test -f 'src/pcm_buffer.c'; then $(CYGPATH_W) 'src/pcm_buffer.c'; else $(CYGPATH_W) '$(srcdir)/src/pcm_buffer.c'; fi`
 
 src/test_run_filter-audio_check.o: src/audio_check.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_filter_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/test_run_filter-audio_check.o -MD -MP -MF src/$(DEPDIR)/test_run_filter-audio_check.Tpo -c -o src/test_run_filter-audio_check.o `test -f 'src/audio_check.c' || echo '$(srcdir)/'`src/audio_check.c
@@ -12031,6 +12242,20 @@ src/test_run_output-fifo_buffer.obj: src/fifo_buffer.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_output_CPPFLAGS) $(CPPFLAGS) $(test_run_output_CFLAGS) $(CFLAGS) -c -o src/test_run_output-fifo_buffer.obj `if test -f 'src/fifo_buffer.c'; then $(CYGPATH_W) 'src/fifo_buffer.c'; else $(CYGPATH_W) '$(srcdir)/src/fifo_buffer.c'; fi`
 
+src/test_run_output-growing_fifo.o: src/growing_fifo.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_output_CPPFLAGS) $(CPPFLAGS) $(test_run_output_CFLAGS) $(CFLAGS) -MT src/test_run_output-growing_fifo.o -MD -MP -MF src/$(DEPDIR)/test_run_output-growing_fifo.Tpo -c -o src/test_run_output-growing_fifo.o `test -f 'src/growing_fifo.c' || echo '$(srcdir)/'`src/growing_fifo.c
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_output-growing_fifo.Tpo src/$(DEPDIR)/test_run_output-growing_fifo.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/growing_fifo.c' object='src/test_run_output-growing_fifo.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_output_CPPFLAGS) $(CPPFLAGS) $(test_run_output_CFLAGS) $(CFLAGS) -c -o src/test_run_output-growing_fifo.o `test -f 'src/growing_fifo.c' || echo '$(srcdir)/'`src/growing_fifo.c
+
+src/test_run_output-growing_fifo.obj: src/growing_fifo.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_output_CPPFLAGS) $(CPPFLAGS) $(test_run_output_CFLAGS) $(CFLAGS) -MT src/test_run_output-growing_fifo.obj -MD -MP -MF src/$(DEPDIR)/test_run_output-growing_fifo.Tpo -c -o src/test_run_output-growing_fifo.obj `if test -f 'src/growing_fifo.c'; then $(CYGPATH_W) 'src/growing_fifo.c'; else $(CYGPATH_W) '$(srcdir)/src/growing_fifo.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_output-growing_fifo.Tpo src/$(DEPDIR)/test_run_output-growing_fifo.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/growing_fifo.c' object='src/test_run_output-growing_fifo.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_output_CPPFLAGS) $(CPPFLAGS) $(test_run_output_CFLAGS) $(CFLAGS) -c -o src/test_run_output-growing_fifo.obj `if test -f 'src/growing_fifo.c'; then $(CYGPATH_W) 'src/growing_fifo.c'; else $(CYGPATH_W) '$(srcdir)/src/growing_fifo.c'; fi`
+
 src/test_run_output-page.o: src/page.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_output_CPPFLAGS) $(CPPFLAGS) $(test_run_output_CFLAGS) $(CFLAGS) -MT src/test_run_output-page.o -MD -MP -MF src/$(DEPDIR)/test_run_output-page.Tpo -c -o src/test_run_output-page.o `test -f 'src/page.c' || echo '$(srcdir)/'`src/page.c
 @am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_output-page.Tpo src/$(DEPDIR)/test_run_output-page.Po
@@ -12422,6 +12647,20 @@ src/test_run_output-pcm_volume.obj: src/pcm_volume.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/pcm_volume.c' object='src/test_run_output-pcm_volume.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_output_CPPFLAGS) $(CPPFLAGS) $(test_run_output_CFLAGS) $(CFLAGS) -c -o src/test_run_output-pcm_volume.obj `if test -f 'src/pcm_volume.c'; then $(CYGPATH_W) 'src/pcm_volume.c'; else $(CYGPATH_W) '$(srcdir)/src/pcm_volume.c'; fi`
+
+src/test_run_output-pcm_buffer.o: src/pcm_buffer.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_output_CPPFLAGS) $(CPPFLAGS) $(test_run_output_CFLAGS) $(CFLAGS) -MT src/test_run_output-pcm_buffer.o -MD -MP -MF src/$(DEPDIR)/test_run_output-pcm_buffer.Tpo -c -o src/test_run_output-pcm_buffer.o `test -f 'src/pcm_buffer.c' || echo '$(srcdir)/'`src/pcm_buffer.c
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_output-pcm_buffer.Tpo src/$(DEPDIR)/test_run_output-pcm_buffer.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/pcm_buffer.c' object='src/test_run_output-pcm_buffer.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_output_CPPFLAGS) $(CPPFLAGS) $(test_run_output_CFLAGS) $(CFLAGS) -c -o src/test_run_output-pcm_buffer.o `test -f 'src/pcm_buffer.c' || echo '$(srcdir)/'`src/pcm_buffer.c
+
+src/test_run_output-pcm_buffer.obj: src/pcm_buffer.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_output_CPPFLAGS) $(CPPFLAGS) $(test_run_output_CFLAGS) $(CFLAGS) -MT src/test_run_output-pcm_buffer.obj -MD -MP -MF src/$(DEPDIR)/test_run_output-pcm_buffer.Tpo -c -o src/test_run_output-pcm_buffer.obj `if test -f 'src/pcm_buffer.c'; then $(CYGPATH_W) 'src/pcm_buffer.c'; else $(CYGPATH_W) '$(srcdir)/src/pcm_buffer.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) src/$(DEPDIR)/test_run_output-pcm_buffer.Tpo src/$(DEPDIR)/test_run_output-pcm_buffer.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/pcm_buffer.c' object='src/test_run_output-pcm_buffer.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_output_CPPFLAGS) $(CPPFLAGS) $(test_run_output_CFLAGS) $(CFLAGS) -c -o src/test_run_output-pcm_buffer.obj `if test -f 'src/pcm_buffer.c'; then $(CYGPATH_W) 'src/pcm_buffer.c'; else $(CYGPATH_W) '$(srcdir)/src/pcm_buffer.c'; fi`
 
 src/AudioCompress/test_run_output-compress.o: src/AudioCompress/compress.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_run_output_CPPFLAGS) $(CPPFLAGS) $(test_run_output_CFLAGS) $(CFLAGS) -MT src/AudioCompress/test_run_output-compress.o -MD -MP -MF src/AudioCompress/$(DEPDIR)/test_run_output-compress.Tpo -c -o src/AudioCompress/test_run_output-compress.o `test -f 'src/AudioCompress/compress.c' || echo '$(srcdir)/'`src/AudioCompress/compress.c
