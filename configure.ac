@@ -1,5 +1,5 @@
 AC_PREREQ(2.60)
-AC_INIT(mpd, 0.16.5, musicpd-dev-team@lists.sourceforge.net)
+AC_INIT(mpd, 0.16.7, musicpd-dev-team@lists.sourceforge.net)
 AC_CONFIG_SRCDIR([src/main.c])
 AM_INIT_AUTOMAKE([foreign 1.10 dist-bzip2 subdir-objects])
 AM_CONFIG_HEADER(config.h)
@@ -68,6 +68,7 @@ AC_CANONICAL_HOST
 
 case "$host_os" in
 mingw32* | windows*)
+	AM_CPPFLAGS="$AM_CPPFLAGS -DWINVER=0x0501"
 	MPD_LIBS="$MPD_LIBS -lws2_32"
 	;;
 esac
@@ -431,6 +432,11 @@ dnl ---------------------------------------------------------------------------
 PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.12 gthread-2.0],,
 		[AC_MSG_ERROR([GLib 2.12 is required])])
 
+if test x$GCC = xyes; then
+	# suppress warnings in the GLib headers
+	GLIB_CFLAGS=`echo $GLIB_CFLAGS |sed -e 's,-I/,-isystem /,g'`
+fi
+
 dnl ---------------------------------------------------------------------------
 dnl Protocol Options
 dnl ---------------------------------------------------------------------------
@@ -445,7 +451,11 @@ if test x$enable_ipv6 = xyes; then
 	AC_EGREP_CPP([AP_maGiC_VALUE],
 	[
 #include <sys/types.h>
+#ifdef WIN32
+#include <winsock2.h>
+#else
 #include <sys/socket.h>
+#endif
 #include <netdb.h>
 #ifdef PF_INET6
 #ifdef AF_INET6
@@ -1486,7 +1496,6 @@ if test x$GCC = xyes
 then
 	MPD_CHECK_FLAG([-Wall])
 	MPD_CHECK_FLAG([-Wextra])
-	MPD_CHECK_FLAG([-Wno-deprecated-declarations])
 	MPD_CHECK_FLAG([-Wmissing-prototypes])
 	MPD_CHECK_FLAG([-Wshadow])
 	MPD_CHECK_FLAG([-Wpointer-arith])

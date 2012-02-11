@@ -86,7 +86,7 @@ directory_set_stat(struct directory *dir, const struct stat *st)
 {
 	dir->inode = st->st_ino;
 	dir->device = st->st_dev;
-	dir->stat = 1;
+	dir->have_stat = true;
 }
 
 static void
@@ -346,7 +346,7 @@ inodeFoundInParent(struct directory *parent, ino_t inode, dev_t device)
 {
 #ifndef G_OS_WIN32
 	while (parent) {
-		if (!parent->stat && statDirectory(parent) < 0)
+		if (!parent->have_stat && statDirectory(parent) < 0)
 			return -1;
 		if (parent->inode == inode && parent->device == device) {
 			g_debug("recursive directory found");
@@ -616,6 +616,8 @@ update_regular_file(struct directory *directory,
 		}
 
 		if (song == NULL) {
+			g_debug("reading %s/%s",
+				directory_get_path(directory), name);
 			song = song_file_load(name, directory);
 			if (song == NULL) {
 				g_debug("ignoring unrecognized file %s/%s",
