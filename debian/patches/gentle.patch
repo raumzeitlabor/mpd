@@ -1,0 +1,45 @@
+tiny changes in mpd's behaviour
+
+* stop changed into pause
+* enforce consume mode
+* ignore clear
+--- a/src/command.c
++++ b/src/command.c
+@@ -728,7 +728,7 @@
+ handle_clear(G_GNUC_UNUSED struct client *client,
+ 	     G_GNUC_UNUSED int argc, G_GNUC_UNUSED char *argv[])
+ {
+-	playlist_clear(&g_playlist);
++	/* playlist_clear(&g_playlist); */
+ 	return COMMAND_RETURN_OK;
+ }
+ 
+@@ -1246,7 +1246,7 @@
+ 		return COMMAND_RETURN_ERROR;
+ 	}
+ 
+-	playlist_set_consume(&g_playlist, status);
++	playlist_set_consume(&g_playlist, true);
+ 	return COMMAND_RETURN_OK;
+ }
+ 
+@@ -1895,7 +1895,7 @@
+ #ifdef ENABLE_SQLITE
+ 	{ "sticker", PERMISSION_ADMIN, 3, -1, handle_sticker },
+ #endif
+-	{ "stop", PERMISSION_CONTROL, 0, 0, handle_stop },
++	{ "stop", PERMISSION_CONTROL, 0, 0, handle_pause },
+ 	{ "swap", PERMISSION_CONTROL, 2, 2, handle_swap },
+ 	{ "swapid", PERMISSION_CONTROL, 2, 2, handle_swapid },
+ 	{ "tagtypes", PERMISSION_READ, 0, 0, handle_tagtypes },
+--- a/src/queue.c
++++ b/src/queue.c
+@@ -282,7 +282,7 @@
+ 	queue->repeat = false;
+ 	queue->random = false;
+ 	queue->single = false;
+-	queue->consume = false;
++	queue->consume = true;
+ 
+ 	queue->items = g_new(struct queue_item, max_length);
+ 	queue->order = g_malloc(sizeof(queue->order[0]) *
